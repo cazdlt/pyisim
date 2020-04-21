@@ -1,7 +1,10 @@
 import json
-import requests
 import urllib
 from urllib.parse import urlencode
+
+import requests
+
+from .exceptions import *
 
 requests.packages.urllib3.disable_warnings()
 
@@ -12,25 +15,9 @@ requests.packages.urllib3.disable_warnings()
 # si viene con algún atrubuto, lo recupera
 
 
-class AuthenticationError(Exception):
-    pass
+class Client:
 
-
-class NotFoundError(Exception):
-    pass
-
-
-class PersonNotFoundError(NotFoundError):
-    pass
-
-
-class MultipleFoundError(Exception):
-    pass
-
-
-class sim:
-
-    def __init__(self, user_, pass_, env="qa"):
+    def __init__(self, user_, pass_, env="int"):
 
         # colpensiones
         ambientes = {
@@ -423,18 +410,3 @@ class sim:
         actividad = json.loads(self.s.get(url_act,params=data).text)
 
         return actividad
-
-
-if __name__ == "__main__":
-    user_=""
-    pass_=""
-    sesion=sim(user_,pass_,env="pr")
-    
-    act=sesion.lookupActividad("8322763180415790339")
-
-    print(json.dumps(act,indent=3))
-    
-    #r=sim.buscarServicio("Directorio Activo",atributos=["dn"])
-    #print(json.dumps(r,indent=3))
-
-    

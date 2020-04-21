@@ -1,13 +1,13 @@
 from zeep import Client,Settings
 from zeep.xsd import Nil
-from isim_classes import StaticRole
+from .classes import StaticRole
 import requests
 import pprint
-import exceptions
+from .exceptions import *
 
 requests.packages.urllib3.disable_warnings()
 
-class sim():
+class Client():
     def __init__(self, user_, pass_,env="int"):
 
         # colpensiones
@@ -186,7 +186,7 @@ class sim():
 
         if find_unique:
             if len(servicios)==0:
-                raise exceptions.NotFoundError(f"No se ha encontrado el servicio con el filtro: {parent_ou_name} - {filtro}. Verifique que sea un filtro LDAP válido.")
+                raise NotFoundError(f"No se ha encontrado el servicio con el filtro: {parent_ou_name} - {filtro}. Verifique que sea un filtro LDAP válido.")
             assert len(servicios)==1,f"Se ha encontrado más de un servicio con: {parent_ou_name} - {filtro}"
             return servicios[0]
         else:
@@ -218,7 +218,7 @@ class sim():
 
         if find_unique:
             if len(perfiles)==0:
-                raise exceptions.NotFoundError(f"No se ha encontrado el perfil: {nombre}. Verifique que sea un filtro LDAP válido.")
+                raise NotFoundError(f"No se ha encontrado el perfil: {nombre}. Verifique que sea un filtro LDAP válido.")
             assert len(perfiles)==1,f"Se ha encontrado más de un perfil de servicio con: {nombre}"
             return perfiles[0]["value"]
         else:
@@ -263,23 +263,6 @@ class sim():
 
         return flujos[0]["value"]
 
-    
-
-        
-if __name__ == "__main__":
-    sesion=sim("","")
-    
-    print(sesion.buscarRol("(errolename=WS)",find_unique=False))
-
-    # print(sesion.buscarServicio("Colpensiones","(erservicename=Directorio Activo)"))
-    
-    # role=StaticRole(sesion,"Rol WS 4","Con dueño rol y humano","Aplicacion",2,"Aplicaciones_Colpensiones",owner_cedulas=["1015463230"],owner_roles=["Test Role"])
-    # wsrole=role.crearWSRole(sesion)
-    # print(wsrole)
-    # ret=sesion.crearRolEstatico(wsrole,"Colpensiones")
-    # print(ret)
-
-    # print(sesion.buscarPersona("(employeenumber=1015463230)")["itimDN"])
     
 
    

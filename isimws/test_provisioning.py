@@ -1,11 +1,12 @@
-from simrest import sim as simrest
-from masaccesos import Person
 import json
 import time
 
+from .classes import Person
+from .rest import Client as simrest
+
 #Pruebas unitarias
 
-def crear_persona(info_persona):
+def test_crear_persona(info_persona):
 
     #login
     sesion=simrest("cazamorad",'goDiCLNT8Z4W',env="int")
@@ -19,7 +20,7 @@ def crear_persona(info_persona):
 
     return persona
 
-def crear_y_solicitar(info_persona,accesos):
+def test_crear_y_solicitar(info_persona,accesos):
 
     #login
     sesion=simrest("cazamorad",'goDiCLNT8Z4W',env="int")
@@ -52,7 +53,7 @@ def crear_y_solicitar(info_persona,accesos):
 
     return persona
 
-def solicitar_a_existente(nombre_persona,accesos):
+def test_solicitar_a_existente(nombre_persona,accesos):
 
     #login
     sesion=simrest("cazamorad",'goDiCLNT8Z4W',env="int")
@@ -88,11 +89,10 @@ if __name__ == "__main__":
     accesos=["Rol prueba Modican Consulta",
              "Rol prueba Autoliss Consulta"]
     
-    persona = crear_y_solicitar(info_persona,accesos)
+    persona = test_crear_y_solicitar(info_persona,accesos)
 
     accesos=[
         "Rol prueba CORRDNC BASICO",
         "Rol prueba HLT Verifica"
     ]
-    solicitar_a_existente(persona.cn,accesos)
-    
+    test_solicitar_a_existente(persona.cn,accesos)
