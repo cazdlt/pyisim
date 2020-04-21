@@ -1,8 +1,10 @@
-from zeep import Client,Settings
-from zeep.xsd import Nil
-from .classes import StaticRole
-import requests
 import pprint
+
+import requests
+from zeep import Client, Settings
+from zeep.xsd import Nil
+
+from .classes import StaticRole
 from .exceptions import *
 
 requests.packages.urllib3.disable_warnings()
@@ -263,7 +265,3 @@ class Client():
 
         return flujos[0]["value"]
 
-    
-
-   
-    
