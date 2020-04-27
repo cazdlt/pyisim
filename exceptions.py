@@ -5,7 +5,6 @@ class AuthenticationError(Exception):
 class NotFoundError(Exception):
     pass
 
-
 class PersonNotFoundError(NotFoundError):
     pass
 

@@ -1,9 +1,9 @@
 import pandas as pd
-from simsoap import sim
 import numpy as np
 import pprint
-from isim_classes import ProvisioningPolicy
-from tictoc import tic,toc
+from isimws.classes import ProvisioningPolicy
+from isimws.auth import Session
+from .tictoc import tic,toc
 import re
 
 def construir_attrs(titularidades_df):
@@ -129,8 +129,8 @@ def crearOModificarPolitica(sesion,politica,entitlements):
     else:
         return f"ERROR - Múltiples políticas encontradas con el nombre {pol['name']}"
 
-def carga(usuario,clave,ruta_titularidades,ruta_politicas):
-    sesion=sim(usuario,clave)
+def carga(usuario,clave,url,ruta_titularidades,ruta_politicas):
+    sesion=sesion(usuario,clave,url)
 
     tic()
     entitlements=leerTitularidades(ruta_titularidades)
@@ -164,9 +164,10 @@ if __name__ == "__main__":
     path_entitlements="data/carga/titularidad_prueba_perfiles.csv"
     path_politicas="data/carga/politica_prueba_heredadas.csv"
     path_resultados="output/csv/out_pp_corrdnc.csv"
+    url=""
 
 
-    res=carga(usuario,clave,path_entitlements,path_politicas)
+    res=carga(usuario,clave,url,path_entitlements,path_politicas)
 
     res.to_csv(path_resultados,sep=****;")
 

@@ -15,18 +15,11 @@ requests.packages.urllib3.disable_warnings()
 # si viene con algún atrubuto, lo recupera
 
 
-class Client:
+class ISIMClient:
 
-    def __init__(self, user_, pass_, env="int"):
+    def __init__(self, user_, pass_, url):
 
-        # colpensiones
-        ambientes = {
-            "int": "https://iam.appintegracion.loc:9082",
-            "qa": "https://iam.appqa.loc:9082",
-            "pr":""
-        }
-
-        self.__addr = ambientes[env]
+        self.__addr = url
         self.s, self.CSRF = self.autenticar(user_, pass_)
 
     def autenticar(self, user_, pass_):
