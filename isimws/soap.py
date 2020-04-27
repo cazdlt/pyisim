@@ -9,17 +9,10 @@ from .exceptions import *
 
 requests.packages.urllib3.disable_warnings()
 
-class Client():
-    def __init__(self, user_, pass_,env="int"):
+class ISIMClient():
+    def __init__(self, user_, pass_,url):
 
-        # colpensiones
-        ambientes = {
-            "int": "https://iam.appintegracion.loc:9082/itim/services/",
-            "qa": "https://",
-            # "pr":"https://"
-        }
-
-        self.addr = ambientes[env]
+        self.addr = url+"/itim/services/"
         self.s = self.login(user_, pass_)
         
     def login(self,user_,pass_):

@@ -1,9 +1,9 @@
 import pandas as pd
-from simsoap import sim
 import numpy as np
 import pprint
-from isim_classes import StaticRole
-from tictoc import tic,toc
+from isimws.classes import StaticRole
+from isimws.auth import Session
+from .tictoc import tic,toc
 
 def leerRoles(csv_path):
 
@@ -75,8 +75,8 @@ def crearOModificarRol(sesion,rol_info):
     else:
         return f"ERROR - Múltiples roles encontrados con el nombre {rol['name']}"
 
-def carga(usuario,clave,ruta_roles):
-    sesion=sim(usuario,clave)
+def carga(usuario,clave,url,ruta_roles):
+    sesion=sesion(usuario,clave,url)
 
     tic()
     roles_df=leerRoles(ruta_roles)
@@ -99,8 +99,9 @@ if __name__ == "__main__":
     clave=****
     path_roles="data/carga/rol_prueba_heredadas.csv"
     path_resultados="output/csv/role_output.csv"
+    url=""
 
-    res=carga(usuario, clave, path_roles)
+    res=carga(usuario, clave, url, path_roles)
     res.to_csv(path_resultados,sep=****;")
 
     
