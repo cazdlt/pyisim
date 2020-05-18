@@ -4,7 +4,7 @@ Due to API limitations some functionalities are served through ISIM's REST API a
 
 - Functionalities
     - Authentication
-    - Request Access 
+    - Access request
     - Complete Manual Activities
         - Approval
         - Work Order
@@ -29,8 +29,13 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - BPPerson
         - OrgUnit
         - Access
-        - Manual activity
+        - Manual activities
         - Forms
+        - Groups
+    - Unit testing:
+        - Creating people
+        - Requesting multiple accesses
+        - Automatically completing all approvals and work orders from the request
 
 - TODO:
     - Improve project structure
@@ -39,7 +44,7 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - Basic usage
         - Batch loads
         - Requirements
-    - Create class APIs for Service and Access items
+    - Create class bindings for Service and Access items
     - Generalize Person and BPPerson attribute handling
         - *Abstract* class?
     - Add search to class initialization:
@@ -48,3 +53,5 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - Static Role
         - Provisioning Policy
     - Add at least modify and delete operations for Person classes
+    - Generalize policy and role creation
+        - Should not always require a full CSV file but only a dict or some structure for ease of use

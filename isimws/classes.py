@@ -466,3 +466,24 @@ class BPPerson:
         sesion=sesion_isim.restclient
         ret=sesion.crearBpperson(self,justificacion)
         return json.loads(ret.text)
+
+class Group:
+    def __init__(self):
+        pass
+        
+    def search(self,sesion,by,dn,groupProfileName=None,groupInfo=None):
+        
+        sesion=sesion.soapclient
+
+        if by=="account":
+            raise Exception("No implementado aún")
+        elif by=="access":
+            raise Exception("No implementado aún")
+        elif by=="service":
+            assert groupProfileName is not None,"Debe ingresar el parámetro groupProfileName"
+            assert groupInfo is not None,"Debe ingresar el parámetro groupInfo"
+            ret=sesion.buscarCuentasPorServicio(dn,groupProfileName,groupInfo)
+        else:
+            raise Exception("Opción inválida")
+
+        return ret
