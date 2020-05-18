@@ -258,3 +258,13 @@ class ISIMClient():
 
         return flujos[0]["value"]
 
+    def buscarCuentasPorServicio(self,dn_servicio,profile_name,info):
+        try:
+            client=self.group_client
+        except AttributeError:
+            url=self.addr+"WSGroupServiceService?wsdl"
+            settings = Settings(strict=False)
+            self.group_client=Client(url,settings=settings)
+            client=self.group_client
+
+        return client.service.getGroupsByService(self.s,dn_servicio,profile_name,info)

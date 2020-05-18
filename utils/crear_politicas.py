@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import pprint
 from isimws.classes import ProvisioningPolicy
 from isimws.auth import Session
 from .tictoc import tic,toc
@@ -26,7 +25,7 @@ def construir_attrs(titularidades_df):
 
     atributos = entitlements_df.drop(["nombre_politica", "nombre_servicio", "automatico","flujo"], axis=1).set_index(
         "nombre_atributo")  # quita columnas que sobran
-    atributos["valor"] = atributos.apply(lambda row: [s.strip() for s in str(row["valor"]).split(",")] if "return " not in row["valor"] else [row["valor"]], axis=1)  # vuelve atributos multivalor a lista
+    atributos["valor"] = atributos.apply(lambda row: [s.strip().replace("!",",") for s in str(row["valor"]).split(",")] if "return " not in row["valor"] else [row["valor"]], axis=1)  # vuelve atributos multivalor a lista
     atributos["enforcement"] = atributos.apply(lambda row: str(row["enforcement"]).lower(), axis=1)  # vuelve atributos multivalor a lista
 
 
@@ -61,11 +60,12 @@ def leerTitularidades(csv_filename):
 
     return politicas
 
-def leerPoliticas(csv_filename):
+def leerPoliticas(csv_filename,limit=None):
 
     politicas = pd.read_csv(csv_filename, sep=****;",index_col="nombre",comment="#").astype(str) 
-    politicas["roles"]=politicas["roles"].apply(lambda x: x.split(","))
+    politicas["roles"]=politicas["roles"].apply(lambda roles: [r.strip() for r in roles.split(",")] if roles!="nan" else None)
     politicas["nombre"]=politicas.index
+    politicas["descripcion"]=politicas["descripcion"].replace("nan","")
 
     politicas=politicas.rename({
         "roles":"memberships",
@@ -77,7 +77,10 @@ def leerPoliticas(csv_filename):
     # politicas["servicios_auto"]=politicas["servicios_auto"].apply(lambda x: x.split(",") if x != "nan" else None)
     # politicas["servicios_manual"]=politicas["servicios_manual"].apply(lambda x: x.split(",") if x != "nan" else None)
 
-    return politicas
+    if limit:
+        return politicas.head(limit)
+    else:
+        return politicas
 
 def crearOModificarPolitica(sesion,politica,entitlements):
     """
@@ -94,9 +97,12 @@ def crearOModificarPolitica(sesion,politica,entitlements):
     except Exception as e:
         return f"ERROR - {str(e)} - {pol.name}"
 
-    found=sesion.buscarPoliticaSuministro(wsou,pol.name,find_unique=False)
+    found=sesion.buscarPoliticaSuministro(wsou,pol.name,find_unique=False) 
+    #a veces retorna de sobra si el nombre de la política es el inicio de otra política
+    found_names=[f.name for f in found]
+    found_exact=[found[idx] for idx,f in enumerate(found_names) if f==pol.name]
     
-    if len(found)==0:
+    if len(found_exact)==0:
         print(f"Creando política {pol.name}")
         try:
             tic()
@@ -110,7 +116,7 @@ def crearOModificarPolitica(sesion,politica,entitlements):
         except Exception as e:
             return f"ERROR - {str(e)} - {pol.name}"
 
-    elif len(found)==1:
+    elif len(found_exact)==1:
         print(f"Política encontrada, actualizando {pol.name}")
         try:
            
@@ -118,7 +124,7 @@ def crearOModificarPolitica(sesion,politica,entitlements):
             pp=****(sesion=sesion,entitlements=entitlements,**pol.to_dict())
             toc("Tiempo de creación")
 
-            pp_found=found[0]
+            pp_found=found_exact[0]
             tic()
             r=pp.modificarEnSIM(sesion,pp_found)
             toc("Tiempo de respuesta modificación")
@@ -129,12 +135,12 @@ def crearOModificarPolitica(sesion,politica,entitlements):
     else:
         return f"ERROR - Múltiples políticas encontradas con el nombre {pol['name']}"
 
-def carga(usuario,clave,url,ruta_titularidades,ruta_politicas):
-    sesion=sesion(usuario,clave,url)
+def carga(usuario,clave,url,ruta_titularidades,ruta_politicas,limit=None):
+    sesion=Session(usuario,clave,url).soapclient
 
     tic()
     entitlements=leerTitularidades(ruta_titularidades)
-    politicas=leerPoliticas(ruta_politicas)
+    politicas=leerPoliticas(ruta_politicas,limit)
     toc("Tiempo de carga")
 
     responses=[]
@@ -165,8 +171,6 @@ if __name__ == "__main__":
     path_politicas="data/carga/politica_prueba_heredadas.csv"
     path_resultados="output/csv/out_pp_corrdnc.csv"
     url=""
-
-
     res=carga(usuario,clave,url,path_entitlements,path_politicas)
 
     res.to_csv(path_resultados,sep=****;")
