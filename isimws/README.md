@@ -1,6 +1,8 @@
 # isim
-Python client for IBM Security Identity Manager web services (SOAP and REST APIs) <br>
-Due to API limitations some functionalities are served through ISIM's REST API and some other through ISIM SOAP Web Services. 
+Python client for IBM Security Identity Manager (ISIM/ITIM) web services (SOAP and REST APIs) <br>
+Tested on ISIM7.0.1.13 and ISIM7.0.2.
+Due to API limitations some functionalities are served through ISIM's REST API and some other through ISIM SOAP Web Services. <br>
+You probably will need to import ISIMs Root Certificate into Certifi for the connection to work.
 
 - Functionalities
     - Authentication
