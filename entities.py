@@ -1,22 +1,24 @@
 import datetime
+import os
 import time
-import json
 from random import choice, randint, seed
 
 import names
 import pytz
 from zeep import Client, Settings
+from zeep.xsd import Nil
 
-from .exceptions import *
+import isimws.auth as auth
+from isimws.exceptions import *
 
 
 class ProvisioningPolicy():
     """
         Para usar con el API SOAPWS de ISIM7
     """
-    def __init__(self, sesion_isim, name,description,entitlements,memberships,ou,priority=100,scope=2,enabled=True):
+    def __init__(self, sesion, name,description,entitlements,memberships,ou,priority=1,scope=2,enabled=True):
 
-        sesion=sesion_isim.soapclient
+        sesion=sesion.soapclient
         url=sesion.addr+"WSProvisioningPolicyServiceService?wsdl"
         settings = Settings(strict=False)
         client=Client(url,settings=settings)
@@ -24,7 +26,7 @@ class ProvisioningPolicy():
 
         self.description=description
         self.name=name
-        self.entitlements=self.__crearEntitlementList(sesion,entitlements)
+        self.entitlements=self.crearEntitlementList(sesion,entitlements)
         self.membership=****(sesion,memberships)
         self.ou=****(ou)
         self.priority=priority
@@ -44,7 +46,7 @@ class ProvisioningPolicy():
         return ret
 
     
-    def __crearEntitlementList(self,sesion,titularidades):
+    def crearEntitlementList(self,sesion,titularidades):
         """
             Recibe dict sacado de crear_politicas.leerCSV():
             {
@@ -64,7 +66,7 @@ class ProvisioningPolicy():
                 }
             }
         """ 
-        
+        sesion=sesion.soapclient
         client=self.pp_client
         
         itemFactory=client.type_factory('ns1')
@@ -93,7 +95,7 @@ class ProvisioningPolicy():
             process_dn=sesion.searchWorkflow(attrs["flujo"]) if attrs["flujo"] else None
             #print(process_dn)
 
-            parameters=__crearParameterListList(client,attrs)
+            parameters=self.crearParameterList(client,attrs)
 
             wsentitlement=itemFactory.WSProvisioningPolicyEntitlement(ownershipType="Individual",type=type_,serviceTarget=serviceTarget,parameters=parameters,processDN=process_dn)
             entitlement_list.append(wsentitlement)
@@ -103,7 +105,7 @@ class ProvisioningPolicy():
 
         return ws_entitlement_list
 
-    def __crearParameterListList(self,client,atributos):
+    def crearParameterList(self,client,atributos):
         itemFactory=client.type_factory('ns1')
         listFactory = client.type_factory('ns0')
 
@@ -148,17 +150,20 @@ class ProvisioningPolicy():
 
         return wsparameters
 
-    def __crearMembershipList(self,sesion,memberships):
+    def crearMembershipList(self,sesion,memberships):
         """
         Si recibe *: Devuelve 2;*
         Si recibe lista con nombres de roles: Devuelve array[1;rol1, 2;rol2, ...]
         """
+        sesion=sesion.soapclient
         client=self.pp_client
 
         membershipFactory=client.type_factory('ns1')
         listFactory = client.type_factory('ns0')
 
-        if memberships[0]=="*":
+        if not memberships:
+            raise Exception("La política debe tener al menos un miembro.")
+        elif memberships[0]=="*":
             mem=membershipFactory.WSProvisioningPolicyMembership(name="*",type=2)
             membershipList = listFactory.ArrayOf_tns1_WSProvisioningPolicyMembership([mem])
         else:
@@ -172,7 +177,7 @@ class ProvisioningPolicy():
         return membershipList
     
     def crearEnSIM(self,sesion):
-
+        sesion=sesion.soapclient
         client=self.pp_client
 
         itemFactory=client.type_factory('ns1')
@@ -197,7 +202,7 @@ class ProvisioningPolicy():
         return r
 
     def modificarEnSIM(self, sesion, old_pp):
-
+        sesion=sesion.soapclient
         client=self.pp_client
 
         itemFactory=client.type_factory('ns1')
@@ -245,9 +250,9 @@ class StaticRole():
         owner_cedulas: Lista de cédulas de personas dueñas del acceso
 
     """
-    def __init__(self,sesion_isim,name,description,ou,classification,access_option,access_category=None,owner_roles=None,owner_cedulas=None):
+    def __init__(self,sesion,name,description,ou,classification,access_option,access_category=None,owner_roles=None,owner_cedulas=None):
         
-        sesion=sesion_isim.soapclient
+        sesion=sesion.soapclient
         self.name=name
         self.description=description
         self.ou=****(ou)
@@ -275,7 +280,7 @@ class StaticRole():
                 #print(rol)
                 self.owners.append(sesion.buscarRol(f"(errolename={rol})")["itimDN"])
 
-    def __crearAtributoRol(self,client,name,values):
+    def crearAtributoRol(self,client,name,values):
         itemFactory=client.type_factory('ns1')
         listFactory = client.type_factory('ns0')
 
@@ -285,12 +290,12 @@ class StaticRole():
 
         return attr
 
-    def __crearWSRole(self,sesion):
+    def crearWSRole(self,sesion):
 
         """
             A partir de la información de la instancia, devuelve un objeto WSRole para entregárselo al API de ISIM 
         """
-
+        sesion=sesion.soapclient
         url=sesion.addr+"WSRoleServiceService?wsdl"
         settings = Settings(strict=False)
         client=Client(url,settings=settings)
@@ -298,17 +303,17 @@ class StaticRole():
         itemFactory=client.type_factory('ns1')
         listFactory = client.type_factory('ns0')
 
-        eraccesoption=self.__crearAtributoRol(client,"eraccessoption",self.access_option)
-        erRoleClassification=self.__crearAtributoRol(client,"erRoleClassification",self.classification)
+        eraccesoption=self.crearAtributoRol(client,"eraccessoption",self.access_option)
+        erRoleClassification=self.crearAtributoRol(client,"erRoleClassification",self.classification)
 
         if self.access_option in [2,3]:
-            erObjectProfileName=self.__crearAtributoRol(client,"erObjectProfileName",self.access_category)
+            erObjectProfileName=self.crearAtributoRol(client,"erObjectProfileName",self.access_category)
             lista_atributos=[eraccesoption,erRoleClassification,erObjectProfileName]
         else:
             lista_atributos=[eraccesoption,erRoleClassification]
 
         if self.owners is not None:
-            owner=self.__crearAtributoRol(client,"owner",self.owners)
+            owner=self.crearAtributoRol(client,"owner",self.owners)
             lista_atributos.append(owner)
 
         array_attributes=listFactory.ArrayOf_tns1_WSAttribute(lista_atributos)
@@ -319,28 +324,28 @@ class StaticRole():
         return role
 
     def crearEnSIM(self,sesion):
-
+        sesion=sesion.soapclient
         url=sesion.addr+"WSRoleServiceService?wsdl"
         settings = Settings(strict=False)
         client=Client(url,settings=settings)
         
-        wsrole=self.__crearWSRole(sesion)
+        wsrole=self.crearWSRole(sesion)
 
         r=sesion.crearRolEstatico(wsrole,self.ou)
 
         return r
 
     def modificarEnSIM(self,sesion,role_dn):
-
+        sesion=sesion.soapclient
         url=sesion.addr+"WSRoleServiceService?wsdl"
         settings = Settings(strict=False)
         client=Client(url,settings=settings)
         
-        wsrole=self.__crearWSRole(sesion)
+        wsrole=self.crearWSRole(sesion)
         wsattributes=wsrole["attributes"]["item"]
         
-        erparent=self.__crearAtributoRol(client,"erparent",self.ou["itimDN"])
-        description=self.__crearAtributoRol(client,"description",wsrole["description"])
+        erparent=self.crearAtributoRol(client,"erparent",self.ou["itimDN"])
+        description=self.crearAtributoRol(client,"description",wsrole["description"])
         
         wsattributes.append(erparent)
         wsattributes.append(description)
@@ -350,88 +355,13 @@ class StaticRole():
         r=sesion.modificarRolEstatico(role_dn,wsattributes)
 
         return r
-        
-class Person:
-    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
-
-    def __init__(self, sesion_isim, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", cedulajefe="", dep=****, cargo=None, tipocontrato=None):
-
-        sesion=sesion_isim.restclient
-
-        # busca información del formulario
-        if dep is None or cargo is None or tipocontrato is None:
-            form=sesion.buscarFormulario("Person")
-            info_funcionario=list(filter(lambda tab: tab["title"] == "Información del Funcionario",form))[0]
-            cargos=list(filter(lambda x: x["name"]=="data.title",info_funcionario["formElement"]))[0]
-            cargos=[cargo["value"] for cargo in cargos["select"]["option"]]
-
-            deps=list(filter(lambda x: x["name"]=="data.departmentnumber",info_funcionario["formElement"]))[0]
-            deps=[dep["value"] for dep in deps["select"]["option"]]
-
-            tiposContrato=list(filter(lambda x: x["name"]=="data.businesscategory",info_funcionario["formElement"]))[0]
-            tiposContrato=[tc["value"] for tc in tiposContrato["select"]["option"]]
-
-        if nombre is None:
-            nombre = names.get_first_name()
-        self.givenname = nombre
-
-        if apellido is None:
-            apellido = names.get_last_name()
-        self.sn = apellido
-
-        if doc is None:
-            doc = str(randint(1, 100000000000))
-        self.employeenumber = doc
-
-        if dep is None:
-            dep = choice(deps)
-        self.departmentnumber = dep
-
-        if cargo is None:
-            cargo = choice(cargos)
-        self.title = cargo
-
-        if tipocontrato is None:
-            tipocontrato = choice(tiposContrato)
-        self.businesscategory = tipocontrato
-
-        if cedulajefe:
-
-            dire = sesion.buscarPersonas(
-                "person", atributos="dn", buscar_por="employeenumber", filtro=cedulajefe)
-
-            if len(dire) == 0:
-                raise Exception(
-                    "No se ha encontrado ninguna persona con la cédula de jefe ingresada.")
-            elif len(dire) > 1:
-                raise Exception(
-                    "Se ha encontrado más de una persona con la cédula de jefe ingresada.")
-            else:
-                self.manager = dire[0]["_attributes"]["dn"]
-
-        else:
-            self.manager = ""
-
-        self.initials = tipodoc
-        self.mobile = correo
-        self.cn = self.givenname+" "+self.sn
-
-    def __str__(self):
-        return f"Person.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}"
-
-    def crearEnSIM(self,sesion_isim,justificacion):
-        sesion=sesion_isim.restclient
-        ret=sesion.crearPersona(self,justificacion)
-        return json.loads(ret.text)
-
-
 
 class BPPerson:
     orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
 
-    def __init__(self, sesion_isim, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None):
+    def __init__(self, sim, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None):
 
-        sesion=sesion_isim.restclient
+        sim=sim.restclient
         if nombre is None:
             nombre = names.get_first_name()
         self.givenname = nombre
@@ -444,10 +374,7 @@ class BPPerson:
             doc = str(randint(1, 100000000000))
         self.employeenumber = doc
 
-        if contrato is None:
-            raise ContratoNoEncontradoError(f"No se ha proporcionado un número de contrato para {nombre} {apellido}")
-
-        bpOrgs=sesion.buscarOUs(cat="bporganizations", filtro=contrato, buscar_por="description",buscar_igual=True)
+        bpOrgs=sim.buscarOUs(cat="bporganizations", filtro=contrato, buscar_por="description",buscar_igual=True)
         #print(bpOrgs)
         if not bpOrgs:
             raise ContratoNoEncontradoError(f"El contrato {contrato} no está registrado en +Accesos. El usuario no ha sido creado.")
@@ -462,28 +389,103 @@ class BPPerson:
     def __str__(self):
         return f"BPPerson.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}\n\tContrato: {self.description}"
 
-    def crearEnSIM(self,sesion_isim,justificacion):
-        sesion=sesion_isim.restclient
-        ret=sesion.crearBpperson(self,justificacion)
-        return json.loads(ret.text)
+class Person:
+    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
 
-class Group:
-    def __init__(self):
-        pass
-        
-    def search(self,sesion,by,dn,groupProfileName=None,groupInfo=None):
-        
-        sesion=sesion.soapclient
+    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", cedulajefe="", dep=****, cargo=None, tipocontrato=None,href=None):
 
-        if by=="account":
-            raise Exception("No implementado aún")
-        elif by=="access":
-            raise Exception("No implementado aún")
-        elif by=="service":
-            assert groupProfileName is not None,"Debe ingresar el parámetro groupProfileName"
-            assert groupInfo is not None,"Debe ingresar el parámetro groupInfo"
-            ret=sesion.buscarCuentasPorServicio(dn,groupProfileName,groupInfo)
-        else:
-            raise Exception("Opción inválida")
+        current_dir=os.path.dirname(__file__)
+        sesion=sesion.restclient
+
+        if not href:
+            if nombre is None:
+                nombre = names.get_first_name()
+            self.givenname = nombre
+
+            if apellido is None:
+                apellido = names.get_last_name()
+            self.sn = apellido
+
+            if doc is None:
+                doc = str(randint(1, 100000000000))
+            self.employeenumber = doc
+
+            if dep is None:
+                #data="accesos/sim/data/dependencias.txt"
+                data=f"{current_dir}/data/dependencias.txt"
+                deps = open(data).read().splitlines()
+                dep = choice(deps)
+            self.departmentnumber = dep
+
+            if cargo is None:
+                #data="accesos/sim/data/cargos.txt"
+                data=f"{current_dir}/data/cargos.txt"
+                cargos = open(data).read().splitlines()
+                cargo = choice(cargos)
+            self.title = cargo
+
+            if tipocontrato is None:
+                #data="accesos/sim/data/tiposContrato.txt"
+                data=f"{current_dir}/data/tiposContrato.txt"
+                tiposcontrato = open(data).read().splitlines()
+                tipocontrato = choice(tiposcontrato)
+            self.businesscategory = tipocontrato
+
+            if cedulajefe:
+
+                dire = sesion.buscarPersonas(
+                    "person", atributos="dn", buscar_por="employeenumber", filtro=cedulajefe)
+
+                if len(dire) == 0:
+                    raise Exception(
+                        "No se ha encontrado ninguna persona con la cédula de jefe ingresada.")
+                elif len(dire) > 1:
+                    raise Exception(
+                        "Se ha encontrado más de una persona con la cédula de jefe ingresada.")
+                else:
+                    self.manager = dire[0]["_attributes"]["dn"]
+
+            else:
+                self.manager = ""
+
+            self.initials = tipodoc
+            self.mobile = correo
+            self.cn = self.givenname+" "+self.sn
+        else:            
+            r=sesion.lookupPersona(href)
+            assert "bpperson" not in href, "Para crear BPPerson utilice la entidad isimws.entities.BPPerson"
+            assert r["_links"]["self"]["href"]==href, "Persona no encontrada o inválida"
+
+            attrs=r["_attributes"]
+            self.href=href
+            for k, v in attrs.items():
+                setattr(self, k, v)
+
+    def crear_o_modificar(self,sesion,justificacion):
+        sesion=sesion.restclient
+        op=****
+        try:
+            href=self.href
+            op=****
+        except AttributeError:
+            pass
+
+        if op=="crear":
+            ret=sesion.crearPersona(self,justificacion)
+        else: 
+            ret=sesion.modificarPersona(self.href,self,justificacion)
 
         return ret
+
+    def get_attributes(self):
+        info=self.__dict__
+        info.pop("href","")
+        info.pop("ercustomdisplay","")
+        info.pop("errolerecertificationlastaction","")
+        info.pop("personType","")
+        info.pop("errolerecertificationlastactiondate","")
+        info.pop("erlocale","")
+        return info
+
+    def __str__(self):
+        return f"Person.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}"
