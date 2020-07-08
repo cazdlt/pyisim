@@ -8,6 +8,7 @@ Due to API limitations some functionalities are served through ISIM's REST API a
     - Complete Manual Activities
         - Approval
         - Work Order
+        - RFI
     - Create:
         - Person
             - Need to Modify isimws.classes.Person to match your attributes (for now)
@@ -34,6 +35,7 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - Groups
     - Unit testing:
         - Creating people
+        - Modify people
         - Requesting multiple accesses
         - Automatically completing all approvals and work orders from the request
 
@@ -44,14 +46,8 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - Basic usage
         - Batch loads
         - Requirements
-    - Create class bindings for Service and Access items
+    - Create class bindings for all searchable items
     - Generalize Person and BPPerson attribute handling
-        - *Abstract* class?
-    - Add search to class initialization:
-        - Person
-        - Business Partner Person
-        - Static Role
-        - Provisioning Policy
-    - Add at least modify and delete operations for Person classes
+    - Delete operations for Person classes
     - Generalize policy and role creation
-        - Should not always require a full CSV file but only a dict or some structure for ease of use
+    - Improve initialization after search operations
