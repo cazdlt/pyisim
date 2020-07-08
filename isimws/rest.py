@@ -1,10 +1,9 @@
 import json
+import requests
 import urllib
 from urllib.parse import urlencode
-
-import requests
-
-from .exceptions import *
+import os
+from isimws.exceptions import *
 
 requests.packages.urllib3.disable_warnings()
 
@@ -14,12 +13,19 @@ requests.packages.urllib3.disable_warnings()
 # si buscar_igual=True entonces quita comodines de busqueda
 # si viene con algún atrubuto, lo recupera
 
-
 class ISIMClient:
 
-    def __init__(self, user_, pass_, url):
+    def __init__(self, user_, pass_, env="qa"):
 
-        self.__addr = url
+        # colpensiones
+        ambientes = {
+            "int": "https://iam.appintegracion.loc:9082",
+            "qa": "https://iam.appqa.loc:9082",
+            "pr": ""
+        }
+
+        self.env = env
+        self.__addr = ambientes[env]
         self.s, self.CSRF = self.autenticar(user_, pass_)
 
     def autenticar(self, user_, pass_):
@@ -27,9 +33,9 @@ class ISIMClient:
         url = self.__addr+"/itim/restlogin/login.jsp"
         s = requests.Session()
         headers = {"Accept": "*/*"}
-        r1=s.get(url, headers=headers)
-    
-        assert 404 != r1.status_code,"Error 404: "+r1.text
+        r1 = s.get(url, headers=headers)
+
+        assert 404 != r1.status_code, "Error 404: "+r1.text
         # jsessionid=self.s.cookies.get("JSESSIONID")
 
         url = self.__addr+"/itim/j_security_check"
@@ -38,7 +44,7 @@ class ISIMClient:
         data_login = {"j_username": user_, "j_password": pass_}
         r2 = s.post(url, headers=headers, data=data_login)
 
-        #print(r2)
+        # print(r2)
         url = self.__addr+"/itim/rest/systemusers/me"
         r3 = s.get(url, headers=headers)
         try:
@@ -82,7 +88,7 @@ class ISIMClient:
         return list(OUs)
 
     # si filtro="*" busca todo
-    def buscarPersonas(self, perfil, atributos="cn", embedded="", buscar_por="cn", filtro="*"):
+    def buscarPersonas(self, perfil, atributos="cn", embedded="", buscar_por="cn", filtro="*",limit=50):
 
         assert perfil in ("person", "bpperson")
 
@@ -92,6 +98,7 @@ class ISIMClient:
 
         data = {"attributes": atributos,
                 "embedded": embedded,
+                "limit": limit,
                 buscar_por: filtro
                 }
         data = urlencode(data, quote_via=urllib.parse.quote)
@@ -129,10 +136,37 @@ class ISIMClient:
             "CSRFToken": self.CSRF,
             "Content-Type": "application/json",
             "Accept": "*/*",
-            "X-HTTP-Method-Override": "submit-in-batch"
+            # "X-HTTP-Method-Override": "submit-in-batch" FP2
         }
 
-        return self.s.post(url, json=data, headers=headers)
+        ret=self.s.post(url, json=data, headers=headers)
+        return json.loads(ret.text)
+
+    def modificarPersona(self, href, person, justificacion):
+        url=self.__addr+href
+
+        info=person.get_attributes()
+        info.pop("erpersonstatus","")
+        info.pop("cn","")
+        info.pop("givenname","")
+        info.pop("sn","")
+        info.pop("employeenumber","")
+        info.pop("erparent","")
+        info.pop("name","")
+
+        data={
+            "justification": justificacion,
+            "_attributes": info,
+        }
+
+        headers = {
+                "CSRFToken": self.CSRF,
+                "Content-Type": "application/json",
+                "Accept": "*/*",
+        }
+
+        ret=self.s.put(url,json=data,headers=headers)
+        return json.loads(ret.text)
 
     def crearBpperson(self, bpp, justificacion):
 
@@ -185,6 +219,19 @@ class ISIMClient:
         return listaAccesos
 
     # retorna el primer elemento
+    def escribir_nombres_accesos(self):
+
+        current_dir = os.path.dirname(__file__)
+
+        accesos = self.buscarAcceso()
+
+        # print(accesos)
+
+        with open(f"{current_dir}/data/accesos_{self.env}.txt", 'w', newline='\n') as f:
+            for a in accesos:
+                # print(a)
+                f.write(a["_links"]["self"]["href"]+";" +
+                        a["_attributes"]["accessName"]+"\n")
 
     def verificarResultadoUnico(self, json_):
         if len(json_) > 1:
@@ -210,20 +257,21 @@ class ISIMClient:
             }
         }
 
-    def buscarActividad(self, solicitudID="",search_attr="activityName",search_filter="*"):
+    def buscarActividad(self, solicitudID="", search_attr="activityName", search_filter="*"):
 
         url = self.__addr+"/itim/rest/activities"
         data = {
             "filterId": "activityFilter",
             "status": "PENDING",
-            search_attr:search_filter
+            search_attr: search_filter
         }
 
-        headers={
-            "Cache-Control" : "no-cache "
+        headers = {
+            "Cache-Control": "no-cache "
         }
 
-        actividades = json.loads(self.s.get(url, params=data,headers=headers).text)
+        actividades = json.loads(self.s.get(
+            url, params=data, headers=headers).text)
         if solicitudID:
             actividades = filter(
                 lambda a: a["_links"]["request"]["href"] == solicitudID, actividades)
@@ -233,6 +281,7 @@ class ISIMClient:
 
     def solicitarAccesos(self, nombreAccesos, nombrePersona, justificacion="test"):
         url = self.__addr+"/itim/rest/access/assignments"
+        cwd = os.path.dirname(__file__)
 
         try:
             persona = self.obtenerLinks(self.buscarPersonas("person",
@@ -248,7 +297,8 @@ class ISIMClient:
         #accesos = [obtenerLinks(buscarAcceso(self.s, filtro=nombre), "acceso") for nombre in nombreAccesos]
         # print(accesos)
 
-        listaAccesos = open("data/accesos.txt", "r").readlines()
+        listaAccesos = open(
+            f"{cwd}/data/accesos_{self.env}.txt", "r").readlines()
         accesos = [acceso.split(";")[0].strip(
         ) for acceso in listaAccesos if acceso.split(";")[1].strip() in nombreAccesos]
         # print(accesos)
@@ -279,6 +329,39 @@ class ISIMClient:
         # print(data)
         return self.s.post(url, json=data, headers=headers)
 
+    def parse_rfi_form(self, workitem_id, rfi_values):
+
+        response = self.s.get(
+            f'{self.__addr}/itim/rest/activities/rfiformdetails/{workitem_id}')
+        form_details = json.loads(response.text)
+        # esto es un arreglo con la info del formulario
+        form = form_details["template"]["page"]["body"]["tabbedForm"]["tab"]
+
+        rfi_form = []
+        for tab in form:
+            for element in tab["formElement"]:
+                attr_name = element["name"].split(".")[-1]
+                editable = element["editable"]
+
+                try:
+                    required = element["required"]
+                except KeyError:
+                    required = False
+
+                if required:
+                    value = form_details["defaultAttrValues"][attr_name]
+                elif editable:
+                    value = [attr["value"]
+                             for attr in rfi_values if attr["name"] == attr_name][0]
+
+                if editable or required:
+                    rfi_form.append({
+                        "name": attr_name,
+                        "value": value,
+                    })
+
+        return rfi_form
+
     # falta tener en cuenta cuando llegan varias actividades
     def completarActividades(self, actividades, resultado, justificacion="ok"):
 
@@ -289,7 +372,7 @@ class ISIMClient:
             "Rechazado": "AR",
             "Correcto": "SS",
             "Aviso": "SW",
-            "Error": "SF"
+            "Error": "SF",
         }
 
         body = []
@@ -305,8 +388,10 @@ class ISIMClient:
                 assert resultado in ["Aprobado", "Rechazado"]
             elif activityType == "WORK_ORDER":
                 assert resultado in ["Correcto", "Aviso", "Error"]
+            elif activityType == "RFI":
+                assert isinstance(resultado, list)
 
-            resultCode = resultCodes[resultado]
+            resultCode = resultCodes[resultado] if activityType != "RFI" else "RS"
             action = {
                 "_links": {
                     "self": {
@@ -319,6 +404,36 @@ class ISIMClient:
                 "label": activityLabel,
                 "justification": justificacion
             }
+
+            if activityType == "RFI":
+
+                assert len(
+                    actividades) == 1, "Solo es posible completar un RFI a la vez"
+
+                workitem_id = workitem.split("/")[-1]
+
+                action = {
+                    "action": {
+                        "code": resultCode
+                    },
+                    "label": activityLabel,
+                    "justification": justificacion,
+
+                }
+
+                if len(resultado) > 0:
+
+                    rfi_form = self.parse_rfi_form(workitem_id, resultado)
+                    action["rfiAttributeValues"] = rfi_form
+
+                headers = {
+                    "CSRFToken": self.CSRF,
+                    "Content-Type": "application/json",
+                    "Accept": "*/*",
+                }
+
+                return self.s.put(f"{url}/{workitem_id}", json=action, headers=headers)
+
             body.append(action)
 
         headers = {
@@ -330,26 +445,26 @@ class ISIMClient:
         }
 
         return self.s.put(url, json=body, headers=headers)
-    
+
     def buscarFormulario(self, perfil):
 
         url = self.__addr+"/itim/rest/forms/people"
 
-        assert perfil in ["Person","BPPerson"],"Perfil inválido."
+        assert perfil in ["Person", "BPPerson"], "Perfil inválido."
 
-        urlPerfil=url+"/"+perfil  
-        resp=****(urlPerfil)
-        
+        urlPerfil = url+"/"+perfil
+        resp = self.s.get(urlPerfil)
+
         return json.loads(resp.text)["template"]["page"]["body"]["tabbedForm"]["tab"]
 
-    def buscarServicio(self, nombre,atributos=""):
-        
-        url= self.__addr+"/itim/rest/services"
+    def buscarServicio(self, nombre, atributos=""):
+
+        url = self.__addr+"/itim/rest/services"
 
         data = {
-                "erservicename": nombre,
-                "attributes":','.join(atributos)
-               }
+            "erservicename": nombre,
+            "attributes": ','.join(atributos)
+        }
         data = urlencode(data, quote_via=urllib.parse.quote)
 
         servicios = json.loads(self.s.get(url, params=data).text)
@@ -361,15 +476,15 @@ class ISIMClient:
 
         return listaServicios
 
-    def eliminarServicio(self,nombre):
+    def eliminarServicio(self, nombre):
 
-        url= self.__addr+"/itim/rest/services"
+        url = self.__addr+"/itim/rest/services"
 
-        servicio=self.buscarServicio(nombre)
-        servicio_href=servicio[0]["_links"]["self"]["href"]
-        servicio_id=servicio_href.split("/")[-1]
+        servicio = self.buscarServicio(nombre)
+        servicio_href = servicio[0]["_links"]["self"]["href"]
+        servicio_id = servicio_href.split("/")[-1]
 
-        url_del=f"{url}/{servicio_id}"
+        url_del = f"{url}/{servicio_id}"
 
         headers = {
             "CSRFToken": self.CSRF,
@@ -377,29 +492,41 @@ class ISIMClient:
             "Accept": "*/*",
             "X-HTTP-Method-Override": "submit-in-batch"
         }
-        
+
         return self.s.delete(url_del, headers=headers)
 
-    def lookupSolicitud(self,requestID):
-        url= self.__addr+"/itim/rest/requests"
+    def lookupSolicitud(self, requestID):
+        url = self.__addr+"/itim/rest/requests"
 
-        url_req=url+"/"+requestID
-        data={
-            "attributes":"*"
+        url_req = url+"/"+requestID
+        data = {
+            "attributes": "*"
         }
 
-        solicitud = json.loads(self.s.get(url_req,params=data).text)
+        solicitud = json.loads(self.s.get(url_req, params=data).text)
 
         return solicitud
 
-    def lookupActividad(self,activityID):
-        url= self.__addr+"/itim/rest/activities"
+    def lookupActividad(self, activityID):
+        url = self.__addr+"/itim/rest/activities"
 
-        url_act=url+"/"+activityID
-        data={
-            "attributes":"*"
+        url_act = url+"/"+activityID
+        data = {
+            "attributes": "*"
         }
 
-        actividad = json.loads(self.s.get(url_act,params=data).text)
+        actividad = json.loads(self.s.get(url_act, params=data).text)
 
         return actividad
+
+    def lookupPersona(self,href):
+        url=self.__addr+href
+
+        params={
+            "attribute":"*",
+            "forms":False,
+        }
+
+        person=self.s.get(url,params=params)
+
+        return json.loads(person.text)

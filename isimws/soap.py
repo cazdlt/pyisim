@@ -1,18 +1,24 @@
-import pprint
-
-import requests
-from zeep import Client, Settings
+from zeep import Client,Settings
 from zeep.xsd import Nil
+# from isim_classes import StaticRole
+import requests
+import pprint
+from isimws.exceptions import * 
 
-from .classes import StaticRole
-from .exceptions import *
 
 requests.packages.urllib3.disable_warnings()
 
 class ISIMClient():
-    def __init__(self, user_, pass_,url):
+    def __init__(self, user_, pass_,env="int"):
 
-        self.addr = url+"/itim/services/"
+        # colpensiones
+        ambientes = {
+            "int": "https://iam.appintegracion.loc:9082/itim/services/",
+            "qa": "https://iam.appqa.loc:9082/itim/services/",
+            # "pr":"https://"
+        }
+
+        self.addr = ambientes[env]
         self.s = self.login(user_, pass_)
         
     def login(self,user_,pass_):
@@ -258,7 +264,7 @@ class ISIMClient():
 
         return flujos[0]["value"]
 
-    def buscarCuentasPorServicio(self,dn_servicio,profile_name,info):
+    def buscarGruposPorServicio(self,dn_servicio,profile_name,info):
         try:
             client=self.group_client
         except AttributeError:
@@ -268,3 +274,7 @@ class ISIMClient():
             client=self.group_client
 
         return client.service.getGroupsByService(self.s,dn_servicio,profile_name,info)
+    
+
+   
+    
