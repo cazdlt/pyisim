@@ -20,9 +20,16 @@ class ProvisioningPolicy():
 
         sesion=sesion.soapclient
         url=sesion.addr+"WSProvisioningPolicyServiceService?wsdl"
-        settings = Settings(strict=False)
-        client=Client(url,settings=settings)
-        self.pp_client=client
+
+        try:
+            self.pp_client=sesion.pp_client
+        except AttributeError:
+            settings = Settings(strict=False)
+            s=requests.Session()
+            s.verify=self.cert_path
+            client=Client(url,transport=Transport(session=s))
+            sesion.pp_client=client
+            self.pp_client=client
 
         self.description=description
         self.name=name
@@ -253,6 +260,15 @@ class StaticRole():
     def __init__(self,sesion,name,description,ou,classification,access_option,access_category=None,owner_roles=None,owner_cedulas=None):
         
         sesion=sesion.soapclient
+
+        try:
+            self.role_client=sesion.role_client
+        except AttributeError:
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
+            sesion.role_client=self.role_client
+
         self.name=name
         self.description=description
         self.ou=****(ou)
@@ -296,9 +312,7 @@ class StaticRole():
             A partir de la información de la instancia, devuelve un objeto WSRole para entregárselo al API de ISIM 
         """
         # sesion=sesion.soapclient
-        url=sesion.addr+"WSRoleServiceService?wsdl"
-        settings = Settings(strict=False)
-        client=Client(url,settings=settings)
+        client=self.role_client
 
         itemFactory=client.type_factory('ns1')
         listFactory = client.type_factory('ns0')
@@ -325,9 +339,8 @@ class StaticRole():
 
     def crearEnSIM(self,sesion):
         sesion=sesion.soapclient
-        url=sesion.addr+"WSRoleServiceService?wsdl"
-        settings = Settings(strict=False)
-        client=Client(url,settings=settings)
+
+        client=self.role_client
         
         wsrole=self.crearWSRole(sesion)
 
@@ -338,8 +351,7 @@ class StaticRole():
     def modificarEnSIM(self,sesion,role_dn):
         sesion=sesion.soapclient
         url=sesion.addr+"WSRoleServiceService?wsdl"
-        settings = Settings(strict=False)
-        client=Client(url,settings=settings)
+        client=self.role_client
         
         wsrole=self.crearWSRole(sesion)
         wsattributes=wsrole["attributes"]["item"]

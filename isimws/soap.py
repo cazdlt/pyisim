@@ -1,5 +1,6 @@
 from zeep import Client,Settings
 from zeep.xsd import Nil
+from zeep.transports import Transport
 # from isim_classes import StaticRole
 import requests
 import pprint
@@ -9,7 +10,7 @@ from isimws.exceptions import *
 requests.packages.urllib3.disable_warnings()
 
 class ISIMClient():
-    def __init__(self, user_, pass_,env="int"):
+    def __init__(self, user_, pass_,env="int",cert_path=None):
 
         # colpensiones
         ambientes = {
@@ -19,11 +20,16 @@ class ISIMClient():
         }
 
         self.addr = ambientes[env]
+        self.cert_path=cert_path
         self.s = self.login(user_, pass_)
+        
         
     def login(self,user_,pass_):
         url=self.addr+"WSSessionService?wsdl"
-        client=Client(url)
+        assert self.cert_path is not None,"No certificate passed"
+        s=requests.Session()
+        s.verify=self.cert_path
+        client=Client(url,transport=Transport(session=s))
         sesion=client.service.login(user_,pass_)
         #print(sesion)
         return sesion
@@ -35,7 +41,9 @@ class ISIMClient():
         except AttributeError: #si el cliente de OUs no se ha inicializado
             url=self.addr+"WSOrganizationalContainerServiceService?wsdl"
             settings = Settings(strict=False)
-            self.ou_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.ou_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.ou_client
         
         ous=client.service.searchContainerByName(self.s,Nil,"Organization",nombre)
@@ -62,7 +70,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSProvisioningPolicyServiceService?wsdl"
             settings = Settings(strict=False)
-            self.pp_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.pp_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.pp_client
 
         politicas=client.service.getPolicies(self.s,wsou,nombre_politica)
@@ -82,7 +92,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSProvisioningPolicyServiceService?wsdl"
             settings = Settings(strict=False)
-            self.pp_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.pp_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.pp_client
 
         s=client.service.createPolicy(self.s,ou,wsprovisioningpolicy,date)
@@ -96,7 +108,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSProvisioningPolicyServiceService?wsdl"
             settings = Settings(strict=False)
-            self.pp_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.pp_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.pp_client
 
         s=client.service.modifyPolicy(self.s,ou,wsprovisioningpolicy,date)
@@ -119,7 +133,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSRoleServiceService?wsdl"
             settings = Settings(strict=False)
-            self.role_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.role_client
 
         roles=client.service.searchRoles(self.s,filtro)
@@ -139,7 +155,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSRoleServiceService?wsdl"
             settings = Settings(strict=False)
-            self.role_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.role_client
 
         return client.service.createStaticRole(self.s,wsou,wsrole)
@@ -151,7 +169,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSRoleServiceService?wsdl"
             settings = Settings(strict=False)
-            self.role_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.role_client
 
         return client.service.modifyStaticRole(self.s,role_dn,wsattr_list)
@@ -163,7 +183,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSPersonServiceService?wsdl"
             settings = Settings(strict=False)
-            self.person_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.person_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.person_client
 
         personas=client.service.searchPersonsFromRoot(self.s,filtro,Nil)
@@ -179,7 +201,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSServiceServiceService?wsdl"
             settings = Settings(strict=False)
-            self.service_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.service_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.service_client
 
         ou=****(parent_ou_name)
@@ -205,7 +229,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSSearchDataServiceService?wsdl"
             settings = Settings(strict=False)
-            self.search_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.search_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.search_client
 
         perfiles=client.service.findSearchControlObjects(self.s,{
@@ -236,7 +262,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSSearchDataServiceService?wsdl"
             settings = Settings(strict=False)
-            self.search_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.search_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.search_client
 
         """
@@ -270,7 +298,9 @@ class ISIMClient():
         except AttributeError:
             url=self.addr+"WSGroupServiceService?wsdl"
             settings = Settings(strict=False)
-            self.group_client=Client(url,settings=settings)
+            s=requests.Session()
+            s.verify=self.cert_path
+            self.group_client=Client(url,settings=settings,transport=Transport(session=s))
             client=self.group_client
 
         return client.service.getGroupsByService(self.s,dn_servicio,profile_name,info)
