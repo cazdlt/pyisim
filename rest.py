@@ -15,7 +15,7 @@ requests.packages.urllib3.disable_warnings()
 
 class ISIMClient:
 
-    def __init__(self, user_, pass_, env="qa"):
+    def __init__(self, user_, pass_, env="qa",cert_path=None):
 
         # colpensiones
         ambientes = {
@@ -26,12 +26,15 @@ class ISIMClient:
 
         self.env = env
         self.__addr = ambientes[env]
-        self.s, self.CSRF = self.autenticar(user_, pass_)
+        self.s, self.CSRF = self.autenticar(user_, pass_,cert_path)
 
-    def autenticar(self, user_, pass_):
+    def autenticar(self, user_, pass_,cert=None):
 
+        assert cert is not None,"No certificate passed"
         url = self.__addr+"/itim/restlogin/login.jsp"
         s = requests.Session()
+        # print(cert)
+        s.verify=cert
         headers = {"Accept": "*/*"}
         r1 = s.get(url, headers=headers)
 

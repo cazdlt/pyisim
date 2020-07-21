@@ -31,7 +31,7 @@ def groups(sesion,by,dn,groupProfileName=None,groupInfo=None):
 
     return ret
 
-def people(sesion,profile,by="cn",filter="*",attributes="cn",embedded="",limit=50,href=None):
+def people(sesion,profile,by="cn",filter="*",attributes="cn",embedded="",limit=50):
     """"Wrapper para buscar/lookup personas o bpperson desde REST API
 
     Args:
@@ -42,18 +42,14 @@ def people(sesion,profile,by="cn",filter="*",attributes="cn",embedded="",limit=5
         attributes (str, optional): Atributos a retornar. Defaults to "cn".
         embedded (str, optional): Atributos embebidos a retornar (ej. manager.cn). Defaults to "".
         limit (int, optional): Defaults to 50.
-        href ([type], optional): Si se provee el href de la persona, se realiza un lookup de este. Defaults to None.
 
     Returns:
-        [dict/list(dict)]: Si es búsqueda, listado de personas encontradas. Si es lookup, retorna el resultado.
+        [list(dict)]: listado de personas encontradas
     """
 
     sesion=sesion.restclient
 
-    if href is not None:
-        ret=sesion.lookupPersona(href)
-    else:
-        ret=sesion.buscarPersonas(profile.lower(), atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
+    ret=sesion.buscarPersonas(profile.lower(), atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
 
     return ret
 
