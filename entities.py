@@ -66,7 +66,7 @@ class ProvisioningPolicy():
                 }
             }
         """ 
-        sesion=sesion.soapclient
+        #sesion=sesion.soapclient
         client=self.pp_client
         
         itemFactory=client.type_factory('ns1')
@@ -155,7 +155,7 @@ class ProvisioningPolicy():
         Si recibe *: Devuelve 2;*
         Si recibe lista con nombres de roles: Devuelve array[1;rol1, 2;rol2, ...]
         """
-        sesion=sesion.soapclient
+        #sesion=sesion.soapclient
         client=self.pp_client
 
         membershipFactory=client.type_factory('ns1')
@@ -295,7 +295,7 @@ class StaticRole():
         """
             A partir de la información de la instancia, devuelve un objeto WSRole para entregárselo al API de ISIM 
         """
-        sesion=sesion.soapclient
+        # sesion=sesion.soapclient
         url=sesion.addr+"WSRoleServiceService?wsdl"
         settings = Settings(strict=False)
         client=Client(url,settings=settings)
@@ -489,3 +489,38 @@ class Person:
 
     def __str__(self):
         return f"Person.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}"
+
+class Activity:
+
+    def __init__(self,sesion,activity=None,id=None):
+
+        if id:
+            activity=sesion.restclient.lookupActividad(str(id))
+            if "_attributes" not in activity.keys():
+                raise NotFoundError(f"Actividad no encontrada {id}")
+
+        self.request_href=activity["_links"]["request"]["href"]
+        self.href=activity["_links"]["self"]["href"]
+        self.workitem_href=activity["_links"]["workitem"]["href"]
+        self.name=activity["_attributes"]["name"]
+        self.type=activity["_attributes"]["type"]
+        self.status=activity["_attributes"]["status"]["key"].split(".")[-1]
+        self.requestee=activity["_links"]["requestee"]["title"]
+
+    def completar(self,sesion,resultado,justificacion):
+        """Permite OTs, Aprobaciones, RFIs"""
+        act_dict={
+            "_attributes":{},
+            "_links":{
+                "workitem":{}
+                }
+            }
+        act_dict["_attributes"]["type"]=self.type
+        act_dict["_attributes"]["name"]=self.name
+        act_dict["_links"]["workitem"]["href"]=self.workitem_href
+
+        assert self.status == "PENDING","La actividad ya ha sido completada."
+        r=sesion.restclient.completarActividades([act_dict],resultado,justificacion)
+
+        return r
+
