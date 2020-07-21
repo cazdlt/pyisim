@@ -267,7 +267,7 @@ class ISIMClient:
         }
 
         headers = {
-            "Cache-Control": "no-cache "
+            "Cache-Control": "no-cache"
         }
 
         actividades = json.loads(self.s.get(
