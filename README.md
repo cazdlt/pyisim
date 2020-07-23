@@ -12,16 +12,15 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - Work Order
         - RFI
     - Create:
-        - Person
-            - Need to Modify isimws.classes.Person to match your attributes (for now)
-        - BPPerson
-            - Need to Modify isimws.classes.BPPerson to match your attributes (for now)
+        - Person (and custom Person entities)
+        - BPPerson (and custom BPPPerson entities)
         - Static Roles
         - Provisioning Policies
     - Modify:
+        - Person (and custom Person entities)
+        - BPPerson (and custom BPPPerson entities)
         - Static Roles
         - Provisioning Policies
-        - Person
     - Delete:
         - Services
     - Search: 
@@ -37,7 +36,6 @@ Due to API limitations some functionalities are served through ISIM's REST API a
         - Batch loads
         - Requirements
     - Create class bindings for all searchable items
-    - Generalize Person and BPPerson attribute handling
     - Delete operations for Person classes
     - Generalize policy and role creation
     - Improve initialization after search operations

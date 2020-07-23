@@ -121,16 +121,16 @@ class ISIMClient:
 
         url = self.__addr+"/itim/rest/people"
 
-        tipo_persona = person.__class__.__name__
+        # tipo_persona = person.profile_name
 
-        tipos = ["Person", "BPPerson"]
-        if tipo_persona not in tipos:
-            raise Exception(
-                "No es una tipo válido de persona. Seleccione un tipo de persona entre los siguientes: "+str(tipos))
+        # tipos = ["Person", "BPPerson"]
+        # if tipo_persona in tipos:
+        #     raise Exception(
+        #         "No es una tipo válido de persona. Seleccione un tipo de persona entre los siguientes: "+str(tipos))
 
         data = {
             "justification": justificacion,
-            "profileName": tipo_persona,
+            "profileName": person.profile_name,
             "orgID": person.orgid,
             "_attributes": person.__dict__
         }
@@ -148,14 +148,10 @@ class ISIMClient:
     def modificarPersona(self, href, person, justificacion):
         url=self.__addr+href
 
-        info=person.get_attributes()
-        info.pop("erpersonstatus","")
-        info.pop("cn","")
-        info.pop("givenname","")
-        info.pop("sn","")
-        info.pop("employeenumber","")
-        info.pop("erparent","")
-        info.pop("name","")
+        info=person.__dict__.copy()
+
+        for excluded in person.excluded_attributes:
+            info.pop(excluded,"")
 
         data={
             "justification": justificacion,
@@ -168,35 +164,10 @@ class ISIMClient:
                 "Accept": "*/*",
         }
 
+        # if person.profile_name.lower()=="bpperson":
+        #     raise NotImplementedError("no implementado?")
         ret=self.s.put(url,json=data,headers=headers)
         return json.loads(ret.text)
-
-    def crearBpperson(self, bpp, justificacion):
-
-        url = self.__addr+"/itim/rest/people"
-
-        tipo_persona = bpp.__class__.__name__
-
-        tipos = ["Person", "BPPerson"]
-        if tipo_persona not in tipos:
-            raise Exception(
-                "No es una tipo válido de persona. Seleccione un tipo de persona entre los siguientes: "+str(tipos))
-
-        data = {
-            "justification": justificacion,
-            "profileName": tipo_persona,
-            "orgID": bpp.orgid,
-            "_attributes": bpp.__dict__
-        }
-
-        headers = {
-            "CSRFToken": self.CSRF,
-            "Content-Type": "application/json",
-            "Accept": "*/*",
-            "X-HTTP-Method-Override": "submit-in-batch"
-        }
-
-        return self.s.post(url, json=data, headers=headers)
 
     def buscarAcceso(self, atributos="accessName", filtro="*"):
         ""
