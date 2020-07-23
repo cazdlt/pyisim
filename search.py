@@ -1,5 +1,5 @@
 from isimws.exceptions import *
-from isimws.entities import Activity
+from isimws.entities import Activity,Access,Person
 
 def groups(sesion,by,dn,groupProfileName=None,groupInfo=None):
     """Buscar grupos.
@@ -47,11 +47,9 @@ def people(sesion,profile,by="cn",filter="*",attributes="cn",embedded="",limit=5
         [list(dict)]: listado de personas encontradas
     """
 
-    sesion=sesion.restclient
-
-    ret=sesion.buscarPersonas(profile.lower(), atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
-
-    return ret
+    ret=sesion.restclient.buscarPersonas(profile.lower(), atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
+    personas=[Person(rest_person=p) for p in ret]
+    return personas
 
 def roles(sesion,by="errolename",filter="*",find_unique=False):
     soap=****
@@ -73,3 +71,10 @@ def activities(sesion,by="activityName",filter="*"):
         results=sesion.restclient.buscarActividad(search_attr=by,search_filter=filter)
 
     return [Activity(sesion,activity=a) for a in results]
+
+def access(sesion,by="accessName",filter="*",attributes="accessName",limit=20):
+
+    ret=sesion.restclient.buscarAcceso(by=by,filtro=filter,atributos=attributes,limit=limit)
+    accesos=[Access(access=a) for a in ret]
+    
+    return accesos

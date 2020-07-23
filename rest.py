@@ -169,28 +169,23 @@ class ISIMClient:
         ret=self.s.put(url,json=data,headers=headers)
         return json.loads(ret.text)
 
-    def buscarAcceso(self, atributos="accessName", filtro="*"):
-        ""
+    def buscarAcceso(self, by="accessName",atributos="accessName", filtro="*",limit=20,requestee_href=None):
 
         url = self.__addr+"/itim/rest/access"
 
-        data = {"accessName": filtro,
-                "accessCategory": filtro,
-                "attributes": atributos,
-                "limit": "1000",
-                "filterId": "accessSearch"
-                }
+        data = {
+            by: filtro,
+            "attributes": atributos,
+            "limit": limit,
+            "requestee":requestee_href,
+            # "filterId": "accessSearch"
+        }
         data = urlencode(data, quote_via=urllib.parse.quote)
 
-        accesos = json.loads(self.s.get(url, params=data).text)
+        res=self.s.get(url, params=data).text
+        accesos = json.loads(res)
 
-        # print(data)
-        listaAccesos = list(accesos)
-
-        if len(listaAccesos) == 0:
-            raise NotFoundError("Acceso no encontrado: "+filtro)
-
-        return listaAccesos
+        return list(accesos)
 
     # retorna el primer elemento
     def escribir_nombres_accesos(self):
@@ -253,33 +248,23 @@ class ISIMClient:
 
         return list(actividades)
 
-    def solicitarAccesos(self, nombreAccesos, nombrePersona, justificacion="test"):
+    def solicitarAccesos(self, accesos, persona, justificacion):
         url = self.__addr+"/itim/rest/access/assignments"
         cwd = os.path.dirname(__file__)
 
-        try:
-            persona = self.obtenerLinks(self.buscarPersonas("person",
-                                                            filtro=nombrePersona), "persona")["_links"]
-        except NotFoundError:
-            try:
-                persona = self.obtenerLinks(self.buscarPersonas("bpperson",
-                                                                filtro=nombrePersona), "persona")["_links"]
-            except NotFoundError:
-                raise PersonNotFoundError(
-                    "Persona no encontrada: "+nombrePersona)
+        persona_rest={
+            "self":{
+                "href":persona.href
+            }
+        }
 
-        #accesos = [obtenerLinks(buscarAcceso(self.s, filtro=nombre), "acceso") for nombre in nombreAccesos]
-        # print(accesos)
-
-        listaAccesos = open(
-            f"{cwd}/data/accesos_{self.env}.txt", "r").readlines()
-        accesos = [acceso.split(";")[0].strip(
-        ) for acceso in listaAccesos if acceso.split(";")[1].strip() in nombreAccesos]
-        # print(accesos)
-        dictAccesos = list(
-            map(lambda ruta: {"_links": {"access": {"href": ruta}}}, accesos))
-
-        #print([buscarAcceso(self.s, filtro=nombre) for nombre in nombreAccesos])
+        accesos_rest=[{
+            "_links":{
+                "access":{
+                    "href":a.href
+                }
+            }
+        } for a in accesos]
 
         headers = {
             "CSRFToken": self.CSRF,
@@ -288,13 +273,15 @@ class ISIMClient:
             "X-HTTP-Method-Override": "submit-in-batch"
         }
 
+        #persona: {'self': {'href': '/itim/rest/people/ZX...bnNpb25lcw'}}
+        #accesos: [{'_links':{'access': {'href': '/itim/rest/access/32...7126878451'}}},...]
         data = {
             "justification": justificacion,
             "requests": [{
                 "requestee": {
-                    "_links": persona,
+                    "_links": persona_rest,
                     "add": {
-                        "assignments": dictAccesos
+                        "assignments": accesos_rest
                     }
                 }
             }]
