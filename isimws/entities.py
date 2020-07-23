@@ -368,48 +368,72 @@ class StaticRole():
 
         return r
 
-class BPPerson:
-    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
-
-    def __init__(self, sim, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None):
-
-        sim=sim.restclient
-        if nombre is None:
-            nombre = names.get_first_name()
-        self.givenname = nombre
-
-        if apellido is None:
-            apellido = names.get_last_name()
-        self.sn = apellido
-
-        if doc is None:
-            doc = str(randint(1, 100000000000))
-        self.employeenumber = doc
-
-        bpOrgs=sim.buscarOUs(cat="bporganizations", filtro=contrato, buscar_por="description",buscar_igual=True)
-        #print(bpOrgs)
-        if not bpOrgs:
-            raise ContratoNoEncontradoError(f"El contrato {contrato} no está registrado en +Accesos. El usuario no ha sido creado.")
-        else:
-            self.description=contrato
-
-        self.mail = correo
-        self.initials = tipodoc
-        
-        self.cn = self.givenname+" "+self.sn        
-
-    def __str__(self):
-        return f"BPPerson.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}\n\tContrato: {self.description}"
-
 class Person:
-    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
+    def __init__(self, **kwargs):
+        
+        if 'href' in kwargs:
+            assert 'sesion' in kwargs, "Para inicializar desde lookup es necesario una sesión válida"
+            href=kwargs["href"]
+            r=kwargs["sesion"].restclient.lookupPersona(href)
+            assert "bpperson" not in href.lower(), "Para crear BPPerson utilice la entidad isimws.entities.BPPerson"
+            assert r["_links"]["self"]["href"]==href, "Persona no encontrada o inválida"
+
+            attrs=r["_attributes"]
+            self.href=href
+            for k, v in attrs.items():
+                setattr(self, k, v)
+        else:
+            for attr, value in kwargs.iteritems():
+                setattr(self, attr, value)
+    
+    def __init_subclass__(cls):
+        try:
+            getattr(cls, "orgid")
+        except AttributeError:
+            raise TypeError(f"All classes based on the Person entity need their Organization ID defined in the class attribute orgid")
+        
+        try:
+            getattr(cls, "profile_name")
+        except AttributeError:
+            raise TypeError(f"All classes based on the Person entity need their profile specified (Person/BPPerson/Your custom profile)")
+
+        rest_attributes=["name","href","personType","erpersonstatus","erparent","ercustomdisplay","errolerecertificationlastaction","errolerecertificationlastactiondate"]        
+        excluded=getattr(cls,"excluded_attributes",[])
+        excluded.extend(rest_attributes)
+        setattr(cls,"excluded_attributes",excluded)
+
+        return super().__init_subclass__()
+
+    def crear(self,sesion, justificacion):
+        ret=sesion.restclient.crearPersona(self,justificacion)
+        return ret
+    
+    def modificar(self, sesion,justificacion):
+        try:
+            href=self.href
+            ret=sesion.restclient.modificarPersona(self.href,self,justificacion)
+            return ret
+        except AttributeError:
+            raise Exception("Person has no reference to ISIM, search for it or initialize it with href to link it.")
+        
+class PersonColpensiones(Person):
+
+    #REST Organization ID
+    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz" 
+
+    #Attributes that can't be modified
+    excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
+
+    #Person profile
+    profile_name="Person"
 
     def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", cedulajefe="", dep=****, cargo=None, tipocontrato=None,href=None):
 
         current_dir=os.path.dirname(__file__)
-        sesion=sesion.restclient
-
-        if not href:
+        # sesion=sesion.restclient
+        if href:
+            super().__init__(sesion=sesion,href=href)
+        else:
             if nombre is None:
                 nombre = names.get_first_name()
             self.givenname = nombre
@@ -445,7 +469,7 @@ class Person:
 
             if cedulajefe:
 
-                dire = sesion.buscarPersonas(
+                dire = sesion.restclient.buscarPersonas(
                     "person", atributos="dn", buscar_por="employeenumber", filtro=cedulajefe)
 
                 if len(dire) == 0:
@@ -462,45 +486,49 @@ class Person:
 
             self.initials = tipodoc
             self.mobile = correo
-            self.cn = self.givenname+" "+self.sn
-        else:            
-            r=sesion.lookupPersona(href)
-            assert "bpperson" not in href, "Para crear BPPerson utilice la entidad isimws.entities.BPPerson"
-            assert r["_links"]["self"]["href"]==href, "Persona no encontrada o inválida"
-
-            attrs=r["_attributes"]
-            self.href=href
-            for k, v in attrs.items():
-                setattr(self, k, v)
-
-    def crear_o_modificar(self,sesion,justificacion):
-        sesion=sesion.restclient
-        op=****
-        try:
-            href=self.href
-            op=****
-        except AttributeError:
-            pass
-
-        if op=="crear":
-            ret=sesion.crearPersona(self,justificacion)
-        else: 
-            ret=sesion.modificarPersona(self.href,self,justificacion)
-
-        return ret
-
-    def get_attributes(self):
-        info=self.__dict__
-        info.pop("href","")
-        info.pop("ercustomdisplay","")
-        info.pop("errolerecertificationlastaction","")
-        info.pop("personType","")
-        info.pop("errolerecertificationlastactiondate","")
-        info.pop("erlocale","")
-        return info
+            self.cn = self.givenname+" "+self.sn            
+            
 
     def __str__(self):
         return f"Person.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}"
+
+class BPPersonColpensiones(Person):
+    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
+    profile_name="BPPerson"
+    excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
+
+    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None,href=None):
+
+        if href:
+            super().__init__(sesion=sesion,href=href)
+        else:
+            if nombre is None:
+                nombre = names.get_first_name()
+            self.givenname = nombre
+
+            if apellido is None:
+                apellido = names.get_last_name()
+            self.sn = apellido
+
+            if doc is None:
+                doc = str(randint(1, 100000000000))
+            self.employeenumber = doc
+
+            bpOrgs=sesion.restclient.buscarOUs(cat="bporganizations", filtro=contrato, buscar_por="description",buscar_igual=True)
+            #print(bpOrgs)
+            if not bpOrgs:
+                raise ContratoNoEncontradoError(f"El contrato {contrato} no está registrado en +Accesos. El usuario no ha sido creado.")
+            else:
+                self.description=contrato
+
+            self.mail = correo
+            self.initials = tipodoc
+            
+            self.cn = self.givenname+" "+self.sn        
+
+    def __str__(self):
+        return f"BPPerson.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}\n\tContrato: {self.description}"
+
 
 class Activity:
 
