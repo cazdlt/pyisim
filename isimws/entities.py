@@ -371,11 +371,20 @@ class StaticRole():
 class Person:
     def __init__(self, **kwargs):
         
-        if 'href' in kwargs:
+        if "rest_person" in kwargs:
+
+            rest_person=kwargs["rest_person"]
+            self.href=rest_person["_links"]["self"]["href"]
+            attrs=rest_person["_attributes"]
+            for k, v in attrs.items():
+                # print(k)
+                setattr(self, k, v)
+
+        elif 'href' in kwargs:
             assert 'sesion' in kwargs, "Para inicializar desde lookup es necesario una sesión válida"
             href=kwargs["href"]
             r=kwargs["sesion"].restclient.lookupPersona(href)
-            assert "bpperson" not in href.lower(), "Para crear BPPerson utilice la entidad isimws.entities.BPPerson"
+            
             assert r["_links"]["self"]["href"]==href, "Persona no encontrada o inválida"
 
             attrs=r["_attributes"]
@@ -383,7 +392,7 @@ class Person:
             for k, v in attrs.items():
                 setattr(self, k, v)
         else:
-            for attr, value in kwargs.iteritems():
+            for attr, value in kwargs.items():
                 setattr(self, attr, value)
     
     def __init_subclass__(cls):
@@ -397,7 +406,7 @@ class Person:
         except AttributeError:
             raise TypeError(f"All classes based on the Person entity need their profile specified (Person/BPPerson/Your custom profile)")
 
-        rest_attributes=["name","href","personType","erpersonstatus","erparent","ercustomdisplay","errolerecertificationlastaction","errolerecertificationlastactiondate"]        
+        rest_attributes=["erpswdlastchanged","erlastmodifiedtime","ercreatedate","ersynchpassword","name","href","personType","erpersonstatus","erparent","ercustomdisplay","erlastcertifieddate","errolerecertificationlastaction","errolerecertificationlastactiondate"]        
         excluded=getattr(cls,"excluded_attributes",[])
         excluded.extend(rest_attributes)
         setattr(cls,"excluded_attributes",excluded)
@@ -415,6 +424,12 @@ class Person:
             return ret
         except AttributeError:
             raise Exception("Person has no reference to ISIM, search for it or initialize it with href to link it.")
+    
+    def solicitar_accesos(self,sesion,accesos,justificacion):
+
+        if len(accesos)>0:
+            ret=sesion.restclient.solicitarAccesos(accesos,self,justificacion)
+        return ret
         
 class PersonColpensiones(Person):
 
@@ -564,3 +579,8 @@ class Activity:
 
         return r
 
+class Access:
+    def __init__(self,access=None):
+
+        self.href=access["_links"]["self"]["href"]
+        self.name=access["_links"]["self"]["title"]
