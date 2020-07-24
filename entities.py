@@ -369,7 +369,13 @@ class StaticRole():
         return r
 
 class Person:
-    def __init__(self, **kwargs):
+    
+    profile_name="Person"
+
+    def __init__(self, sesion,**kwargs):
+
+        if not getattr(self,"excluded_attributes",""):
+            self.excluded_attributes=["erpswdlastchanged","erlastmodifiedtime","ercreatedate","ersynchpassword","name","href","personType","erpersonstatus","erparent","ercustomdisplay","erlastcertifieddate","errolerecertificationlastaction","errolerecertificationlastactiondate"]        
         
         if "rest_person" in kwargs:
 
@@ -442,12 +448,13 @@ class PersonColpensiones(Person):
     #Person profile
     profile_name="Person"
 
-    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", cedulajefe="", dep=****, cargo=None, tipocontrato=None,href=None):
+    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", cedulajefe="", dep=****, cargo=None, tipocontrato=None,href=None,rest_person=None):
 
         current_dir=os.path.dirname(__file__)
         # sesion=sesion.restclient
-        if href:
-            super().__init__(sesion=sesion,href=href)
+        
+        if href or rest_person:
+            super().__init__(sesion=sesion,href=href,rest_person=rest_person)
         else:
             if nombre is None:
                 nombre = names.get_first_name()
@@ -508,14 +515,15 @@ class PersonColpensiones(Person):
         return f"Person.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}"
 
 class BPPersonColpensiones(Person):
+
     orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
     profile_name="BPPerson"
     excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
 
-    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None,href=None):
+    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None,href=None,rest_person=None):
 
-        if href:
-            super().__init__(sesion=sesion,href=href)
+        if href or rest_person:
+            super().__init__(sesion=sesion,href=href,rest_person=rest_person)
         else:
             if nombre is None:
                 nombre = names.get_first_name()

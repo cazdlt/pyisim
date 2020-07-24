@@ -31,7 +31,7 @@ def groups(sesion,by,dn,groupProfileName=None,groupInfo=None):
 
     return ret
 
-def people(sesion,profile,by="cn",filter="*",attributes="cn",embedded="",limit=50):
+def people(sesion,profile=Person,by="cn",filter="*",attributes="cn",embedded="",limit=50):
     """"Wrapper para buscar/lookup personas o bpperson desde REST API
 
     Args:
@@ -47,8 +47,8 @@ def people(sesion,profile,by="cn",filter="*",attributes="cn",embedded="",limit=5
         [list(dict)]: listado de personas encontradas
     """
 
-    ret=sesion.restclient.buscarPersonas(profile.lower(), atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
-    personas=[Person(rest_person=p) for p in ret]
+    ret=sesion.restclient.buscarPersonas(profile.profile_name, atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
+    personas=[profile(sesion,rest_person=p) for p in ret]
     return personas
 
 def roles(sesion,by="errolename",filter="*",find_unique=False):

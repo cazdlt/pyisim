@@ -93,7 +93,7 @@ class ISIMClient:
     # si filtro="*" busca todo
     def buscarPersonas(self, perfil, atributos="cn", embedded="", buscar_por="cn", filtro="*",limit=50):
 
-        assert perfil in ("person", "bpperson")
+        assert perfil.lower() in ("person", "bpperson")
 
         url = self.__addr+"/itim/rest/people"
         if perfil == "bpperson":
