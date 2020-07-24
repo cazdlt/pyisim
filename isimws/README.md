@@ -24,7 +24,7 @@ Due to API limitations some functionalities are served through ISIM's REST API a
     - Delete:
         - Services
     - Search: 
-        - Most things through the clients
+        - Most things
         - Currently implementing interfaces to ease this task
 
 
