@@ -1,9 +1,5 @@
 import datetime
-import os
-import time
-from random import choice, randint, seed
 
-import names
 import pytz
 from zeep import Client, Settings
 from zeep.xsd import Nil
@@ -410,7 +406,7 @@ class Person:
         try:
             getattr(cls, "profile_name")
         except AttributeError:
-            raise TypeError(f"All classes based on the Person entity need their profile specified (Person/BPPerson/Your custom profile)")
+            raise TypeError(f"All classes based on the Person entity need their profile specified (Person/BPPerson/Your custom profile) in the profile_name attribute")
 
         rest_attributes=["erpswdlastchanged","erlastmodifiedtime","ercreatedate","ersynchpassword","name","href","personType","erpersonstatus","erparent","ercustomdisplay","erlastcertifieddate","errolerecertificationlastaction","errolerecertificationlastactiondate"]        
         excluded=getattr(cls,"excluded_attributes",[])
@@ -433,126 +429,11 @@ class Person:
     
     def solicitar_accesos(self,sesion,accesos,justificacion):
 
+        ret={}
         if len(accesos)>0:
             ret=sesion.restclient.solicitarAccesos(accesos,self,justificacion)
         return ret
         
-class PersonColpensiones(Person):
-
-    #REST Organization ID
-    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz" 
-
-    #Attributes that can't be modified
-    excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
-
-    #Person profile
-    profile_name="Person"
-
-    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", cedulajefe="", dep=****, cargo=None, tipocontrato=None,href=None,rest_person=None):
-
-        current_dir=os.path.dirname(__file__)
-        # sesion=sesion.restclient
-        
-        if href or rest_person:
-            super().__init__(sesion=sesion,href=href,rest_person=rest_person)
-        else:
-            if nombre is None:
-                nombre = names.get_first_name()
-            self.givenname = nombre
-
-            if apellido is None:
-                apellido = names.get_last_name()
-            self.sn = apellido
-
-            if doc is None:
-                doc = str(randint(1, 100000000000))
-            self.employeenumber = doc
-
-            if dep is None:
-                #data="accesos/sim/data/dependencias.txt"
-                data=f"{current_dir}/data/dependencias.txt"
-                deps = open(data).read().splitlines()
-                dep = choice(deps)
-            self.departmentnumber = dep
-
-            if cargo is None:
-                #data="accesos/sim/data/cargos.txt"
-                data=f"{current_dir}/data/cargos.txt"
-                cargos = open(data).read().splitlines()
-                cargo = choice(cargos)
-            self.title = cargo
-
-            if tipocontrato is None:
-                #data="accesos/sim/data/tiposContrato.txt"
-                data=f"{current_dir}/data/tiposContrato.txt"
-                tiposcontrato = open(data).read().splitlines()
-                tipocontrato = choice(tiposcontrato)
-            self.businesscategory = tipocontrato
-
-            if cedulajefe:
-
-                dire = sesion.restclient.buscarPersonas(
-                    "person", atributos="dn", buscar_por="employeenumber", filtro=cedulajefe)
-
-                if len(dire) == 0:
-                    raise Exception(
-                        "No se ha encontrado ninguna persona con la cédula de jefe ingresada.")
-                elif len(dire) > 1:
-                    raise Exception(
-                        "Se ha encontrado más de una persona con la cédula de jefe ingresada.")
-                else:
-                    self.manager = dire[0]["_attributes"]["dn"]
-
-            else:
-                self.manager = ""
-
-            self.initials = tipodoc
-            self.mobile = correo
-            self.cn = self.givenname+" "+self.sn            
-            
-
-    def __str__(self):
-        return f"Person.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}"
-
-class BPPersonColpensiones(Person):
-
-    orgid = "ZXJnbG9iYWxpZD0wMDAwMDAwMDAwMDAwMDAwMDAwMCxvdT1jb2xwZW5zaW9uZXMsZGM9Y29scGVuc2lvbmVz"
-    profile_name="BPPerson"
-    excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
-
-    def __init__(self, sesion, tipodoc="CC", nombre=None, apellido=None, doc=None, correo="pruebasiamqa@colpensiones.gov.co", contrato=None,href=None,rest_person=None):
-
-        if href or rest_person:
-            super().__init__(sesion=sesion,href=href,rest_person=rest_person)
-        else:
-            if nombre is None:
-                nombre = names.get_first_name()
-            self.givenname = nombre
-
-            if apellido is None:
-                apellido = names.get_last_name()
-            self.sn = apellido
-
-            if doc is None:
-                doc = str(randint(1, 100000000000))
-            self.employeenumber = doc
-
-            bpOrgs=sesion.restclient.buscarOUs(cat="bporganizations", filtro=contrato, buscar_por="description",buscar_igual=True)
-            #print(bpOrgs)
-            if not bpOrgs:
-                raise ContratoNoEncontradoError(f"El contrato {contrato} no está registrado en +Accesos. El usuario no ha sido creado.")
-            else:
-                self.description=contrato
-
-            self.mail = correo
-            self.initials = tipodoc
-            
-            self.cn = self.givenname+" "+self.sn        
-
-    def __str__(self):
-        return f"BPPerson.\n\tNombre completo: {self.cn}\n\tCédula: {self.employeenumber}\n\tContrato: {self.description}"
-
-
 class Activity:
 
     def __init__(self,sesion,activity=None,id=None):

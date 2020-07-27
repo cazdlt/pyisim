@@ -187,21 +187,6 @@ class ISIMClient:
 
         return list(accesos)
 
-    # retorna el primer elemento
-    def escribir_nombres_accesos(self):
-
-        current_dir = os.path.dirname(__file__)
-
-        accesos = self.buscarAcceso()
-
-        # print(accesos)
-
-        with open(f"{current_dir}/data/accesos_{self.env}.txt", 'w', newline='\n') as f:
-            for a in accesos:
-                # print(a)
-                f.write(a["_links"]["self"]["href"]+";" +
-                        a["_attributes"]["accessName"]+"\n")
-
     def verificarResultadoUnico(self, json_):
         if len(json_) > 1:
             raise MultipleFoundError()
@@ -310,8 +295,11 @@ class ISIMClient:
                     required = False
 
                 if required:
-                    value = form_details["defaultAttrValues"][attr_name]
-                elif editable:
+                    try:
+                        value = form_details["defaultAttrValues"][attr_name]
+                    except KeyError:
+                        pass
+                if editable:
                     value = [attr["value"]
                              for attr in rfi_values if attr["name"] == attr_name][0]
 
