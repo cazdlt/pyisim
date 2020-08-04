@@ -12,7 +12,8 @@ from isimws.auth import Session
 user=****
 password=****
 cert="./my_certificate.cer"
-sess=Session(user,password,cert)
+url="isim.deltaits.com"
+sess=Session(url,user,password,cert)
 ```
 
 *Every example after assumes you have already a valid Session object named sess*

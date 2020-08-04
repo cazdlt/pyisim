@@ -15,17 +15,9 @@ requests.packages.urllib3.disable_warnings()
 
 class ISIMClient:
 
-    def __init__(self, user_, pass_, env="qa",cert_path=None):
+    def __init__(self, url, user_, pass_,cert_path=None):
 
-        # colpensiones
-        ambientes = {
-            "int": "https://iam.appintegracion.loc:9082",
-            "qa": "https://iam.appqa.loc:9082",
-            "pr": ""
-        }
-
-        self.env = env
-        self.__addr = ambientes[env]
+        self.__addr = url
         self.s, self.CSRF = self.autenticar(user_, pass_,cert_path)
 
     def autenticar(self, user_, pass_,cert=None):
@@ -288,6 +280,7 @@ class ISIMClient:
             for element in tab["formElement"]:
                 attr_name = element["name"].split(".")[-1]
                 editable = element["editable"]
+                value=""
 
                 try:
                     required = element["required"]

@@ -5,7 +5,7 @@ class Session():
     """
     Maneja sesión conjunta de REST y SOAP
     """
-    def __init__(self, username, password, certificate_path, env="int",use_rest=True, use_soap=****):
+    def __init__(self, url, username, password, certificate_path):
         self.username=****
-        self.restclient=simrest.ISIMClient(username,password,env,certificate_path)
-        self.soapclient=simsoap.ISIMClient(username,password,env,certificate_path)
+        self.restclient=simrest.ISIMClient(url, username,password,certificate_path)
+        self.soapclient=simsoap.ISIMClient(url, username,password,certificate_path)

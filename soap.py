@@ -10,16 +10,9 @@ from isimws.exceptions import *
 requests.packages.urllib3.disable_warnings()
 
 class ISIMClient():
-    def __init__(self, user_, pass_,env="int",cert_path=None):
+    def __init__(self, url, user_, pass_,cert_path=None):
 
-        # colpensiones
-        ambientes = {
-            "int": "https://iam.appintegracion.loc:9082/itim/services/",
-            "qa": "https://iam.appqa.loc:9082/itim/services/",
-            # "pr":"https://"
-        }
-
-        self.addr = ambientes[env]
+        self.addr = url+"/itim/services/"
         self.cert_path=cert_path
         self.s = self.login(user_, pass_)
         
