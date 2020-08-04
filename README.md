@@ -3,6 +3,7 @@ Python client for IBM Security Identity Manager (ISIM/ITIM) web services (SOAP a
 Tested on ISIM 7.0.1 FP13 and ISIM 7.0.2 FP2
 Due to API limitations some functionalities are served through ISIM's REST API and some other through ISIM SOAP Web Services. <br>
 
+
 Usage example:
 
 - Login
@@ -82,6 +83,25 @@ actividad=search.activities(sesion,by="requestId",filter=request_id)[0]
 actividad.completar(sess,form,"justification")
 ```
 
+- Update property files (ISIM VA)
+```py
+from isimws.va.auth import Session
+from isimws.va.configure import update_property
+
+
+u=****@local"
+p=****
+url="isimva.deltaits.com"
+cert="./mycert.cer"
+
+s=Session(u,p,url,cert)
+
+property_file="CustomLabels.properties"
+property_name="scriptframework.properties"
+property_value="ITIM.java.access.util"
+update_property.create_or_update_property(sesion,property_file,property_name,property_value)
+```
+
 - Functionalities
     - TLS Client
     - Authentication
@@ -105,6 +125,8 @@ actividad.completar(sess,form,"justification")
     - Search: 
         - Most things
         - Currently implementing interfaces to ease this task
+    - ISIM VA Utilities:
+        - Create/Search/Update property files
 
 
 - TODO:
