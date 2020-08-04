@@ -1,8 +1,10 @@
 import datetime
 
 import pytz
+import requests
 from zeep import Client, Settings
 from zeep.xsd import Nil
+from zeep.transports import Transport
 
 import isimws.auth as auth
 from isimws.exceptions import *
@@ -20,7 +22,7 @@ class ProvisioningPolicy():
         try:
             self.pp_client=sesion.pp_client
         except AttributeError:
-            settings = Settings(strict=False)
+            # settings = Settings(strict=False)
             s=requests.Session()
             s.verify=self.cert_path
             client=Client(url,transport=Transport(session=s))
@@ -256,12 +258,14 @@ class StaticRole():
     def __init__(self,sesion,name,description,ou,classification,access_option,access_category=None,owner_roles=None,owner_cedulas=None):
         
         sesion=sesion.soapclient
+        url=sesion.addr+"WSRoleServiceService?wsdl"
 
         try:
             self.role_client=sesion.role_client
         except AttributeError:
             s=requests.Session()
             s.verify=self.cert_path
+            settings = Settings(strict=False)
             self.role_client=Client(url,settings=settings,transport=Transport(session=s))
             sesion.role_client=self.role_client
 
