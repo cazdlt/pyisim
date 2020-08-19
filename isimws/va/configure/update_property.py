@@ -46,7 +46,7 @@ def add_property(sesion,property_file,property_name,property_value):
 
     r=sesion.s.post(url,json=data,headers=headers,auth=sesion.auth)
 
-    return json.loads(r.content)
+    return r.reason
 
 
 def update_property(sesion,property_file,property_name,property_value):
@@ -67,12 +67,33 @@ def update_property(sesion,property_file,property_name,property_value):
 
     return r.reason
 
+def delete_property(sesion,property_file,property_name=None):
+    url=f"https://{sesion.base_url}/v1/property"
+
+    params={
+        "PropertyFile":property_file,
+    }
+    if property_name:
+        params["PropertyName"]=property_name
+    
+    headers={
+        "Accept":"application/json",
+        "Content-Type":"application/json",
+    }
+
+    r=sesion.s.delete(url,params=params,headers=headers,auth=sesion.auth)
+
+    return r
+
 def create_or_update_property(sesion,property_file,property_name,property_value):
     old_value=get_property_value(sesion,property_file,property_name)
 
-    if old_value["result"]=="property_not_found":
-        r=add_property(sesion,property_file,property_name,property_value)
+    if "result" in old_value.keys() and old_value["result"]=="property_not_found":
+        r="Adding: "+add_property(sesion,property_file,property_name,property_value)
     else:
-        r=update_property(sesion,property_file,property_name,property_value)
+        if property_value == old_value["PropertyValue"]:
+            r="No changes"
+        else:
+            r="Updating: "+update_property(sesion,property_file,property_name,property_value)
 
     return r
