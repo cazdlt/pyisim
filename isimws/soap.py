@@ -1,6 +1,7 @@
 from zeep import Client,Settings
 from zeep.xsd import Nil
 from zeep.transports import Transport
+from zeep.helpers import serialize_object
 # from isim_classes import StaticRole
 import requests
 import pprint
@@ -206,9 +207,9 @@ class ISIMClient():
             if len(servicios)==0:
                 raise NotFoundError(f"No se ha encontrado el servicio con el filtro: {parent_ou_name} - {filtro}. Verifique que sea un filtro LDAP válido.")
             assert len(servicios)==1,f"Se ha encontrado más de un servicio con: {parent_ou_name} - {filtro}"
-            return servicios[0]
+            return serialize_object(servicios[0],target_cls=dict)
         else:
-            return servicios
+            return [serialize_object(s,target_cls=dict) for s in servicios]
     
     def buscarPerfilServicio(self,nombre, find_unique=True):
         """

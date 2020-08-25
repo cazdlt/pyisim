@@ -399,24 +399,23 @@ class ISIMClient:
 
         return json.loads(resp.text)["template"]["page"]["body"]["tabbedForm"]["tab"]
 
-    def buscarServicio(self, nombre, atributos=""):
+    def buscarServicio(self, search_attr,search_filter, limit,atributos=""):
 
         url = self.__addr+"/itim/rest/services"
 
         data = {
-            "erservicename": nombre,
-            "attributes": ','.join(atributos)
+            search_attr: search_filter,
+            "attributes": atributos,
+            "limit":limit,
         }
         data = urlencode(data, quote_via=urllib.parse.quote)
 
-        servicios = json.loads(self.s.get(url, params=data).text)
+        servicios = json.loads(self.s.get(url, params=data).content)
 
-        listaServicios = list(servicios)
+        if len(servicios) == 0:
+            raise NotFoundError(f"Servicio no encontrado: ({search_attr}={search_filter})")
 
-        if len(listaServicios) == 0:
-            raise NotFoundError("Servicio no encontrado: "+nombre)
-
-        return listaServicios
+        return servicios
 
     def eliminarServicio(self, nombre):
 

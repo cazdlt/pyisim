@@ -477,3 +477,15 @@ class Access:
 
         self.href=access["_links"]["self"]["href"]
         self.name=access["_links"]["self"]["title"]
+
+class Service:
+    def __init__(self,sesion,service=None):
+
+        # if id:
+        #     service=sesion.restclient.lookupServicio(str(id))
+        #     if "_attributes" not in service.keys():
+        #         raise NotFoundError(f"Servicio no encontrado {id}")
+
+        self.dn=service["itimDN"]
+        self.profile_name=service["profileName"]
+        self.name=service["name"]
