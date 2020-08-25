@@ -1,15 +1,11 @@
 from isimws.va.configure import update_property
 from isimws.va.auth import Session
 import pytest
+from secret import va_login,va_pw,va_url
 
 @pytest.fixture
 def sesion():
-    env="int"
-    u=****@local"
-    p=****=="qa" else "Colpensiones.2019"
-    url="10.120.70.181" if env=="qa" else "10.130.70.142"
-
-    s=Session(u,p,url,None)
+    s=Session(va_login,va_pw,va_url,None)
     return s
 
 def test_list_property_files(sesion):    

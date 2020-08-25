@@ -6,3 +6,4 @@ webservice
 isimws.egg-info
 pycolp
 *.cer
+secret.py
