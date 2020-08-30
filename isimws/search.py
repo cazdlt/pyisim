@@ -1,7 +1,8 @@
 from isimws.exceptions import *
-from isimws.entities import Activity,Access,Person,Service
+from isimws.entities import Activity, Access, Person, Service
 
-def groups(sesion,by,dn,groupProfileName=None,groupInfo=None):
+
+def groups(sesion, by, dn, groupProfileName="", groupInfo=""):
     """Buscar grupos.
 
     Args:
@@ -16,23 +17,28 @@ def groups(sesion,by,dn,groupProfileName=None,groupInfo=None):
 
     Returns:
         list: Search results
-    """        
-    sesion=sesion.soapclient
-    if by=="account":
+    """
+    sesion = sesion.soapclient
+    if by == "account":
         raise NotImplementedError("No implementado aún")
-    elif by=="access":
+    elif by == "access":
         raise NotImplementedError("No implementado aún")
-    elif by=="service":
-        assert groupProfileName is not None,"Debe ingresar el parámetro groupProfileName"
-        assert groupInfo is not None,"Debe ingresar el parámetro groupInfo"
-        ret=sesion.buscarGruposPorServicio(dn,groupProfileName,groupInfo)
+    elif by == "service":
+        assert (
+            groupProfileName is not None
+        ), "Debe ingresar el parámetro groupProfileName"
+        assert groupInfo is not None, "Debe ingresar el parámetro groupInfo"
+        ret = sesion.buscarGruposPorServicio(dn, groupProfileName, groupInfo)
     else:
         raise InvalidOptionError("Opción inválida")
 
     return ret
 
-def people(sesion,profile=Person,by="cn",filter="*",attributes="cn",embedded="",limit=50):
-    """"Wrapper para buscar/lookup personas o bpperson desde REST API
+
+def people(
+    sesion, profile=Person, by="cn", filter="*", attributes="cn", embedded="", limit=50
+):
+    """ "Wrapper para buscar/lookup personas o bpperson desde REST API
 
     Args:
         sesion ([isimws.auth.Session]): Sesión de isimws
@@ -47,16 +53,25 @@ def people(sesion,profile=Person,by="cn",filter="*",attributes="cn",embedded="",
         [list(dict)]: listado de personas encontradas
     """
 
-    ret=sesion.restclient.buscarPersonas(profile.profile_name, atributos=attributes, embedded=embedded, buscar_por=by, filtro=filter,limit=limit)
-    personas=[profile(sesion,rest_person=p) for p in ret]
+    ret = sesion.restclient.buscarPersonas(
+        profile.profile_name,
+        atributos=attributes,
+        embedded=embedded,
+        buscar_por=by,
+        filtro=filter,
+        limit=limit,
+    )
+    personas = [profile(sesion, rest_person=p) for p in ret]
     return personas
 
-def roles(sesion,by="errolename",filter="*",find_unique=False):
-    soap=****
-    results=soap.buscarRol(f"({by}={filter})",find_unique)
+
+def roles(sesion, by="errolename", filter="*", find_unique=False):
+    soap = sesion.soapclient
+    results = soap.buscarRol(f"({by}={filter})", find_unique)
     return results
 
-def activities(sesion,by="activityName",filter="*"):
+
+def activities(sesion, by="activityName", filter="*"):
     """Busca actividades
 
     Args:
@@ -65,25 +80,35 @@ def activities(sesion,by="activityName",filter="*"):
         filter (str, optional): Filtro. Defaults to "*".
     """
 
-    if by=="requestId":
-        results=sesion.restclient.buscarActividad(solicitudID=f"/itim/rest/requests/{filter}")
+    if by == "requestId":
+        results = sesion.restclient.buscarActividad(
+            solicitudID=f"/itim/rest/requests/{filter}"
+        )
     else:
-        results=sesion.restclient.buscarActividad(search_attr=by,search_filter=filter)
+        results = sesion.restclient.buscarActividad(
+            search_attr=by, search_filter=filter
+        )
 
-    return [Activity(sesion,activity=a) for a in results]
+    return [Activity(sesion, activity=a) for a in results]
 
-def access(sesion,by="accessName",filter="*",attributes="",limit=20):
 
-    ret=sesion.restclient.buscarAcceso(by=by,filtro=filter,atributos=attributes,limit=limit)
-    accesos=[Access(access=a) for a in ret]
-    
+def access(sesion, by="accessName", filter="*", attributes="", limit=20):
+
+    ret = sesion.restclient.buscarAcceso(
+        by=by, filtro=filter, atributos=attributes, limit=limit
+    )
+    accesos = [Access(access=a) for a in ret]
+
     return accesos
 
-def service(sesion,parent_name,by="erservicename",filter="*"):
-    
+
+def service(sesion, parent_name, by="erservicename", filter="*"):
+
     # ret=sesion.restclient.buscarServicio(by,filter,limit,atributos=attributes)
     # servicios=[Service(sesion,service=s) for s in ret]
-    ret=sesion.soapclient.buscarServicio(parent_name,f"({by}={filter})",find_unique=False)
-    servicios=[Service(sesion,service=s) for s in ret]
+    ret = sesion.soapclient.buscarServicio(
+        parent_name, f"({by}={filter})", find_unique=False
+    )
+    servicios = [Service(sesion, service=s) for s in ret]
 
     return servicios

@@ -1,265 +1,311 @@
-from zeep import Client,Settings
+from zeep import Client, Settings
 from zeep.xsd import Nil
 from zeep.transports import Transport
 from zeep.helpers import serialize_object
+
 # from isim_classes import StaticRole
 import requests
 import pprint
-from isimws.exceptions import * 
+from isimws.exceptions import *
 
 
 requests.packages.urllib3.disable_warnings()
 
-class ISIMClient():
-    def __init__(self, url, user_, pass_,cert_path=None):
 
-        self.addr = url+"/itim/services/"
-        self.cert_path=cert_path
+class ISIMClient:
+    def __init__(self, url, user_, pass_, cert_path=None):
+
+        self.addr = url + "/itim/services/"
+        self.cert_path = cert_path
         self.s = self.login(user_, pass_)
-        
-        
-    def login(self,user_,pass_):
-        url=self.addr+"WSSessionService?wsdl"
-        assert self.cert_path is not None,"No certificate passed"
-        s=requests.Session()
-        s.verify=self.cert_path
-        client=Client(url,transport=Transport(session=s))
-        sesion=client.service.login(user_,pass_)
-        #print(sesion)
+
+    def login(self, user_, pass_):
+        url = self.addr + "WSSessionService?wsdl"
+        assert self.cert_path is not None, "No certificate passed"
+        s = requests.Session()
+        s.verify = self.cert_path
+        client = Client(url, transport=Transport(session=s))
+        sesion = client.service.login(user_, pass_)
+        # print(sesion)
         return sesion
 
-    def buscarOrganizacion(self,nombre):
+    def buscarOrganizacion(self, nombre):
 
         try:
-            client=self.ou_client
-        except AttributeError: #si el cliente de OUs no se ha inicializado
-            url=self.addr+"WSOrganizationalContainerServiceService?wsdl"
+            client = self.ou_client
+        except AttributeError:  # si el cliente de OUs no se ha inicializado
+            url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.ou_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.ou_client
-        
-        ous=client.service.searchContainerByName(self.s,Nil,"Organization",nombre)
-        if len(ous)==0:
-            ous=client.service.searchContainerByName(self.s,Nil,"OrganizationalUnit",nombre)
-        
-        assert len(ous)>0,f"No se ha encontrado la Unidad Organizativa de nombre: {nombre}. Verifique que sea un filtro LDAP válido."
-        assert len(ous)==1,f"Se ha encontrado más de una Unidad Organizativa de nombre: {nombre}"
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.ou_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.ou_client
+
+        ous = client.service.searchContainerByName(self.s, Nil, "Organization", nombre)
+        if len(ous) == 0:
+            ous = client.service.searchContainerByName(
+                self.s, Nil, "OrganizationalUnit", nombre
+            )
+
+        assert (
+            len(ous) > 0
+        ), f"No se ha encontrado la Unidad Organizativa de nombre: {nombre}. Verifique que sea un filtro LDAP válido."
+        assert (
+            len(ous) == 1
+        ), f"Se ha encontrado más de una Unidad Organizativa de nombre: {nombre}"
         return ous[0]
 
-    def buscarPoliticaSuministro(self,wsou, nombre_politica, find_unique=True):
+    def buscarPoliticaSuministro(self, wsou, nombre_politica, find_unique=True):
         """
-           Si find_unique es True (por defecto): 
-              lanza error si no encuentra ninguno o encuentra múltiples. 
-              Devuelve instancia encontrada
+        Si find_unique es True (por defecto):
+           lanza error si no encuentra ninguno o encuentra múltiples.
+           Devuelve instancia encontrada
 
-           Si find_unique es False:
-              No lanza errores
-              Devuelve lista de resultados
-        """           
+        Si find_unique es False:
+           No lanza errores
+           Devuelve lista de resultados
+        """
 
         try:
-            client=self.pp_client
+            client = self.pp_client
         except AttributeError:
-            url=self.addr+"WSProvisioningPolicyServiceService?wsdl"
+            url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.pp_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.pp_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.pp_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.pp_client
 
-        politicas=client.service.getPolicies(self.s,wsou,nombre_politica)
+        politicas = client.service.getPolicies(self.s, wsou, nombre_politica)
 
         if find_unique:
-            assert len(politicas)>0,f"No se ha encontrado la política {nombre_politica}."
-            assert len(politicas)==1,f"Se ha encontrado más de la política con: {nombre_politica}"
+            assert (
+                len(politicas) > 0
+            ), f"No se ha encontrado la política {nombre_politica}."
+            assert (
+                len(politicas) == 1
+            ), f"Se ha encontrado más de la política con: {nombre_politica}"
             return politicas[0]
         else:
             return politicas
-        
 
-    def crearPolitica(self,ou,wsprovisioningpolicy,date):
-        
+    def crearPolitica(self, ou, wsprovisioningpolicy, date):
+
         try:
-            client=self.pp_client
+            client = self.pp_client
         except AttributeError:
-            url=self.addr+"WSProvisioningPolicyServiceService?wsdl"
+            url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.pp_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.pp_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.pp_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.pp_client
 
-        s=client.service.createPolicy(self.s,ou,wsprovisioningpolicy,date)
-        
+        s = client.service.createPolicy(self.s, ou, wsprovisioningpolicy, date)
+
         return s
 
-    def modificarPolitica(self,ou,wsprovisioningpolicy,date):
-        
-        try:
-            client=self.pp_client
-        except AttributeError:
-            url=self.addr+"WSProvisioningPolicyServiceService?wsdl"
-            settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.pp_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.pp_client
+    def modificarPolitica(self, ou, wsprovisioningpolicy, date):
 
-        s=client.service.modifyPolicy(self.s,ou,wsprovisioningpolicy,date)
-        
+        try:
+            client = self.pp_client
+        except AttributeError:
+            url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
+            settings = Settings(strict=False)
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.pp_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.pp_client
+
+        s = client.service.modifyPolicy(self.s, ou, wsprovisioningpolicy, date)
+
         return s
-    
-    def buscarRol(self,filtro,find_unique=True):
-        """
-           Si find_unique es True (por defecto): 
-              lanza error si no encuentra ninguno o encuentra múltiples. 
-              Devuelve instancia encontrada
 
-           Si find_unique es False:
-              No lanza errores
-              Devuelve lista de resultados
+    def buscarRol(self, filtro, find_unique=True):
+        """
+        Si find_unique es True (por defecto):
+           lanza error si no encuentra ninguno o encuentra múltiples.
+           Devuelve instancia encontrada
+
+        Si find_unique es False:
+           No lanza errores
+           Devuelve lista de resultados
         """
 
         try:
-            client=self.role_client
+            client = self.role_client
         except AttributeError:
-            url=self.addr+"WSRoleServiceService?wsdl"
+            url = self.addr + "WSRoleServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.role_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.role_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.role_client
 
-        roles=client.service.searchRoles(self.s,filtro)
+        roles = client.service.searchRoles(self.s, filtro)
 
         if find_unique:
-            assert len(roles)>0,f"No se ha encontrado el rol con el filtro: {filtro}. Verifique que sea un filtro LDAP válido."
-            assert len(roles)==1,f"Se ha encontrado más de un rol con: {filtro}"
+            assert (
+                len(roles) > 0
+            ), f"No se ha encontrado el rol con el filtro: {filtro}. Verifique que sea un filtro LDAP válido."
+            assert len(roles) == 1, f"Se ha encontrado más de un rol con: {filtro}"
             return roles[0]
         else:
             return roles
 
-
-    def crearRolEstatico(self,wsrole,wsou):
-
-        try:
-            client=self.role_client
-        except AttributeError:
-            url=self.addr+"WSRoleServiceService?wsdl"
-            settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.role_client
-
-        return client.service.createStaticRole(self.s,wsou,wsrole)
-
-    def modificarRolEstatico(self,role_dn,wsattr_list):
+    def crearRolEstatico(self, wsrole, wsou):
 
         try:
-            client=self.role_client
+            client = self.role_client
         except AttributeError:
-            url=self.addr+"WSRoleServiceService?wsdl"
+            url = self.addr + "WSRoleServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.role_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.role_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.role_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.role_client
 
-        return client.service.modifyStaticRole(self.s,role_dn,wsattr_list)
+        return client.service.createStaticRole(self.s, wsou, wsrole)
 
-    def buscarPersona(self,filtro):
+    def modificarRolEstatico(self, role_dn, wsattr_list):
 
         try:
-            client=self.person_client
+            client = self.role_client
         except AttributeError:
-            url=self.addr+"WSPersonServiceService?wsdl"
+            url = self.addr + "WSRoleServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.person_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.person_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.role_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.role_client
 
-        personas=client.service.searchPersonsFromRoot(self.s,filtro,Nil)
-        
-        assert len(personas)>0,f"No se ha encontrado la persona con el filtro: {filtro}. Verifique que sea un filtro LDAP válido."
-        assert len(personas)==1,f"Se ha encontrado más de una persona con: {filtro}"
+        return client.service.modifyStaticRole(self.s, role_dn, wsattr_list)
+
+    def buscarPersona(self, filtro):
+
+        try:
+            client = self.person_client
+        except AttributeError:
+            url = self.addr + "WSPersonServiceService?wsdl"
+            settings = Settings(strict=False)
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.person_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.person_client
+
+        personas = client.service.searchPersonsFromRoot(self.s, filtro, Nil)
+
+        assert (
+            len(personas) > 0
+        ), f"No se ha encontrado la persona con el filtro: {filtro}. Verifique que sea un filtro LDAP válido."
+        assert len(personas) == 1, f"Se ha encontrado más de una persona con: {filtro}"
         return personas[0]
 
-    def buscarServicio(self,parent_ou_name,filtro,find_unique=True):
+    def buscarServicio(self, parent_ou_name, filtro, find_unique=True):
 
         try:
-            client=self.service_client
+            client = self.service_client
         except AttributeError:
-            url=self.addr+"WSServiceServiceService?wsdl"
+            url = self.addr + "WSServiceServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.service_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.service_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.service_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.service_client
 
-        ou=****(parent_ou_name)
-        servicios=client.service.searchServices(self.s,ou,filtro)
+        ou = self.buscarOrganizacion(parent_ou_name)
+        servicios = client.service.searchServices(self.s, ou, filtro)
 
         if find_unique:
-            if len(servicios)==0:
-                raise NotFoundError(f"No se ha encontrado el servicio con el filtro: {parent_ou_name} - {filtro}. Verifique que sea un filtro LDAP válido.")
-            assert len(servicios)==1,f"Se ha encontrado más de un servicio con: {parent_ou_name} - {filtro}"
-            return serialize_object(servicios[0],target_cls=dict)
+            if len(servicios) == 0:
+                raise NotFoundError(
+                    f"No se ha encontrado el servicio con el filtro: {parent_ou_name} - {filtro}. Verifique que sea un filtro LDAP válido."
+                )
+            assert (
+                len(servicios) == 1
+            ), f"Se ha encontrado más de un servicio con: {parent_ou_name} - {filtro}"
+            return serialize_object(servicios[0], target_cls=dict)
         else:
-            return [serialize_object(s,target_cls=dict) for s in servicios]
-    
-    def buscarPerfilServicio(self,nombre, find_unique=True):
+            return [serialize_object(s, target_cls=dict) for s in servicios]
+
+    def buscarPerfilServicio(self, nombre, find_unique=True):
         """
-            NO FUNCIONA IBM DOCUMENT YOUR SHIT
-            Busca el el perfil de servicio indicado por [nombre]
-            Retorna el DN. 
+        NO FUNCIONA IBM DOCUMENT YOUR SHIT
+        Busca el el perfil de servicio indicado por [nombre]
+        Retorna el DN.
         """
 
         try:
-            client=self.search_client
+            client = self.search_client
         except AttributeError:
-            url=self.addr+"WSSearchDataServiceService?wsdl"
+            url = self.addr + "WSSearchDataServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.search_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.search_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.search_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.search_client
 
-        perfiles=client.service.findSearchControlObjects(self.s,{
-                 "objectclass": "erServiceProfile", 
-                 "contextDN": "ou=****,ou=****,ou=****,dc=colpensiones", 
-                 "returnedAttributeName": "dn", 
-                 "filter": f"(erObjectProfileName={nombre})", 
-                 "base": "global",
-                 "category":"ProfileService"
-        })
+        perfiles = client.service.findSearchControlObjects(
+            self.s,
+            {
+                "objectclass": "erServiceProfile",
+                "contextDN": "ou=****,ou=****,ou=****,dc=colpensiones",
+                "returnedAttributeName": "dn",
+                "filter": f"(erObjectProfileName={nombre})",
+                "base": "global",
+                "category": "ProfileService",
+            },
+        )
 
         if find_unique:
-            if len(perfiles)==0:
-                raise NotFoundError(f"No se ha encontrado el perfil: {nombre}. Verifique que sea un filtro LDAP válido.")
-            assert len(perfiles)==1,f"Se ha encontrado más de un perfil de servicio con: {nombre}"
+            if len(perfiles) == 0:
+                raise NotFoundError(
+                    f"No se ha encontrado el perfil: {nombre}. Verifique que sea un filtro LDAP válido."
+                )
+            assert (
+                len(perfiles) == 1
+            ), f"Se ha encontrado más de un perfil de servicio con: {nombre}"
             return perfiles[0]["value"]
         else:
             return [p["value"] for p in perfiles]
 
-    def searchWorkflow(self,nombre):
+    def searchWorkflow(self, nombre):
         """
-            Busca flujos de cuenta y acceso por el nombre.
-            Retorna el DN. 
+        Busca flujos de cuenta y acceso por el nombre.
+        Retorna el DN.
         """
 
         try:
-            client=self.search_client
+            client = self.search_client
         except AttributeError:
-            url=self.addr+"WSSearchDataServiceService?wsdl"
+            url = self.addr + "WSSearchDataServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.search_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.search_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.search_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.search_client
 
         """
         Category puede ser (usar EstaCapitalizacion y quitar _):
@@ -272,33 +318,38 @@ class ISIMClient():
         SEPARATION_OF_DUTY_POLICY, SEPARATION_OF_DUTY_RULE, SERVICE, SERVICE_MODEL, SERVICE_PROFILE, 
         SHARED_ACCESS_POLICY, SYSTEM_ROLE, SYSTEM_USER, TENANT, USERACCESS
         """
-        flujos=client.service.findSearchControlObjects(self.s,{
-                 "objectclass": "erWorkflowDefinition", 
-                 "contextDN": "ou=****,erglobalid=00000000000000000000,ou=****,dc=colpensiones", 
-                 "returnedAttributeName": "dn", 
-                 "filter": f"(erProcessName={nombre})", 
-                 "base": "global",
-                 "category":"CustomProcess"
-        })
+        flujos = client.service.findSearchControlObjects(
+            self.s,
+            {
+                "objectclass": "erWorkflowDefinition",
+                "contextDN": "ou=****,erglobalid=00000000000000000000,ou=****,dc=colpensiones",
+                "returnedAttributeName": "dn",
+                "filter": f"(erProcessName={nombre})",
+                "base": "global",
+                "category": "CustomProcess",
+            },
+        )
 
-        assert len(flujos)>0,f"No se ha encontrado el flujo: {nombre}. Verifique que sea un filtro LDAP válido."
-        assert len(flujos)==1,f"Se ha encontrado más de un servicio con: {nombre}"
+        assert (
+            len(flujos) > 0
+        ), f"No se ha encontrado el flujo: {nombre}. Verifique que sea un filtro LDAP válido."
+        assert len(flujos) == 1, f"Se ha encontrado más de un servicio con: {nombre}"
 
         return flujos[0]["value"]
 
-    def buscarGruposPorServicio(self,dn_servicio,profile_name,info):
+    def buscarGruposPorServicio(self, dn_servicio, profile_name, info):
         try:
-            client=self.group_client
+            client = self.group_client
         except AttributeError:
-            url=self.addr+"WSGroupServiceService?wsdl"
+            url = self.addr + "WSGroupServiceService?wsdl"
             settings = Settings(strict=False)
-            s=requests.Session()
-            s.verify=self.cert_path
-            self.group_client=Client(url,settings=settings,transport=Transport(session=s))
-            client=self.group_client
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.group_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.group_client
 
-        return client.service.getGroupsByService(self.s,dn_servicio,profile_name,info)
-    
-
-   
-    
+        return client.service.getGroupsByService(
+            self.s, dn_servicio, profile_name, info
+        )
