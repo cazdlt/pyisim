@@ -1,5 +1,5 @@
 from isimws.exceptions import *
-from isimws.entities import Activity, Access, Person, Service
+from isimws.entities import Activity, Access, Person, Service,StaticRole
 
 
 def groups(sesion, by, dn, groupProfileName="", groupInfo=""):
@@ -68,7 +68,7 @@ def people(
 def roles(sesion, by="errolename", filter="*", find_unique=False):
     soap = sesion.soapclient
     results = soap.buscarRol(f"({by}={filter})", find_unique)
-    return results
+    return [StaticRole(sesion,rol=r) for r in results]
 
 
 def activities(sesion, by="activityName", filter="*"):

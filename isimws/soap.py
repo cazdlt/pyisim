@@ -29,6 +29,23 @@ class ISIMClient:
         # print(sesion)
         return sesion
 
+    def lookupContainer(self,dn):
+        try:
+            client = self.ou_client
+        except AttributeError:  # si el cliente de OUs no se ha inicializado
+            url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
+            settings = Settings(strict=False)
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.ou_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.ou_client
+        
+        cont=client.service.lookupContainer(self.s,dn)
+
+        return cont
+
     def buscarOrganizacion(self, nombre):
 
         try:
@@ -162,6 +179,22 @@ class ISIMClient:
             return roles[0]
         else:
             return roles
+    
+    def lookupRole(self,dn):
+        try:
+            client = self.role_client
+        except AttributeError:
+            url = self.addr + "WSRoleServiceService?wsdl"
+            settings = Settings(strict=False)
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.role_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.role_client
+        
+        return client.service.lookupRole(self.s, dn)
+
 
     def crearRolEstatico(self, wsrole, wsou):
 

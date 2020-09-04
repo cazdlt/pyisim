@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 
 import pytz
@@ -297,63 +298,99 @@ class StaticRole:
     def __init__(
         self,
         sesion,
-        name,
-        description,
-        ou,
-        classification,
-        access_option,
-        access_category=None,
-        owner_roles=None,
-        owner_cedulas=None,
+        dn=None,
+        rol=None,
+        role_attrs=None,
     ):
+        """[summary]
 
+        Args:
+            sesion (isimws.Session): session object
+            id (str): for role lookup #TODO not implemented
+            rol (zeep.WSRole): for initialization after search
+            role_attrs (dict):      name,
+                                    description,
+                                    ou,
+                                    classification,
+                                    access_option,
+                                    access_category=None,
+                                    owner_roles=None,
+                                    owner_cedulas=None,
+        """
         sesion = sesion.soapclient
+
         url = sesion.addr + "WSRoleServiceService?wsdl"
 
         try:
             self.role_client = sesion.role_client
         except AttributeError:
             s = requests.Session()
-            s.verify = self.cert_path
+            s.verify = sesion.cert_path
             settings = Settings(strict=False)
             self.role_client = Client(
                 url, settings=settings, transport=Transport(session=s)
             )
             sesion.role_client = self.role_client
 
-        self.name = name
-        self.description = description
-        self.ou = sesion.buscarOrganizacion(ou)
+        if role_attrs:
 
-        assert classification in [
-            "Empresarial",
-            "Aplicacion",
-        ], f"El rol {name} debe ser empresarial o de aplicación."
-        if classification == "Empresarial":
-            self.classification = "role.classification.business"
+            self.name = role_attrs["name"]
+            self.description = role_attrs["description"]
+            self.ou = sesion.buscarOrganizacion(role_attrs["ou"])
+
+            assert role_attrs["classification"] in [
+                "Empresarial",
+                "Aplicacion",
+            ], f"El rol {role_attrs['name']} debe ser empresarial o de aplicación."
+            if role_attrs["classification"] == "Empresarial":
+                self.classification = "role.classification.business"
+            else:
+                self.classification = "role.classification.application"
+
+            assert role_attrs["access_option"] in [1, 2, 3]
+            self.access_option = role_attrs["access_option"]
+            if role_attrs["access_option"] == 2:
+                assert (
+                    role_attrs["access_category"] is not None
+                ), "Si el rol es acceso, debe darle una categoría"
+                self.access_category = role_attrs["access_category"]
+
+            self.owners = []
+            if role_attrs["owner_cedulas"]:
+                for dueno in role_attrs["owner_cedulas"]:
+                    # print(dueno)
+                    self.owners.append(
+                        sesion.buscarPersona(f"(employeenumber={dueno})")["itimDN"]
+                    )
+
+            if role_attrs["owner_roles"]:
+                for rol in role_attrs["owner_roles"]:
+                    # print(rol)
+                    self.owners.append(
+                        sesion.buscarRol(f"(errolename={rol})")["itimDN"]
+                    )
+
         else:
-            self.classification = "role.classification.application"
+            if dn:
+                rol=sesion.lookupRole(dn)
 
-        assert access_option in [1, 2, 3]
-        self.access_option = access_option
-        if access_option == 2:
-            assert (
-                access_category is not None
-            ), "Si el rol es acceso, debe darle una categoría"
-            self.access_category = access_category
+            self.name = rol["name"]
+            self.description = rol["description"]
+            self.dn = rol["itimDN"]
 
-        self.owners = []
-        if owner_cedulas:
-            for dueno in owner_cedulas:
-                # print(dueno)
-                self.owners.append(
-                    sesion.buscarPersona(f"(employeenumber={dueno})")["itimDN"]
-                )
-
-        if owner_roles:
-            for rol in owner_roles:
-                # print(rol)
-                self.owners.append(sesion.buscarRol(f"(errolename={rol})")["itimDN"])
+            attrs = {
+                attr["name"]: [i for i in attr["values"]["item"]]
+                for attr in rol["attributes"]["item"]
+            }
+            attrs = defaultdict(list, attrs)
+            self.ou = attrs["erparent"][0]  # dn del contenedor
+            if attrs["erroleclassification"]:
+                self.classification = attrs["erroleclassification"][0]
+            if attrs["eraccessoption"]:
+                self.access_option = attrs["eraccessoption"][0]
+            if attrs["erobjectprofilename"]:
+                self.access_category = attrs["erobjectprofilename"][0]
+            self.owners = attrs["owner"]
 
     def crearAtributoRol(self, client, name, values):
         itemFactory = client.type_factory("ns1")
@@ -407,9 +444,10 @@ class StaticRole:
         )
 
         del role["itimDN"]
+        # del role["erparent"]
         return role
 
-    def crearEnSIM(self, sesion):
+    def crear(self, sesion):
         sesion = sesion.soapclient
 
         client = self.role_client
@@ -418,9 +456,10 @@ class StaticRole:
 
         r = sesion.crearRolEstatico(wsrole, self.ou)
 
+        self.dn = r["itimDN"]
         return r
 
-    def modificarEnSIM(self, sesion, role_dn):
+    def modificar(self, sesion):
         sesion = sesion.soapclient
         url = sesion.addr + "WSRoleServiceService?wsdl"
         client = self.role_client
@@ -428,17 +467,17 @@ class StaticRole:
         wsrole = self.crearWSRole(sesion)
         wsattributes = wsrole["attributes"]["item"]
 
-        erparent = self.crearAtributoRol(client, "erparent", self.ou["itimDN"])
+        errolename = self.crearAtributoRol(client, "errolename", self.name)
         description = self.crearAtributoRol(
             client, "description", wsrole["description"]
         )
 
-        wsattributes.append(erparent)
+        wsattributes.append(errolename)
         wsattributes.append(description)
 
         # print(wsattributes)
 
-        r = sesion.modificarRolEstatico(role_dn, wsattributes)
+        r = sesion.modificarRolEstatico(self.dn, wsattributes)
 
         return r
 
@@ -584,8 +623,9 @@ class Activity:
 class Access:
     def __init__(self, access=None):
 
-        self.href = access["_links"]["self"]["href"]
-        self.name = access["_links"]["self"]["title"]
+        if access:
+            self.href = access["_links"]["self"]["href"]
+            self.name = access["_links"]["self"]["title"]
 
 
 class Service:
@@ -596,6 +636,7 @@ class Service:
         #     if "_attributes" not in service.keys():
         #         raise NotFoundError(f"Servicio no encontrado {id}")
 
-        self.dn = service["itimDN"]
-        self.profile_name = service["profileName"]
-        self.name = service["name"]
+        if service:
+            self.dn = service["itimDN"]
+            self.profile_name = service["profileName"]
+            self.name = service["name"]
