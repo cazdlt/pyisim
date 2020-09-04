@@ -106,29 +106,35 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
 - Functionalities
     - TLS Client
     - Authentication
-    - Access request
-    - Complete Manual Activities
-        - Approval
-        - Work Order
-        - RFI
-    - Create:
-        - Person (and custom Person entities)
-        - BPPerson (and custom BPPPerson entities)
-        - Static Roles
-        - Provisioning Policies
-    - Modify:
-        - Person (and custom Person entities)
-        - BPPerson (and custom BPPPerson entities)
-        - Static Roles
-        - Provisioning Policies
-    - Delete:
-        - Services
-    - Search: 
-        - Most things
-        - Currently implementing interfaces to ease this task
+    - People
+        - Add
+        - Modify
+        - Search
+        - Lookup
+        - Request access (and search/lookup)
+        - Create custom Person entities (BPPerson, etc..)
+    - Activities
+        - Search
+        - Lookup
+        - Complete
+            - Approvals
+            - Work Orders
+            - RFIs
+    - Static roles
+        - Search
+        - Lookup
+        - Add
+        - Modify
+        - Delete
+    - Provisioning policies
+        - Add
+        - Modify
+        - Search
+    - Services
+        - Search
+        - Delete
     - ISIM VA Utilities:
         - Create/Search/Update property files
-
 
 - TODO:
     - Improve project structure
