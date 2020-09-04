@@ -193,7 +193,12 @@ class ISIMClient:
             )
             client = self.role_client
         
-        return client.service.lookupRole(self.s, dn)
+        try:
+            r=client.service.lookupRole(self.s, dn)
+            return r
+        except:
+            raise NotFoundError("Rol no encontrado")
+        
 
 
     def crearRolEstatico(self, wsrole, wsou):
@@ -227,6 +232,26 @@ class ISIMClient:
             client = self.role_client
 
         return client.service.modifyStaticRole(self.s, role_dn, wsattr_list)
+
+    def eliminarRolEstatico(self,role_dn,date=None):
+        try:
+            client = self.role_client
+        except AttributeError:
+            url = self.addr + "WSRoleServiceService?wsdl"
+            settings = Settings(strict=False)
+            s = requests.Session()
+            s.verify = self.cert_path
+            self.role_client = Client(
+                url, settings=settings, transport=Transport(session=s)
+            )
+            client = self.role_client
+
+        if date:
+            #TODO
+            pass
+        else:
+            date=Nil
+        return client.service.removeRole(self.s, role_dn, date)
 
     def buscarPersona(self, filtro):
 

@@ -1,3 +1,4 @@
+from isimws.exceptions import NotFoundError
 import pytest
 
 from isimws import search
@@ -54,6 +55,12 @@ def test_lookup_rol(sesion):
     r = StaticRole(sesion, dn=dn)
     assert r.name == "ITIM Administrators"
 
+    dn = "not found"
+    try:
+        r = StaticRole(sesion, dn=dn)
+    except NotFoundError:
+        assert True
+
 
 def test_crear_modificar_eliminar_rol(sesion):
     # TODO
@@ -79,3 +86,10 @@ def test_crear_modificar_eliminar_rol(sesion):
     assert (
         StaticRole(sesion, dn=rol.dn).name == rol.name
     )  # busca el rol en sim y lo compara con el nuevo
+
+    # del
+    rol.eliminar(sesion)
+    try:
+        r = StaticRole(sesion, dn=rol.dn)
+    except NotFoundError:
+        assert True

@@ -481,6 +481,14 @@ class StaticRole:
 
         return r
 
+    def eliminar(self,sesion,fecha=None):
+        if fecha:
+            raise NotImplementedError("No se ha implementado la programación de tareas.")
+
+        r=sesion.soapclient.eliminarRolEstatico(self.dn,fecha)
+
+        return r
+
 
 class Person:
 
