@@ -2,6 +2,7 @@ from zeep import Client, Settings
 from zeep.xsd import Nil
 from zeep.transports import Transport
 from zeep.helpers import serialize_object
+from zeep.cache import InMemoryCache
 
 # from isim_classes import StaticRole
 import requests
@@ -22,43 +23,44 @@ class ISIMClient:
     def login(self, user_, pass_):
         url = self.addr + "WSSessionService?wsdl"
         assert self.cert_path is not None, "No certificate passed"
-        s = requests.Session()
-        s.verify = self.cert_path
-        client = Client(url, transport=Transport(session=s))
+        client = self.__get_client("session_client", url)
         sesion = client.service.login(user_, pass_)
         # print(sesion)
         return sesion
 
-    def lookupContainer(self,dn):
-        try:
-            client = self.ou_client
-        except AttributeError:  # si el cliente de OUs no se ha inicializado
-            url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
+    def __get_client(self, client_name, url):
+
+        # Si ya se inicializó el cliente especificado en client_name, lo devuelve. Si no, lo inicializa, setea y devuelve.
+        client = getattr(self, client_name, None)
+
+        if client is None:
             settings = Settings(strict=False)
             s = requests.Session()
             s.verify = self.cert_path
-            self.ou_client = Client(
-                url, settings=settings, transport=Transport(session=s)
+            client = Client(
+                url,
+                settings=settings,
+                transport=Transport(session=s, cache=InMemoryCache()),
             )
-            client = self.ou_client
-        
-        cont=client.service.lookupContainer(self.s,dn)
+            # necesario porque los WSDL de SIM queman el puerto y no funciona con balanceador
+            client.service._binding_options["address"] = url[:-5]
+            setattr(self, client_name, client)
+
+        return client
+
+    def lookupContainer(self, dn):
+
+        url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
+        client = self.__get_client("ou_client", url)
+
+        cont = client.service.lookupContainer(self.s, dn)
 
         return cont
 
     def buscarOrganizacion(self, nombre):
 
-        try:
-            client = self.ou_client
-        except AttributeError:  # si el cliente de OUs no se ha inicializado
-            url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.ou_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.ou_client
+        url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
+        client = self.__get_client("ou_client", url)
 
         ous = client.service.searchContainerByName(self.s, Nil, "Organization", nombre)
         if len(ous) == 0:
@@ -85,17 +87,8 @@ class ISIMClient:
            Devuelve lista de resultados
         """
 
-        try:
-            client = self.pp_client
-        except AttributeError:
-            url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.pp_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.pp_client
+        url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
+        client = self.__get_client("pp_client", url)
 
         politicas = client.service.getPolicies(self.s, wsou, nombre_politica)
 
@@ -112,17 +105,8 @@ class ISIMClient:
 
     def crearPolitica(self, ou, wsprovisioningpolicy, date):
 
-        try:
-            client = self.pp_client
-        except AttributeError:
-            url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.pp_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.pp_client
+        url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
+        client = self.__get_client("pp_client", url)
 
         s = client.service.createPolicy(self.s, ou, wsprovisioningpolicy, date)
 
@@ -130,17 +114,8 @@ class ISIMClient:
 
     def modificarPolitica(self, ou, wsprovisioningpolicy, date):
 
-        try:
-            client = self.pp_client
-        except AttributeError:
-            url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.pp_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.pp_client
+        url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
+        client = self.__get_client("pp_client", url)
 
         s = client.service.modifyPolicy(self.s, ou, wsprovisioningpolicy, date)
 
@@ -157,17 +132,8 @@ class ISIMClient:
            Devuelve lista de resultados
         """
 
-        try:
-            client = self.role_client
-        except AttributeError:
-            url = self.addr + "WSRoleServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.role_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.role_client
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.__get_client("role_client", url)
 
         roles = client.service.searchRoles(self.s, filtro)
 
@@ -179,93 +145,48 @@ class ISIMClient:
             return roles[0]
         else:
             return roles
-    
-    def lookupRole(self,dn):
+
+    def lookupRole(self, dn):
+
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.__get_client("role_client", url)
+
         try:
-            client = self.role_client
-        except AttributeError:
-            url = self.addr + "WSRoleServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.role_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.role_client
-        
-        try:
-            r=client.service.lookupRole(self.s, dn)
+            r = client.service.lookupRole(self.s, dn)
             return r
         except:
             raise NotFoundError("Rol no encontrado")
-        
-
 
     def crearRolEstatico(self, wsrole, wsou):
 
-        try:
-            client = self.role_client
-        except AttributeError:
-            url = self.addr + "WSRoleServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.role_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.role_client
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.__get_client("role_client", url)
 
         return client.service.createStaticRole(self.s, wsou, wsrole)
 
     def modificarRolEstatico(self, role_dn, wsattr_list):
 
-        try:
-            client = self.role_client
-        except AttributeError:
-            url = self.addr + "WSRoleServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.role_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.role_client
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.__get_client("role_client", url)
 
         return client.service.modifyStaticRole(self.s, role_dn, wsattr_list)
 
-    def eliminarRolEstatico(self,role_dn,date=None):
-        try:
-            client = self.role_client
-        except AttributeError:
-            url = self.addr + "WSRoleServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.role_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.role_client
+    def eliminarRolEstatico(self, role_dn, date=None):
+
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.__get_client("role_client", url)
 
         if date:
-            #TODO
+            # TODO
             pass
         else:
-            date=Nil
+            date = Nil
         return client.service.removeRole(self.s, role_dn, date)
 
     def buscarPersona(self, filtro):
 
-        try:
-            client = self.person_client
-        except AttributeError:
-            url = self.addr + "WSPersonServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.person_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.person_client
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.__get_client("person_client", url)
 
         personas = client.service.searchPersonsFromRoot(self.s, filtro, Nil)
 
@@ -277,17 +198,8 @@ class ISIMClient:
 
     def buscarServicio(self, parent_ou_name, filtro, find_unique=True):
 
-        try:
-            client = self.service_client
-        except AttributeError:
-            url = self.addr + "WSServiceServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.service_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.service_client
+        url = self.addr + "WSServiceServiceService?wsdl"
+        client = self.__get_client("service_client", url)
 
         ou = self.buscarOrganizacion(parent_ou_name)
         servicios = client.service.searchServices(self.s, ou, filtro)
@@ -311,17 +223,8 @@ class ISIMClient:
         Retorna el DN.
         """
 
-        try:
-            client = self.search_client
-        except AttributeError:
-            url = self.addr + "WSSearchDataServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.search_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.search_client
+        url = self.addr + "WSSearchDataServiceService?wsdl"
+        client = self.__get_client("search_client", url)
 
         perfiles = client.service.findSearchControlObjects(
             self.s,
@@ -353,17 +256,8 @@ class ISIMClient:
         Retorna el DN.
         """
 
-        try:
-            client = self.search_client
-        except AttributeError:
-            url = self.addr + "WSSearchDataServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.search_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.search_client
+        url = self.addr + "WSSearchDataServiceService?wsdl"
+        client = self.__get_client("search_client", url)
 
         """
         Category puede ser (usar EstaCapitalizacion y quitar _):
@@ -396,18 +290,11 @@ class ISIMClient:
         return flujos[0]["value"]
 
     def buscarGruposPorServicio(self, dn_servicio, profile_name, info):
-        try:
-            client = self.group_client
-        except AttributeError:
-            url = self.addr + "WSGroupServiceService?wsdl"
-            settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            self.group_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            client = self.group_client
 
-        return client.service.getGroupsByService(
+        url = self.addr + "WSGroupServiceService?wsdl"
+        client = self.__get_client("group_client", url)
+
+        grps = client.service.getGroupsByService(
             self.s, dn_servicio, profile_name, info
         )
+        return grps

@@ -63,7 +63,6 @@ def test_lookup_rol(sesion):
 
 
 def test_crear_modificar_eliminar_rol(sesion):
-    # TODO
 
     # creación
     rolinfo = {
@@ -93,3 +92,10 @@ def test_crear_modificar_eliminar_rol(sesion):
         r = StaticRole(sesion, dn=rol.dn)
     except NotFoundError:
         assert True
+    else:
+        assert False
+
+def test_get_client():
+    s=Session(test_url, admin_login, admin_pw, cert)
+    s.soapclient.login(admin_login, admin_pw)
+    s.soapclient.login(admin_login, admin_pw)
