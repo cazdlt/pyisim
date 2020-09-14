@@ -1,8 +1,8 @@
 from isimws.exceptions import *
-from isimws.entities import Activity, Access, Person, Service,StaticRole,ProvisioningPolicy
+from isimws.entities import Activity, Access, Person, Service,StaticRole,ProvisioningPolicy,Group
 
 
-def groups(sesion, by, dn, groupProfileName="", groupInfo=""):
+def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
     """Buscar grupos.
 
     Args:
@@ -25,14 +25,14 @@ def groups(sesion, by, dn, groupProfileName="", groupInfo=""):
         raise NotImplementedError("No implementado aún")
     elif by == "service":
         assert (
-            groupProfileName is not None
+            group_profile_name is not None
         ), "Debe ingresar el parámetro groupProfileName"
-        assert groupInfo is not None, "Debe ingresar el parámetro groupInfo"
-        ret = sesion.buscarGruposPorServicio(dn, groupProfileName, groupInfo)
+        assert group_info is not None, "Debe ingresar el parámetro groupInfo"
+        ret = sesion.buscarGruposPorServicio(service_dn, group_profile_name, group_info)
     else:
         raise InvalidOptionError("Opción inválida")
 
-    return ret
+    return [Group(sesion,group=****) for g in ret]
 
 
 def people(

@@ -43,7 +43,7 @@ from isimws import Person
 from isimws import search
 class MyBPPerson(Person):
     
-    orgid = search.ou("Organization","IBM").id
+    orgid = search.ou("Organization","IBM").href
     profile_name="BPPerson"
     excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
 
@@ -130,20 +130,20 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
         - Add
         - Modify
         - Search
+        - Delete
     - Services
         - Search
-        - Delete
     - ISIM VA Utilities:
         - Create/Search/Update property files
 
 - TODO:
     - Improve project structure
-        - Use english for everything
+        - Use english for the high level interface
     - Improve documentation
         - Basic usage
-        - Batch loads
         - Requirements
-    - Create class bindings for all searchable items
-    - Delete operations for Person classes
-    - Improve initialization after search operations
-        - Groups
+    - Delete/Restore/Suspend operations for Person classes
+    - Search groups by account/access
+    - Improve container search
+    - Add operations to services
+

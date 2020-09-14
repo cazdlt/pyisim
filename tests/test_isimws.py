@@ -188,3 +188,10 @@ def test_crear_modificar_eliminar_politica(sesion):
     time.sleep(10)
     pp_elim=search.provisioning_policy(sesion,name,test_org)
     assert len(pp_elim)==0
+
+def test_search_groups(sesion):
+    #TODO Search by account/access
+    #by service
+    service_dn=search.service(sesion,test_org,filter="Directorio Activo")[0].dn
+    r=search.groups(sesion,by="service",service_dn=service_dn,group_info="Administrators")
+    print(r)
