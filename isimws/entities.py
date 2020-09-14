@@ -76,14 +76,14 @@ class ProvisioningPolicy:
             self.description=provisioning_policy["description"]
             self.name=provisioning_policy["name"]
             self.dn=provisioning_policy["itimDN"]
-            self.ou=****["organizationalContainer"]
+            self.ou=provisioning_policy["organizationalContainer"]
             self.priority=provisioning_policy["priority"]
             self.scope=provisioning_policy["scope"]
             self.entitlements=provisioning_policy["entitlements"]
             for titularidad in self.entitlements.item:
                 if titularidad.parameters.parameters is None:
                     titularidad.parameters.parameters={"item":[]}
-            self.membership=****["membership"]
+            self.membership=provisioning_policy["membership"]
             self.caption=provisioning_policy["caption"]
             self.keywords=provisioning_policy["keywords"]
             self.enabled=provisioning_policy["enabled"]
@@ -256,7 +256,7 @@ class ProvisioningPolicy:
             description=self.description,
             name=self.name,
             entitlements=self.entitlements,
-            membership=****,
+            membership=self.membership,
             priority=self.priority,
             scope=self.scope,
             enabled=self.enabled,
@@ -280,7 +280,7 @@ class ProvisioningPolicy:
             description=self.description,
             name=self.name,
             entitlements=self.entitlements,
-            membership=****,
+            membership=self.membership,
             priority=self.priority,
             scope=self.scope,
             enabled=self.enabled,
@@ -673,7 +673,7 @@ class Service:
             self.name = service["name"]
 
 class Group:
-    def __init__(self,sesion,group=****):
+    def __init__(self,sesion,group=None):
         if group:
             self.name=group["name"]
             self.dn=group["itimDN"]

@@ -32,7 +32,7 @@ def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
     else:
         raise InvalidOptionError("Opción inválida")
 
-    return [Group(sesion,group=****) for g in ret]
+    return [Group(sesion,group=g) for g in ret]
 
 
 def people(
@@ -66,7 +66,7 @@ def people(
 
 def provisioning_policy(sesion,name,container_name):
 
-    wsou=****(container_name)
+    wsou=sesion.soapclient.buscarOrganizacion(container_name)
     results=sesion.soapclient.buscarPoliticaSuministro(wsou, nombre_politica=name, find_unique=False)
     return [ProvisioningPolicy(sesion,provisioning_policy=p) for p in results]
 

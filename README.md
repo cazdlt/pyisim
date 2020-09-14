@@ -9,8 +9,8 @@ Usage example:
 - Login
 ```py
 from isimws.auth import Session
-user=****
-password=****
+user="itim manager"
+password="secret"
 cert="./my_certificate.cer"
 url="isim.deltaits.com"
 sess=Session(url,user,password,cert)
@@ -90,8 +90,8 @@ from isimws.va.auth import Session
 from isimws.va.configure import update_property
 
 
-u=****@local"
-p=****
+u="admin@local"
+p="secret"
 url="isimva.deltaits.com"
 cert="./mycert.cer"
 

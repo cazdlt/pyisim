@@ -9,7 +9,7 @@ class Session:
 
     def __init__(self, username, password, base_url, certificate_path):
         self.username = username
-        # self.password=****
+        # self.password=password
         self.base_url = base_url
         # self.cert=certificate_path
 

@@ -251,7 +251,7 @@ class ISIMClient:
             self.s,
             {
                 "objectclass": "erWorkflowDefinition",
-                "contextDN": f"ou=****,erglobalid=00000000000000000000,ou={org_name},dc={org_name}",
+                "contextDN": f"ou=workflow,erglobalid=00000000000000000000,ou={org_name},dc={org_name}",
                 "returnedAttributeName": "dn",
                 "filter": f"(erProcessName={nombre})",
                 "base": "global",

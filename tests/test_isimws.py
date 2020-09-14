@@ -34,7 +34,7 @@ def test_search_roles(sesion):
 
     assert len(r) > 0
     assert "SAP" in r[0].name.upper()
-    assert "ou=****[0].dn
+    assert "ou=roles" in r[0].dn
 
 
 def test_new_rol(sesion):
@@ -53,7 +53,7 @@ def test_new_rol(sesion):
 
 
 def test_lookup_rol(sesion):
-    dn = f"erglobalid=00000000000000000001,ou=****,erglobalid=00000000000000000000,ou={test_org},dc={test_org}"
+    dn = f"erglobalid=00000000000000000001,ou=roles,erglobalid=00000000000000000000,ou={test_org},dc={test_org}"
     r = StaticRole(sesion, dn=dn)
     assert r.name == "ITIM Administrators"
 
@@ -125,7 +125,7 @@ def test_inicializar_politicas(sesion):
         "memberships":["Auditor"],
         "entitlements":entitlements
     }
-    pp=****(sesion,policy_attrs=policy)
+    pp=ProvisioningPolicy(sesion,policy_attrs=policy)
 
     print(pp)
 
@@ -141,7 +141,7 @@ def test_inicializar_politicas(sesion):
             },
         }
     }
-    pp=****(sesion,policy_attrs=policy)
+    pp=ProvisioningPolicy(sesion,policy_attrs=policy)
     print(pp)
     
 def test_search_provisioning_policy(sesion):
@@ -166,7 +166,7 @@ def test_crear_modificar_eliminar_politica(sesion):
             },
         }
     }
-    pp=****(sesion,policy_attrs=policy)
+    pp=ProvisioningPolicy(sesion,policy_attrs=policy)
     pp.crear(sesion)
     
     #buscar pol creada
