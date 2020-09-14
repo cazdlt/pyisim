@@ -7,3 +7,5 @@ isimws.egg-info
 pycolp
 *.cer
 secret.py
+passwords.txt
+.git*
