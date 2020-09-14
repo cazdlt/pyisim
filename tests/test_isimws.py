@@ -1,3 +1,4 @@
+from random import randint
 from isimws.exceptions import NotFoundError
 import pytest
 import time
@@ -5,7 +6,7 @@ import random
 from isimws import search
 from isimws.auth import Session
 from isimws.entities import Person, ProvisioningPolicy, StaticRole
-from secret import admin_login, admin_pw, cert, env, test_url, test_org
+from secret import admin_login, admin_pw, cert, env, test_url, test_org,test_description,test_manager,test_dep
 
 
 @pytest.fixture
@@ -195,3 +196,33 @@ def test_search_groups(sesion):
     service_dn=search.service(sesion,test_org,filter="Directorio Activo")[0].dn
     r=search.groups(sesion,by="service",service_dn=service_dn,group_info="Administrators")
     print(r)
+
+def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
+
+    #required attributes on the Person form (more can be included) + required ORGID attribute
+    info_persona={
+        "givenname":"te",
+        "sn":"st",
+        "cn":"test",
+        "initials":"CC",
+        "employeenumber":random.randint(1,9999999),
+        "departmentnumber":test_dep,
+        "manager":test_manager,
+        "title":"test",
+        "description":test_description,
+        "businesscategory":"test",
+        "mobile":"test@test.com",
+    }
+    persona=Person(sesion,person_attrs=info_persona)
+
+    #crear y validar
+    persona.crear(sesion,test_org,"ok")    
+    time.sleep(2)
+    persona_creada=search.people(sesion,by="employeenumber",filter=info_persona["employeenumber"],attributes="*",limit=1)[0]
+    assert persona_creada.employeenumber==str(info_persona["employeenumber"])
+
+    #modificar
+    persona_creada.title="nuevo cargo"
+    persona_creada.modificar(sesion,"ok")
+    persona_mod=search.people(sesion,by="employeenumber",filter=info_persona["employeenumber"],attributes="*",limit=1)[0]
+    assert persona_mod.title==persona_creada.title

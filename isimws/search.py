@@ -61,7 +61,7 @@ def people(
         filtro=filter,
         limit=limit,
     )
-    personas = [profile(sesion, rest_person=p) for p in ret]
+    personas = [profile(sesion, person=p) for p in ret]
     return personas
 
 def provisioning_policy(sesion,name,container_name):

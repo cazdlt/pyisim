@@ -517,60 +517,34 @@ class Person:
 
     profile_name = "Person"
 
-    def __init__(self, sesion, **kwargs):
+    def __init__(self, sesion, person=None, href=None,person_attrs=None):
 
-        if not getattr(self, "excluded_attributes", ""):
-            self.excluded_attributes = [
-                "erpswdlastchanged",
-                "erlastmodifiedtime",
-                "ercreatedate",
-                "ersynchpassword",
-                "name",
-                "href",
-                "personType",
-                "erpersonstatus",
-                "erparent",
-                "ercustomdisplay",
-                "erlastcertifieddate",
-                "errolerecertificationlastaction",
-                "errolerecertificationlastactiondate",
-            ]
+        self.changes={}
 
-        if "rest_person" in kwargs:
+        if person:
+            self.href = person["_links"]["self"]["href"]
+            person_attrs = person["_attributes"]
 
-            rest_person = kwargs["rest_person"]
-            self.href = rest_person["_links"]["self"]["href"]
-            attrs = rest_person["_attributes"]
-            for k, v in attrs.items():
-                # print(k)
-                setattr(self, k, v)
-
-        elif "href" in kwargs:
-            assert (
-                "sesion" in kwargs
-            ), "Para inicializar desde lookup es necesario una sesión válida"
-            href = kwargs["href"]
-            r = kwargs["sesion"].restclient.lookupPersona(href)
-
+        elif href:
+            r = sesion.restclient.lookupPersona(href)
             assert (
                 r["_links"]["self"]["href"] == href
             ), "Persona no encontrada o inválida"
 
-            attrs = r["_attributes"]
             self.href = href
-            for k, v in attrs.items():
-                setattr(self, k, v)
-        else:
-            for attr, value in kwargs.items():
-                setattr(self, attr, value)
+            person_attrs = r["_attributes"]
+
+        for k, v in person_attrs.items():
+            setattr(self, k, v)
+
+            
+    def __setattr__(self, attr, val):
+        if hasattr(self,attr):
+            self.changes[attr]=val
+        super().__setattr__(attr, val)
+        
 
     def __init_subclass__(cls):
-        try:
-            getattr(cls, "orgid")
-        except AttributeError:
-            raise TypeError(
-                f"All classes based on the Person entity need their Organization ID defined in the class attribute orgid"
-            )
 
         try:
             getattr(cls, "profile_name")
@@ -579,35 +553,17 @@ class Person:
                 f"All classes based on the Person entity need their profile specified (Person/BPPerson/Your custom profile) in the profile_name attribute"
             )
 
-        rest_attributes = [
-            "erpswdlastchanged",
-            "erlastmodifiedtime",
-            "ercreatedate",
-            "ersynchpassword",
-            "name",
-            "href",
-            "personType",
-            "erpersonstatus",
-            "erparent",
-            "ercustomdisplay",
-            "erlastcertifieddate",
-            "errolerecertificationlastaction",
-            "errolerecertificationlastactiondate",
-        ]
-        excluded = getattr(cls, "excluded_attributes", [])
-        excluded.extend(rest_attributes)
-        setattr(cls, "excluded_attributes", excluded)
-
         return super().__init_subclass__()
 
-    def crear(self, sesion, justificacion):
-        ret = sesion.restclient.crearPersona(self, justificacion)
+    def crear(self, sesion, ou_name, justificacion):
+        orgid=sesion.restclient.buscarOUs("organizations",filtro=ou_name)[0]["_links"]["self"]["href"].split("/")[-1]
+        ret = sesion.restclient.crearPersona(self, orgid, justificacion)
         return ret
 
     def modificar(self, sesion, justificacion):
         try:
             href = self.href
-            ret = sesion.restclient.modificarPersona(self.href, self, justificacion)
+            ret = sesion.restclient.modificarPersona(self.href, self.changes, justificacion)
             return ret
         except AttributeError:
             raise Exception(
@@ -620,6 +576,16 @@ class Person:
         if len(accesos) > 0:
             ret = sesion.restclient.solicitarAccesos(accesos, self, justificacion)
         return ret
+
+    # def suspender(self,sesion,justificacion):
+    #     try:
+    #         dn = self.dn
+    #         ret = sesion.restclient.modificarPersona(self.href, self, justificacion)
+    #         return ret
+    #     except AttributeError:
+    #         raise Exception(
+    #             "Person has no reference to ISIM, search for it or initialize it with href to link it."
+    #         )
 
 
 class Activity:

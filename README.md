@@ -26,14 +26,14 @@ info_persona={
     "title": "Especialista de producto",
     "departmentnumber":"IBM",
 }
-persona = Person(sess, **info_persona)
-persona.crear(sess,"my justification")
+persona = Person(sess, person_attrs=info_persona)
+persona.crear(sess,"my org","my justification")
 ```
 - Modifying people
 ```py
 from isimws import search
 persona = search.people(sess,Person,"employeenumber","1015463230",limit=1)[0]
-persona.title="Gerente"
+persona.title="CEO"
 persona.modificar(sess,"my justification")
 ```
 
@@ -41,21 +41,19 @@ persona.modificar(sess,"my justification")
 ```py
 from isimws import Person
 from isimws import search
+
 class MyBPPerson(Person):
     
-    orgid = search.ou("Organization","IBM").href
     profile_name="BPPerson"
-    excluded_attributes=["cn","sn","givenname","employeenumber","erlocale"]
 
-    def __init__(self,first_name,**kwargs):
+    def __init__(self,info,first_name=None):
         if first_name is None:
                 first_name = "Andrés"
-        self.givenname = nombre
+        info["givenname"] = first_name
 
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
+        super().__init__(person_attrs=info)
 
-MyBPPerson("Juan",**info_persona).crear(sess,"New BPPerson")  
+MyBPPerson({"sn":"Zamora"}).crear(sess,"my org","New BPPerson")  
 ```
 
 - Access request 
@@ -144,6 +142,6 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
         - Requirements
     - Delete/Restore/Suspend operations for Person classes
     - Search groups by account/access
-    - Improve container search
+    - Improve container search and managing in entity creation (don't search in role/pp/person create)
     - Add operations to services
 

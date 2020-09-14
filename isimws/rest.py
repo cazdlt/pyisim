@@ -66,27 +66,6 @@ class ISIMClient:
 
         OUs = json.loads(self.s.get(url, params=data).text)
 
-        # print(OUs)
-        # print(data)
-
-        # filtro de búsqueda
-        try:
-            if filtro != "*":
-                if buscar_igual:
-                    OUs = filter(
-                        lambda ou: filtro.lower()
-                        == ou["_attributes"][buscar_por].lower(),
-                        OUs,
-                    )
-                else:
-                    OUs = filter(
-                        lambda ou: filtro.lower()
-                        in ou["_attributes"][buscar_por].lower(),
-                        OUs,
-                    )
-        except KeyError:
-            OUs = None
-
         return list(OUs)
 
     # si filtro="*" busca todo
@@ -119,7 +98,7 @@ class ISIMClient:
 
         return list(personas)
 
-    def crearPersona(self, person, justificacion):
+    def crearPersona(self, person, orgid, justificacion):
 
         url = self.__addr + "/itim/rest/people"
 
@@ -130,11 +109,14 @@ class ISIMClient:
         #     raise Exception(
         #         "No es una tipo válido de persona. Seleccione un tipo de persona entre los siguientes: "+str(tipos))
 
+        person_data=person.__dict__.copy()
+        person_data.pop("changes","")
+        
         data = {
             "justification": justificacion,
             "profileName": person.profile_name,
-            "orgID": person.orgid,
-            "_attributes": person.__dict__,
+            "orgID": orgid,
+            "_attributes": person_data,
         }
 
         headers = {
@@ -147,17 +129,12 @@ class ISIMClient:
         ret = self.s.post(url, json=data, headers=headers)
         return json.loads(ret.text)
 
-    def modificarPersona(self, href, person, justificacion):
+    def modificarPersona(self, href, changes, justificacion):
         url = self.__addr + href
-
-        info = person.__dict__.copy()
-
-        for excluded in person.excluded_attributes:
-            info.pop(excluded, "")
 
         data = {
             "justification": justificacion,
-            "_attributes": info,
+            "_attributes": changes,
         }
 
         headers = {
@@ -166,8 +143,6 @@ class ISIMClient:
             "Accept": "*/*",
         }
 
-        # if person.profile_name.lower()=="bpperson":
-        #     raise NotImplementedError("no implementado?")
         ret = self.s.put(url, json=data, headers=headers)
         return json.loads(ret.text)
 
