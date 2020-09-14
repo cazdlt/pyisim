@@ -145,5 +145,5 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
         - Requirements
     - Create class bindings for all searchable items
     - Delete operations for Person classes
-    - Generalize policy and role creation
     - Improve initialization after search operations
+        - Groups

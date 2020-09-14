@@ -1,3 +1,4 @@
+from datetime import date
 from zeep import Client, Settings
 from zeep.xsd import Nil
 from zeep.transports import Transport
@@ -23,12 +24,12 @@ class ISIMClient:
     def login(self, user_, pass_):
         url = self.addr + "WSSessionService?wsdl"
         assert self.cert_path is not None, "No certificate passed"
-        client = self.__get_client("session_client", url)
+        client = self.get_client("session_client", url)
         sesion = client.service.login(user_, pass_)
         # print(sesion)
         return sesion
 
-    def __get_client(self, client_name, url):
+    def get_client(self, client_name, url):
 
         # Si ya se inicializó el cliente especificado en client_name, lo devuelve. Si no, lo inicializa, setea y devuelve.
         client = getattr(self, client_name, None)
@@ -51,7 +52,7 @@ class ISIMClient:
     def lookupContainer(self, dn):
 
         url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
-        client = self.__get_client("ou_client", url)
+        client = self.get_client("ou_client", url)
 
         cont = client.service.lookupContainer(self.s, dn)
 
@@ -60,7 +61,7 @@ class ISIMClient:
     def buscarOrganizacion(self, nombre):
 
         url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
-        client = self.__get_client("ou_client", url)
+        client = self.get_client("ou_client", url)
 
         ous = client.service.searchContainerByName(self.s, Nil, "Organization", nombre)
         if len(ous) == 0:
@@ -88,7 +89,7 @@ class ISIMClient:
         """
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.__get_client("pp_client", url)
+        client = self.get_client("pp_client", url)
 
         politicas = client.service.getPolicies(self.s, wsou, nombre_politica)
 
@@ -106,7 +107,7 @@ class ISIMClient:
     def crearPolitica(self, ou, wsprovisioningpolicy, date):
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.__get_client("pp_client", url)
+        client = self.get_client("pp_client", url)
 
         s = client.service.createPolicy(self.s, ou, wsprovisioningpolicy, date)
 
@@ -115,11 +116,20 @@ class ISIMClient:
     def modificarPolitica(self, ou, wsprovisioningpolicy, date):
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.__get_client("pp_client", url)
+        client = self.get_client("pp_client", url)
 
         s = client.service.modifyPolicy(self.s, ou, wsprovisioningpolicy, date)
 
         return s
+    
+    def eliminarPolitica(self,ou,dn,date):
+        url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
+        client = self.get_client("pp_client", url)
+
+        s = client.service.deletePolicy(self.s, ou, dn, date)
+
+        return s
+
 
     def buscarRol(self, filtro, find_unique=True):
         """
@@ -133,7 +143,7 @@ class ISIMClient:
         """
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.__get_client("role_client", url)
+        client = self.get_client("role_client", url)
 
         roles = client.service.searchRoles(self.s, filtro)
 
@@ -149,7 +159,7 @@ class ISIMClient:
     def lookupRole(self, dn):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.__get_client("role_client", url)
+        client = self.get_client("role_client", url)
 
         try:
             r = client.service.lookupRole(self.s, dn)
@@ -160,21 +170,21 @@ class ISIMClient:
     def crearRolEstatico(self, wsrole, wsou):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.__get_client("role_client", url)
+        client = self.get_client("role_client", url)
 
         return client.service.createStaticRole(self.s, wsou, wsrole)
 
     def modificarRolEstatico(self, role_dn, wsattr_list):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.__get_client("role_client", url)
+        client = self.get_client("role_client", url)
 
         return client.service.modifyStaticRole(self.s, role_dn, wsattr_list)
 
     def eliminarRolEstatico(self, role_dn, date=None):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.__get_client("role_client", url)
+        client = self.get_client("role_client", url)
 
         if date:
             # TODO
@@ -186,7 +196,7 @@ class ISIMClient:
     def buscarPersona(self, filtro):
 
         url = self.addr + "WSPersonServiceService?wsdl"
-        client = self.__get_client("person_client", url)
+        client = self.get_client("person_client", url)
 
         personas = client.service.searchPersonsFromRoot(self.s, filtro, Nil)
 
@@ -199,7 +209,7 @@ class ISIMClient:
     def buscarServicio(self, parent_ou_name, filtro, find_unique=True):
 
         url = self.addr + "WSServiceServiceService?wsdl"
-        client = self.__get_client("service_client", url)
+        client = self.get_client("service_client", url)
 
         ou = self.buscarOrganizacion(parent_ou_name)
         servicios = client.service.searchServices(self.s, ou, filtro)
@@ -216,48 +226,15 @@ class ISIMClient:
         else:
             return [serialize_object(s, target_cls=dict) for s in servicios]
 
-    def buscarPerfilServicio(self, nombre, find_unique=True):
-        """
-        NO FUNCIONA IBM DOCUMENT YOUR SHIT
-        Busca el el perfil de servicio indicado por [nombre]
-        Retorna el DN.
-        """
 
-        url = self.addr + "WSSearchDataServiceService?wsdl"
-        client = self.__get_client("search_client", url)
-
-        perfiles = client.service.findSearchControlObjects(
-            self.s,
-            {
-                "objectclass": "erServiceProfile",
-                "contextDN": "ou=****,ou=****,ou=****,dc=colpensiones",
-                "returnedAttributeName": "dn",
-                "filter": f"(erObjectProfileName={nombre})",
-                "base": "global",
-                "category": "ProfileService",
-            },
-        )
-
-        if find_unique:
-            if len(perfiles) == 0:
-                raise NotFoundError(
-                    f"No se ha encontrado el perfil: {nombre}. Verifique que sea un filtro LDAP válido."
-                )
-            assert (
-                len(perfiles) == 1
-            ), f"Se ha encontrado más de un perfil de servicio con: {nombre}"
-            return perfiles[0]["value"]
-        else:
-            return [p["value"] for p in perfiles]
-
-    def searchWorkflow(self, nombre):
+    def searchWorkflow(self, nombre,org_name):
         """
         Busca flujos de cuenta y acceso por el nombre.
         Retorna el DN.
         """
 
         url = self.addr + "WSSearchDataServiceService?wsdl"
-        client = self.__get_client("search_client", url)
+        client = self.get_client("search_client", url)
 
         """
         Category puede ser (usar EstaCapitalizacion y quitar _):
@@ -274,7 +251,7 @@ class ISIMClient:
             self.s,
             {
                 "objectclass": "erWorkflowDefinition",
-                "contextDN": "ou=****,erglobalid=00000000000000000000,ou=****,dc=colpensiones",
+                "contextDN": f"ou=****,erglobalid=00000000000000000000,ou={org_name},dc={org_name}",
                 "returnedAttributeName": "dn",
                 "filter": f"(erProcessName={nombre})",
                 "base": "global",
@@ -292,7 +269,7 @@ class ISIMClient:
     def buscarGruposPorServicio(self, dn_servicio, profile_name, info):
 
         url = self.addr + "WSGroupServiceService?wsdl"
-        client = self.__get_client("group_client", url)
+        client = self.get_client("group_client", url)
 
         grps = client.service.getGroupsByService(
             self.s, dn_servicio, profile_name, info

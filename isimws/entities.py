@@ -15,51 +15,78 @@ class ProvisioningPolicy:
     """
     Para usar con el API SOAPWS de ISIM7
     """
+    #TODO GETTER/SETTER en atributos complejos (membership/entitlements)
 
     def __init__(
         self,
         sesion,
-        name,
-        description,
-        entitlements,
-        memberships,
-        ou,
-        priority=1,
-        scope=2,
-        enabled=True,
+        provisioning_policy=None,
+        policy_attrs=None,
     ):
+        """Initializes ProvisioningPolicy object
+
+        Args:
+            sesion (isimws.Session): Custom ISIM/ Default ISIM Session
+            policy_attrs(dict):    
+                name (str): policy name
+                description (str): policy description
+                entitlements (dict): {
+                    service_name:{
+                        "auto":is_automatic,
+                        attr_name:{
+                            "enforcement":enforcement_type (allowed/mandatory/default/excluded),
+                            "values": (ibmjs script (with return clause) or list of constant values)
+                        },
+                        {... more attributes}
+                    },
+                    {... more services}
+                }
+                memberships (list): list of role names or * if everyone
+                ou_name (str): parent container name
+                priority (int): policy priority.
+                scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
+                enabled (bool, optional): Defaults to True.
+                caption(str,optional)
+                keywords(str,optional)
+        """
 
         sesion = sesion.soapclient
         url = sesion.addr + "WSProvisioningPolicyServiceService?wsdl"
+        self.pp_client=sesion.get_client("pp_client",url)
 
-        try:
-            self.pp_client = sesion.pp_client
-        except AttributeError:
-            # settings = Settings(strict=False)
-            s = requests.Session()
-            s.verify = self.cert_path
-            client = Client(url, transport=Transport(session=s))
-            sesion.pp_client = client
-            self.pp_client = client
+        local_tz=datetime.datetime.now().astimezone().tzinfo
+        self.date = datetime.datetime.now(local_tz).isoformat()
 
-        self.description = description
-        self.name = name
-        self.entitlements = self.crearEntitlementList(sesion, entitlements)
-        self.membership = self.crearMembershipList(sesion, memberships)
-        self.ou = sesion.buscarOrganizacion(ou)
-        self.priority = priority
-        self.scope = scope
-        self.enabled = enabled
-        self.date = datetime.datetime.now(pytz.timezone("America/Bogota")).isoformat()
+        if policy_attrs:
+            self.description = policy_attrs["description"]
+            self.name = policy_attrs["name"]
+            self.ou = sesion.buscarOrganizacion(policy_attrs["ou_name"])
+            self.entitlements = self.crearEntitlementList(sesion, policy_attrs["entitlements"])
+            self.membership = self.crearMembershipList(sesion, policy_attrs["memberships"])
+            self.priority = policy_attrs["priority"]
+            self.scope = policy_attrs["scope"] if "scope" in policy_attrs else 2 #1=ONE_LEVEL, 2=SUBTREE
+            self.enabled = policy_attrs["enabled"] if "enabled" in policy_attrs else True
+            self.caption= policy_attrs["caption"] if "caption" in policy_attrs else ""
+            self.keywords= policy_attrs["keywords"] if "keywords" in policy_attrs else ""
+            
+        else:
 
-    def __str__(self):
-        ret = f"Nombre: {self.name}\n"
-        ret += f"Descripción: {self.description}\n"
-        ret += f"OU: {self.ou.name}\n"
-        ret += f"Miembros: {list(map(lambda x: x.name,self.membership.item))}\n"
-        ret += f"Entitlements: {list(map(lambda x: x.serviceTarget.name,self.entitlements.item))}"
-
-        return ret
+            # if dn: no hay método de lookup en sim
+            #     rol=sesion.lookupProvisioningPolicy(dn)
+            self.description=provisioning_policy["description"]
+            self.name=provisioning_policy["name"]
+            self.dn=provisioning_policy["itimDN"]
+            self.ou=****["organizationalContainer"]
+            self.priority=provisioning_policy["priority"]
+            self.scope=provisioning_policy["scope"]
+            self.entitlements=provisioning_policy["entitlements"]
+            for titularidad in self.entitlements.item:
+                if titularidad.parameters.parameters is None:
+                    titularidad.parameters.parameters={"item":[]}
+            self.membership=****["membership"]
+            self.caption=provisioning_policy["caption"]
+            self.keywords=provisioning_policy["keywords"]
+            self.enabled=provisioning_policy["enabled"]
 
     def crearEntitlementList(self, sesion, titularidades):
         """
@@ -95,14 +122,14 @@ class ProvisioningPolicy:
                 servicio_dn = "*"
                 tipo_entitlement = 2
 
-            elif "Profile" in servicio:  # Todos los servicios de un perfil
+            elif "profile" in servicio.lower():  # Todos los servicios de un perfil
                 # servicio_dn=sesion.buscarPerfilServicio(servicio) no sirve búsqueda de perfiles
                 servicio_dn = servicio
                 tipo_entitlement = 0
 
             else:  # Servicio específico
                 servicio_dn = sesion.buscarServicio(
-                    "Colpensiones", f"(erservicename={servicio})"
+                    self.ou.name, f"(erservicename={servicio})"
                 )["itimDN"]
                 tipo_entitlement = 1
 
@@ -112,7 +139,7 @@ class ProvisioningPolicy:
 
             type_ = 1 if attrs["auto"] else 0
             process_dn = (
-                sesion.searchWorkflow(attrs["flujo"]) if attrs["flujo"] else None
+                sesion.searchWorkflow(attrs["flujo"],self.ou.name) if "flujo" in attrs else None
             )
             # print(process_dn)
 
@@ -138,14 +165,14 @@ class ProvisioningPolicy:
         listFactory = client.type_factory("ns0")
 
         attrs = atributos.copy()
-
-        attrs.pop("auto")
-        attrs.pop("flujo")
+        
+        attrs.pop("auto","")
+        attrs.pop("flujo","")
         parameters = []
 
         for name, params in attrs.items():
 
-            is_script = "return " in params["values"][0]  # params["script"]
+            is_script = "return " in params["values"]  # params["script"]
             enforcement_map = {
                 "default": 2,
                 "allowed": 1,
@@ -156,13 +183,13 @@ class ProvisioningPolicy:
 
             if is_script:
                 val = params["values"]
-                enforce = [enforcement_map[params["enforcement"]]]
+                enforce = [enforcement_map[params["enforcement"].lower()]]
                 types = [10]
             else:
                 val = list(
                     map(lambda s: f'"{s}"', params["values"])
                 )  # lo envuelve en ""
-                enforce = [enforcement_map[params["enforcement"]]] * len(val)
+                enforce = [enforcement_map[params["enforcement"].lower()]] * len(val)
                 types = [0] * len(val)
                 # print(val,enforce,types)
 
@@ -189,7 +216,7 @@ class ProvisioningPolicy:
 
     def crearMembershipList(self, sesion, memberships):
         """
-        Si recibe *: Devuelve 2;*
+        Si recibe ["*"]: Devuelve 2;*
         Si recibe lista con nombres de roles: Devuelve array[1;rol1, 2;rol2, ...]
         """
         # sesion=sesion.soapclient
@@ -219,7 +246,7 @@ class ProvisioningPolicy:
 
         return membershipList
 
-    def crearEnSIM(self, sesion):
+    def crear(self, sesion):
         sesion = sesion.soapclient
         client = self.pp_client
 
@@ -236,15 +263,14 @@ class ProvisioningPolicy:
         )
 
         del wspp["organizationalContainer"]
-        del wspp["caption"]
         del wspp["itimDN"]
-        del wspp["keywords"]
 
         r = sesion.crearPolitica(self.ou, wspp, self.date)
-
+        
+        #la respuesta no envía el DN, entonces no se puede meter de una
         return r
 
-    def modificarEnSIM(self, sesion, old_pp):
+    def modificar(self, sesion):
         sesion = sesion.soapclient
         client = self.pp_client
 
@@ -258,9 +284,9 @@ class ProvisioningPolicy:
             priority=self.priority,
             scope=self.scope,
             enabled=self.enabled,
-            itimDN=old_pp["itimDN"],
-            caption=old_pp["caption"],
-            keywords=old_pp["keywords"],
+            itimDN=self.dn,
+            caption=self.caption,
+            keywords=self.keywords,
         )
 
         del wspp["organizationalContainer"]
@@ -268,6 +294,12 @@ class ProvisioningPolicy:
         r = sesion.modificarPolitica(self.ou, wspp, self.date)
 
         return r
+    
+    def eliminar(self,sesion):
+        sesion = sesion.soapclient
+        r=sesion.eliminarPolitica(self.ou,self.dn,self.date)
+        return r
+
 
 
 class StaticRole:
@@ -306,7 +338,7 @@ class StaticRole:
 
         Args:
             sesion (isimws.Session): session object
-            id (str): for role lookup #TODO not implemented
+            id (str): for role lookup
             rol (zeep.WSRole): for initialization after search
             role_attrs (dict):      name,
                                     description,
@@ -321,16 +353,7 @@ class StaticRole:
 
         url = sesion.addr + "WSRoleServiceService?wsdl"
 
-        try:
-            self.role_client = sesion.role_client
-        except AttributeError:
-            s = requests.Session()
-            s.verify = sesion.cert_path
-            settings = Settings(strict=False)
-            self.role_client = Client(
-                url, settings=settings, transport=Transport(session=s)
-            )
-            sesion.role_client = self.role_client
+        self.role_client=sesion.get_client("role_client",url)
 
         if role_attrs:
 

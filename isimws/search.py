@@ -1,5 +1,5 @@
 from isimws.exceptions import *
-from isimws.entities import Activity, Access, Person, Service,StaticRole
+from isimws.entities import Activity, Access, Person, Service,StaticRole,ProvisioningPolicy
 
 
 def groups(sesion, by, dn, groupProfileName="", groupInfo=""):
@@ -64,6 +64,11 @@ def people(
     personas = [profile(sesion, rest_person=p) for p in ret]
     return personas
 
+def provisioning_policy(sesion,name,container_name):
+
+    wsou=****(container_name)
+    results=sesion.soapclient.buscarPoliticaSuministro(wsou, nombre_politica=name, find_unique=False)
+    return [ProvisioningPolicy(sesion,provisioning_policy=p) for p in results]
 
 def roles(sesion, by="errolename", filter="*", find_unique=False):
     soap = sesion.soapclient

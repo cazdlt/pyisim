@@ -1,9 +1,10 @@
 from isimws.exceptions import NotFoundError
 import pytest
-
+import time
+import random
 from isimws import search
 from isimws.auth import Session
-from isimws.entities import Person, StaticRole
+from isimws.entities import Person, ProvisioningPolicy, StaticRole
 from secret import admin_login, admin_pw, cert, env, test_url, test_org
 
 
@@ -48,6 +49,7 @@ def test_new_rol(sesion):
         "owner_cedulas": ["1015463230"],
     }
     r = StaticRole(sesion, role_attrs=rol)
+    print(r)
 
 
 def test_lookup_rol(sesion):
@@ -95,7 +97,94 @@ def test_crear_modificar_eliminar_rol(sesion):
     else:
         assert False
 
+
 def test_get_client():
-    s=Session(test_url, admin_login, admin_pw, cert)
+    s = Session(test_url, admin_login, admin_pw, cert)
     s.soapclient.login(admin_login, admin_pw)
     s.soapclient.login(admin_login, admin_pw)
+
+def test_inicializar_politicas(sesion):
+
+    entitlements={
+        "Directorio Activo":{
+            "auto":False,
+            "ergroup":{
+                "enforcement":"Default",
+                "values":"return 'test';"
+            }
+        },
+        "*":{
+            "auto":False
+        }
+    }
+    policy={
+        "description":"test",
+        "name":"test",
+        "ou_name":test_org,
+        "priority":100,
+        "memberships":["Auditor"],
+        "entitlements":entitlements
+    }
+    pp=****(sesion,policy_attrs=policy)
+
+    print(pp)
+
+    policy={
+        "description":"test",
+        "name":"test",
+        "ou_name":test_org,
+        "priority":100,
+        "memberships":"*",
+        "entitlements":{
+            "Directorio Activo":{
+                "auto":False
+            },
+        }
+    }
+    pp=****(sesion,policy_attrs=policy)
+    print(pp)
+    
+def test_search_provisioning_policy(sesion):
+
+    r = search.provisioning_policy(sesion, "ITIM Global",test_org)
+    print(r)
+    assert len(r) > 0
+
+def test_crear_modificar_eliminar_politica(sesion):
+
+    #crear
+    name=f"test{random.randint(0,999999)}"
+    policy={
+        "description":"test",
+        "name":name,
+        "ou_name":test_org,
+        "priority":100,
+        "memberships":"*",
+        "entitlements":{
+            "Directorio Activo":{
+                "auto":False
+            },
+        }
+    }
+    pp=****(sesion,policy_attrs=policy)
+    pp.crear(sesion)
+    
+    #buscar pol creada
+    time.sleep(3)
+    pp_creada=search.provisioning_policy(sesion,name,test_org)[0]
+    assert pp_creada.name==name
+
+    #modificar y validar modificacion
+    nueva_desc="modificacion"
+    pp_creada.description=nueva_desc
+    pp_creada.modificar(sesion)
+    time.sleep(3)
+    pp_mod=search.provisioning_policy(sesion,name,test_org)[0]
+    assert pp_mod.description==nueva_desc
+
+    #eliminar y validar eliminación
+    time.sleep(120) #tiene que terminar de evaluar la creación/mod
+    pp_mod.eliminar(sesion)
+    time.sleep(10)
+    pp_elim=search.provisioning_policy(sesion,name,test_org)
+    assert len(pp_elim)==0
