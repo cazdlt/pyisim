@@ -109,9 +109,9 @@ class ISIMClient:
         #     raise Exception(
         #         "No es una tipo válido de persona. Seleccione un tipo de persona entre los siguientes: "+str(tipos))
 
-        person_data=person.__dict__.copy()
-        person_data.pop("changes","")
-        
+        person_data = person.__dict__.copy()
+        person_data.pop("changes", "")
+
         data = {
             "justification": justificacion,
             "profileName": person.profile_name,

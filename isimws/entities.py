@@ -15,7 +15,8 @@ class ProvisioningPolicy:
     """
     Para usar con el API SOAPWS de ISIM7
     """
-    #TODO GETTER/SETTER en atributos complejos (membership/entitlements)
+
+    # TODO GETTER/SETTER en atributos complejos (membership/entitlements)
 
     def __init__(
         self,
@@ -27,7 +28,7 @@ class ProvisioningPolicy:
 
         Args:
             sesion (isimws.Session): Custom ISIM/ Default ISIM Session
-            policy_attrs(dict):    
+            policy_attrs(dict):
                 name (str): policy name
                 description (str): policy description
                 entitlements (dict): {
@@ -52,41 +53,51 @@ class ProvisioningPolicy:
 
         sesion = sesion.soapclient
         url = sesion.addr + "WSProvisioningPolicyServiceService?wsdl"
-        self.pp_client=sesion.get_client("pp_client",url)
+        self.pp_client = sesion.get_client("pp_client", url)
 
-        local_tz=datetime.datetime.now().astimezone().tzinfo
+        local_tz = datetime.datetime.now().astimezone().tzinfo
         self.date = datetime.datetime.now(local_tz).isoformat()
 
         if policy_attrs:
             self.description = policy_attrs["description"]
             self.name = policy_attrs["name"]
             self.ou = sesion.buscarOrganizacion(policy_attrs["ou_name"])
-            self.entitlements = self.crearEntitlementList(sesion, policy_attrs["entitlements"])
-            self.membership = self.crearMembershipList(sesion, policy_attrs["memberships"])
+            self.entitlements = self.crearEntitlementList(
+                sesion, policy_attrs["entitlements"]
+            )
+            self.membership = self.crearMembershipList(
+                sesion, policy_attrs["memberships"]
+            )
             self.priority = policy_attrs["priority"]
-            self.scope = policy_attrs["scope"] if "scope" in policy_attrs else 2 #1=ONE_LEVEL, 2=SUBTREE
-            self.enabled = policy_attrs["enabled"] if "enabled" in policy_attrs else True
-            self.caption= policy_attrs["caption"] if "caption" in policy_attrs else ""
-            self.keywords= policy_attrs["keywords"] if "keywords" in policy_attrs else ""
-            
+            self.scope = (
+                policy_attrs["scope"] if "scope" in policy_attrs else 2
+            )  # 1=ONE_LEVEL, 2=SUBTREE
+            self.enabled = (
+                policy_attrs["enabled"] if "enabled" in policy_attrs else True
+            )
+            self.caption = policy_attrs["caption"] if "caption" in policy_attrs else ""
+            self.keywords = (
+                policy_attrs["keywords"] if "keywords" in policy_attrs else ""
+            )
+
         else:
 
             # if dn: no hay método de lookup en sim
             #     rol=sesion.lookupProvisioningPolicy(dn)
-            self.description=provisioning_policy["description"]
-            self.name=provisioning_policy["name"]
-            self.dn=provisioning_policy["itimDN"]
-            self.ou=provisioning_policy["organizationalContainer"]
-            self.priority=provisioning_policy["priority"]
-            self.scope=provisioning_policy["scope"]
-            self.entitlements=provisioning_policy["entitlements"]
+            self.description = provisioning_policy["description"]
+            self.name = provisioning_policy["name"]
+            self.dn = provisioning_policy["itimDN"]
+            self.ou = provisioning_policy["organizationalContainer"]
+            self.priority = provisioning_policy["priority"]
+            self.scope = provisioning_policy["scope"]
+            self.entitlements = provisioning_policy["entitlements"]
             for titularidad in self.entitlements.item:
                 if titularidad.parameters.parameters is None:
-                    titularidad.parameters.parameters={"item":[]}
-            self.membership=provisioning_policy["membership"]
-            self.caption=provisioning_policy["caption"]
-            self.keywords=provisioning_policy["keywords"]
-            self.enabled=provisioning_policy["enabled"]
+                    titularidad.parameters.parameters = {"item": []}
+            self.membership = provisioning_policy["membership"]
+            self.caption = provisioning_policy["caption"]
+            self.keywords = provisioning_policy["keywords"]
+            self.enabled = provisioning_policy["enabled"]
 
     def crearEntitlementList(self, sesion, titularidades):
         """
@@ -139,7 +150,9 @@ class ProvisioningPolicy:
 
             type_ = 1 if attrs["auto"] else 0
             process_dn = (
-                sesion.searchWorkflow(attrs["flujo"],self.ou.name) if "flujo" in attrs else None
+                sesion.searchWorkflow(attrs["flujo"], self.ou.name)
+                if "flujo" in attrs
+                else None
             )
             # print(process_dn)
 
@@ -165,9 +178,9 @@ class ProvisioningPolicy:
         listFactory = client.type_factory("ns0")
 
         attrs = atributos.copy()
-        
-        attrs.pop("auto","")
-        attrs.pop("flujo","")
+
+        attrs.pop("auto", "")
+        attrs.pop("flujo", "")
         parameters = []
 
         for name, params in attrs.items():
@@ -266,8 +279,8 @@ class ProvisioningPolicy:
         del wspp["itimDN"]
 
         r = sesion.crearPolitica(self.ou, wspp, self.date)
-        
-        #la respuesta no envía el DN, entonces no se puede meter de una
+
+        # la respuesta no envía el DN, entonces no se puede meter de una
         return r
 
     def modificar(self, sesion):
@@ -294,12 +307,11 @@ class ProvisioningPolicy:
         r = sesion.modificarPolitica(self.ou, wspp, self.date)
 
         return r
-    
-    def eliminar(self,sesion):
-        sesion = sesion.soapclient
-        r=sesion.eliminarPolitica(self.ou,self.dn,self.date)
-        return r
 
+    def eliminar(self, sesion):
+        sesion = sesion.soapclient
+        r = sesion.eliminarPolitica(self.ou, self.dn, self.date)
+        return r
 
 
 class StaticRole:
@@ -353,7 +365,7 @@ class StaticRole:
 
         url = sesion.addr + "WSRoleServiceService?wsdl"
 
-        self.role_client=sesion.get_client("role_client",url)
+        self.role_client = sesion.get_client("role_client", url)
 
         if role_attrs:
 
@@ -395,7 +407,7 @@ class StaticRole:
 
         else:
             if dn:
-                rol=sesion.lookupRole(dn)
+                rol = sesion.lookupRole(dn)
 
             self.name = rol["name"]
             self.description = rol["description"]
@@ -504,11 +516,13 @@ class StaticRole:
 
         return r
 
-    def eliminar(self,sesion,fecha=None):
+    def eliminar(self, sesion, fecha=None):
         if fecha:
-            raise NotImplementedError("No se ha implementado la programación de tareas.")
+            raise NotImplementedError(
+                "No se ha implementado la programación de tareas."
+            )
 
-        r=sesion.soapclient.eliminarRolEstatico(self.dn,fecha)
+        r = sesion.soapclient.eliminarRolEstatico(self.dn, fecha)
 
         return r
 
@@ -517,9 +531,9 @@ class Person:
 
     profile_name = "Person"
 
-    def __init__(self, sesion, person=None, href=None,person_attrs=None):
+    def __init__(self, sesion, person=None, href=None, person_attrs=None):
 
-        self.changes={}
+        self.changes = {}
 
         if person:
             self.href = person["_links"]["self"]["href"]
@@ -537,12 +551,10 @@ class Person:
         for k, v in person_attrs.items():
             setattr(self, k, v)
 
-            
     def __setattr__(self, attr, val):
-        if hasattr(self,attr):
-            self.changes[attr]=val
+        if hasattr(self, attr):
+            self.changes[attr] = val
         super().__setattr__(attr, val)
-        
 
     def __init_subclass__(cls):
 
@@ -556,14 +568,18 @@ class Person:
         return super().__init_subclass__()
 
     def crear(self, sesion, ou_name, justificacion):
-        orgid=sesion.restclient.buscarOUs("organizations",filtro=ou_name)[0]["_links"]["self"]["href"].split("/")[-1]
+        orgid = sesion.restclient.buscarOUs("organizations", filtro=ou_name)[0][
+            "_links"
+        ]["self"]["href"].split("/")[-1]
         ret = sesion.restclient.crearPersona(self, orgid, justificacion)
         return ret
 
     def modificar(self, sesion, justificacion):
         try:
             href = self.href
-            ret = sesion.restclient.modificarPersona(self.href, self.changes, justificacion)
+            ret = sesion.restclient.modificarPersona(
+                self.href, self.changes, justificacion
+            )
             return ret
         except AttributeError:
             raise Exception(
@@ -578,6 +594,7 @@ class Person:
         return ret
 
     # def suspender(self,sesion,justificacion):
+    # TODO
     #     try:
     #         dn = self.dn
     #         ret = sesion.restclient.modificarPersona(self.href, self, justificacion)
@@ -638,12 +655,16 @@ class Service:
             self.profile_name = service["profileName"]
             self.name = service["name"]
 
+
 class Group:
-    def __init__(self,sesion,group=None):
+    def __init__(self, sesion, group=None):
         if group:
-            self.name=group["name"]
-            self.dn=group["itimDN"]
-            self.id=group["id"]
-            self.description=group["description"]
-            self.profile_name=group["profileName"]
-            self.attributes={attr.name:[v for v in attr.values.item] for attr in group.attributes.item}
+            self.name = group["name"]
+            self.dn = group["itimDN"]
+            self.id = group["id"]
+            self.description = group["description"]
+            self.profile_name = group["profileName"]
+            self.attributes = {
+                attr.name: [v for v in attr.values.item]
+                for attr in group.attributes.item
+            }

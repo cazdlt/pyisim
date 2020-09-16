@@ -6,7 +6,17 @@ import random
 from isimws import search
 from isimws.auth import Session
 from isimws.entities import Person, ProvisioningPolicy, StaticRole
-from secret import admin_login, admin_pw, cert, env, test_url, test_org,test_description,test_manager,test_dep
+from secret import (
+    admin_login,
+    admin_pw,
+    cert,
+    env,
+    test_url,
+    test_org,
+    test_description,
+    test_manager,
+    test_dep,
+)
 
 
 @pytest.fixture
@@ -104,125 +114,136 @@ def test_get_client():
     s.soapclient.login(admin_login, admin_pw)
     s.soapclient.login(admin_login, admin_pw)
 
+
 def test_inicializar_politicas(sesion):
 
-    entitlements={
-        "Directorio Activo":{
-            "auto":False,
-            "ergroup":{
-                "enforcement":"Default",
-                "values":"return 'test';"
-            }
+    entitlements = {
+        "Directorio Activo": {
+            "auto": False,
+            "ergroup": {"enforcement": "Default", "values": "return 'test';"},
         },
-        "*":{
-            "auto":False
-        }
+        "*": {"auto": False},
     }
-    policy={
-        "description":"test",
-        "name":"test",
-        "ou_name":test_org,
-        "priority":100,
-        "memberships":["Auditor"],
-        "entitlements":entitlements
+    policy = {
+        "description": "test",
+        "name": "test",
+        "ou_name": test_org,
+        "priority": 100,
+        "memberships": ["Auditor"],
+        "entitlements": entitlements,
     }
-    pp=ProvisioningPolicy(sesion,policy_attrs=policy)
+    pp = ProvisioningPolicy(sesion, policy_attrs=policy)
 
     print(pp)
 
-    policy={
-        "description":"test",
-        "name":"test",
-        "ou_name":test_org,
-        "priority":100,
-        "memberships":"*",
-        "entitlements":{
-            "Directorio Activo":{
-                "auto":False
-            },
-        }
+    policy = {
+        "description": "test",
+        "name": "test",
+        "ou_name": test_org,
+        "priority": 100,
+        "memberships": "*",
+        "entitlements": {
+            "Directorio Activo": {"auto": False},
+        },
     }
-    pp=ProvisioningPolicy(sesion,policy_attrs=policy)
+    pp = ProvisioningPolicy(sesion, policy_attrs=policy)
     print(pp)
-    
+
+
 def test_search_provisioning_policy(sesion):
 
-    r = search.provisioning_policy(sesion, "ITIM Global",test_org)
+    r = search.provisioning_policy(sesion, "ITIM Global", test_org)
     print(r)
     assert len(r) > 0
 
+
 def test_crear_modificar_eliminar_politica(sesion):
 
-    #crear
-    name=f"test{random.randint(0,999999)}"
-    policy={
-        "description":"test",
-        "name":name,
-        "ou_name":test_org,
-        "priority":100,
-        "memberships":"*",
-        "entitlements":{
-            "Directorio Activo":{
-                "auto":False
-            },
-        }
+    # crear
+    name = f"test{random.randint(0,999999)}"
+    policy = {
+        "description": "test",
+        "name": name,
+        "ou_name": test_org,
+        "priority": 100,
+        "memberships": "*",
+        "entitlements": {
+            "Directorio Activo": {"auto": False},
+        },
     }
-    pp=ProvisioningPolicy(sesion,policy_attrs=policy)
+    pp = ProvisioningPolicy(sesion, policy_attrs=policy)
     pp.crear(sesion)
-    
-    #buscar pol creada
-    time.sleep(3)
-    pp_creada=search.provisioning_policy(sesion,name,test_org)[0]
-    assert pp_creada.name==name
 
-    #modificar y validar modificacion
-    nueva_desc="modificacion"
-    pp_creada.description=nueva_desc
+    # buscar pol creada
+    time.sleep(3)
+    pp_creada = search.provisioning_policy(sesion, name, test_org)[0]
+    assert pp_creada.name == name
+
+    # modificar y validar modificacion
+    nueva_desc = "modificacion"
+    pp_creada.description = nueva_desc
     pp_creada.modificar(sesion)
     time.sleep(3)
-    pp_mod=search.provisioning_policy(sesion,name,test_org)[0]
-    assert pp_mod.description==nueva_desc
+    pp_mod = search.provisioning_policy(sesion, name, test_org)[0]
+    assert pp_mod.description == nueva_desc
 
-    #eliminar y validar eliminación
-    time.sleep(120) #tiene que terminar de evaluar la creación/mod
+    # eliminar y validar eliminación
+    time.sleep(120)  # tiene que terminar de evaluar la creación/mod
     pp_mod.eliminar(sesion)
     time.sleep(10)
-    pp_elim=search.provisioning_policy(sesion,name,test_org)
-    assert len(pp_elim)==0
+    pp_elim = search.provisioning_policy(sesion, name, test_org)
+    assert len(pp_elim) == 0
+
 
 def test_search_groups(sesion):
-    #TODO Search by account/access
-    #by service
-    service_dn=search.service(sesion,test_org,filter="Directorio Activo")[0].dn
-    r=search.groups(sesion,by="service",service_dn=service_dn,group_info="Administrators")
+    # TODO Search by account/access
+    # by service
+    service_dn = search.service(sesion, test_org, filter="Directorio Activo")[0].dn
+    r = search.groups(
+        sesion, by="service", service_dn=service_dn, group_info="Administrators"
+    )
     print(r)
+
 
 def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
 
-    #required attributes on the Person form (more can be included) + required ORGID attribute
-    info_persona={
-        "givenname":"te",
-        "sn":"st",
-        "cn":"test",
-        "initials":"CC",
-        "employeenumber":random.randint(1,9999999),
-        "departmentnumber":test_dep,
-        "manager":test_manager,
-        "title":"test",
-        "description":test_description,
-        "businesscategory":"test",
-        "mobile":"test@test.com",
+    # TODO suspender/restaurar/eliminar
+    # required attributes on the Person form (more can be included)
+    info_persona = {
+        "givenname": "te",
+        "sn": "st",
+        "cn": "test",
+        "initials": "CC",
+        "employeenumber": random.randint(1, 9999999),
+        "departmentnumber": test_dep,
+        "manager": test_manager,
+        "title": "test",
+        "description": test_description,
+        "businesscategory": "test",
+        "mobile": "test@test.com",
     }
-    persona=Person(sesion,person_attrs=info_persona)
+    persona = Person(sesion, person_attrs=info_persona)
 
-    #crear y validar
-    persona.crear(sesion,test_org,"ok")    
+    # crear y validar
+    persona.crear(sesion, test_org, "ok")
     time.sleep(2)
-    persona_creada=search.people(sesion,by="employeenumber",filter=info_persona["employeenumber"],attributes="*",limit=1)[0]
-    assert persona_creada.employeenumber==str(info_persona["employeenumber"])
+    persona_creada = search.people(
+        sesion,
+        by="employeenumber",
+        filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )[0]
+    assert persona_creada.employeenumber == str(info_persona["employeenumber"])
 
-    #modificar
-    persona_creada.title="nuevo cargo"
-    persona_creada.modificar(sesion,"ok")
-    persona_mod=search.people(sesion,by="employeenumber",filter=info_persona["employeenumber"],attributes="*",limit=1)[0]
-    assert persona_mod.title==persona_creada.title
+    # modificar
+    persona_creada.title = "nuevo cargo"
+    persona_creada.modificar(sesion, "ok")
+    persona_mod = search.people(
+        sesion,
+        by="employeenumber",
+        filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )[0]
+    assert persona_mod.title == persona_creada.title

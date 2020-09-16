@@ -121,15 +121,14 @@ class ISIMClient:
         s = client.service.modifyPolicy(self.s, ou, wsprovisioningpolicy, date)
 
         return s
-    
-    def eliminarPolitica(self,ou,dn,date):
+
+    def eliminarPolitica(self, ou, dn, date):
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
         client = self.get_client("pp_client", url)
 
         s = client.service.deletePolicy(self.s, ou, dn, date)
 
         return s
-
 
     def buscarRol(self, filtro, find_unique=True):
         """
@@ -226,8 +225,7 @@ class ISIMClient:
         else:
             return [serialize_object(s, target_cls=dict) for s in servicios]
 
-
-    def searchWorkflow(self, nombre,org_name):
+    def searchWorkflow(self, nombre, org_name):
         """
         Busca flujos de cuenta y acceso por el nombre.
         Retorna el DN.

@@ -1,5 +1,13 @@
 from isimws.exceptions import *
-from isimws.entities import Activity, Access, Person, Service,StaticRole,ProvisioningPolicy,Group
+from isimws.entities import (
+    Activity,
+    Access,
+    Person,
+    Service,
+    StaticRole,
+    ProvisioningPolicy,
+    Group,
+)
 
 
 def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
@@ -32,7 +40,7 @@ def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
     else:
         raise InvalidOptionError("Opción inválida")
 
-    return [Group(sesion,group=g) for g in ret]
+    return [Group(sesion, group=g) for g in ret]
 
 
 def people(
@@ -64,16 +72,20 @@ def people(
     personas = [profile(sesion, person=p) for p in ret]
     return personas
 
-def provisioning_policy(sesion,name,container_name):
 
-    wsou=sesion.soapclient.buscarOrganizacion(container_name)
-    results=sesion.soapclient.buscarPoliticaSuministro(wsou, nombre_politica=name, find_unique=False)
-    return [ProvisioningPolicy(sesion,provisioning_policy=p) for p in results]
+def provisioning_policy(sesion, name, container_name):
+
+    wsou = sesion.soapclient.buscarOrganizacion(container_name)
+    results = sesion.soapclient.buscarPoliticaSuministro(
+        wsou, nombre_politica=name, find_unique=False
+    )
+    return [ProvisioningPolicy(sesion, provisioning_policy=p) for p in results]
+
 
 def roles(sesion, by="errolename", filter="*", find_unique=False):
     soap = sesion.soapclient
     results = soap.buscarRol(f"({by}={filter})", find_unique)
-    return [StaticRole(sesion,rol=r) for r in results]
+    return [StaticRole(sesion, rol=r) for r in results]
 
 
 def activities(sesion, by="activityName", filter="*"):
