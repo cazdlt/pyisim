@@ -35,7 +35,7 @@ def test_search_people(sesion):
 
 
 def test_search_service(sesion):
-    r = search.service(sesion, test_org, filter="SAP NW")
+    r = search.service(sesion, search.organizational_container(sesion,"organizations",test_org)[0], filter="SAP NW")
     assert len(r) > 0
     assert r[0].name == "SAP NW"
 
@@ -52,7 +52,7 @@ def test_new_rol(sesion):
     rol = {
         "name": "rol_prueba",
         "description": "rol_prueba",
-        "ou": test_org,
+        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
         "classification": "Empresarial",
         "access_option": 2,
         "access_category": "Role",
@@ -81,7 +81,7 @@ def test_crear_modificar_eliminar_rol(sesion):
     rolinfo = {
         "name": "rol_prueba",
         "description": "rol_prueba",
-        "ou": test_org,
+        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
         "classification": "Empresarial",
         "access_option": 2,
         "access_category": "Role",
@@ -127,7 +127,7 @@ def test_inicializar_politicas(sesion):
     policy = {
         "description": "test",
         "name": "test",
-        "ou_name": test_org,
+        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
         "priority": 100,
         "memberships": ["Auditor"],
         "entitlements": entitlements,
@@ -139,7 +139,7 @@ def test_inicializar_politicas(sesion):
     policy = {
         "description": "test",
         "name": "test",
-        "ou_name": test_org,
+        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
         "priority": 100,
         "memberships": "*",
         "entitlements": {
@@ -152,7 +152,7 @@ def test_inicializar_politicas(sesion):
 
 def test_search_provisioning_policy(sesion):
 
-    r = search.provisioning_policy(sesion, "ITIM Global", test_org)
+    r = search.provisioning_policy(sesion, "ITIM Global", search.organizational_container(sesion,"organizations",test_org)[0])
     print(r)
     assert len(r) > 0
 
@@ -161,10 +161,12 @@ def test_crear_modificar_eliminar_politica(sesion):
 
     # crear
     name = f"test{random.randint(0,999999)}"
+    parent=search.organizational_container(sesion,"organizations",test_org)[0]
+
     policy = {
         "description": "test",
         "name": name,
-        "ou_name": test_org,
+        "parent": parent,
         "priority": 100,
         "memberships": "*",
         "entitlements": {
@@ -176,7 +178,7 @@ def test_crear_modificar_eliminar_politica(sesion):
 
     # buscar pol creada
     time.sleep(3)
-    pp_creada = search.provisioning_policy(sesion, name, test_org)[0]
+    pp_creada = search.provisioning_policy(sesion, name, parent)[0]
     assert pp_creada.name == name
 
     # modificar y validar modificacion
@@ -184,21 +186,22 @@ def test_crear_modificar_eliminar_politica(sesion):
     pp_creada.description = nueva_desc
     pp_creada.modificar(sesion)
     time.sleep(3)
-    pp_mod = search.provisioning_policy(sesion, name, test_org)[0]
+    pp_mod = search.provisioning_policy(sesion, name, parent)[0]
     assert pp_mod.description == nueva_desc
 
     # eliminar y validar eliminación
     time.sleep(120)  # tiene que terminar de evaluar la creación/mod
     pp_mod.eliminar(sesion)
     time.sleep(10)
-    pp_elim = search.provisioning_policy(sesion, name, test_org)
+    pp_elim = search.provisioning_policy(sesion, name, parent)
     assert len(pp_elim) == 0
 
 
 def test_search_groups(sesion):
     # TODO Search by account/access
     # by service
-    service_dn = search.service(sesion, test_org, filter="Directorio Activo")[0].dn
+    parent=search.organizational_container(sesion,"organizations",test_org)[0]
+    service_dn = search.service(sesion, parent, filter="Directorio Activo")[0].dn
     r = search.groups(
         sesion, by="service", service_dn=service_dn, group_info="Administrators"
     )
@@ -225,7 +228,8 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     persona = Person(sesion, person_attrs=info_persona)
 
     # crear y validar
-    persona.crear(sesion, test_org, "ok")
+    parent=search.organizational_container(sesion,"organizations",test_org)[0]
+    persona.crear(sesion, parent, "ok")
     time.sleep(2)
     persona_creada = search.people(
         sesion,
@@ -239,6 +243,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     # modificar
     persona_creada.title = "nuevo cargo"
     persona_creada.modificar(sesion, "ok")
+    time.sleep(3)
     persona_mod = search.people(
         sesion,
         by="employeenumber",
@@ -247,3 +252,18 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
         limit=1,
     )[0]
     assert persona_mod.title == persona_creada.title
+
+def test_activites_by_request_id(sesion):
+    request_id="7046801252248442711"
+    res=search.activities(sesion,by="requestId",filter=request_id)
+
+def test_search_ou(sesion):
+    #TODO
+    name="Colpensiones"
+    search.organizational_container(sesion,"organizations",name)
+
+    name="Cromasoft Ltda"
+    search.organizational_container(sesion,"bporganizations",name)
+    
+    name="Despacho del Presidente"
+    search.organizational_container(sesion,"organizationunits",name)

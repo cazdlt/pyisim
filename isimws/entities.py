@@ -43,7 +43,7 @@ class ProvisioningPolicy:
                     {... more services}
                 }
                 memberships (list): list of role names or * if everyone
-                ou_name (str): parent container name
+                parent (isimws.entities.OrganizationalContainer): parent container
                 priority (int): policy priority.
                 scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
                 enabled (bool, optional): Defaults to True.
@@ -61,7 +61,7 @@ class ProvisioningPolicy:
         if policy_attrs:
             self.description = policy_attrs["description"]
             self.name = policy_attrs["name"]
-            self.ou = sesion.buscarOrganizacion(policy_attrs["ou_name"])
+            self.ou = policy_attrs["parent"].wsou
             self.entitlements = self.crearEntitlementList(
                 sesion, policy_attrs["entitlements"]
             )
@@ -140,7 +140,7 @@ class ProvisioningPolicy:
 
             else:  # Servicio específico
                 servicio_dn = sesion.buscarServicio(
-                    self.ou.name, f"(erservicename={servicio})"
+                    self.ou, f"(erservicename={servicio})"
                 )["itimDN"]
                 tipo_entitlement = 1
 
@@ -354,7 +354,7 @@ class StaticRole:
             rol (zeep.WSRole): for initialization after search
             role_attrs (dict):      name,
                                     description,
-                                    ou,
+                                    parent (isimws.entities.OrganizationalContainer),
                                     classification,
                                     access_option,
                                     access_category=None,
@@ -371,7 +371,7 @@ class StaticRole:
 
             self.name = role_attrs["name"]
             self.description = role_attrs["description"]
-            self.ou = sesion.buscarOrganizacion(role_attrs["ou"])
+            self.ou = role_attrs["parent"].wsou
 
             assert role_attrs["classification"] in [
                 "Empresarial",
@@ -526,6 +526,13 @@ class StaticRole:
 
         return r
 
+class OrganizationalContainer:
+    def __init__(self,sesion,organizational_container):
+        self.name=organizational_container["_links"]["self"]["title"]
+        self.href=organizational_container["_links"]["self"]["href"]
+        self.dn=organizational_container["_attributes"]["dn"]
+        self.wsou=sesion.soapclient.lookupContainer(self.dn)
+        self.profile_name=self.wsou["profileName"]
 
 class Person:
 
@@ -567,10 +574,8 @@ class Person:
 
         return super().__init_subclass__()
 
-    def crear(self, sesion, ou_name, justificacion):
-        orgid = sesion.restclient.buscarOUs("organizations", filtro=ou_name)[0][
-            "_links"
-        ]["self"]["href"].split("/")[-1]
+    def crear(self, sesion, parent:OrganizationalContainer, justificacion):
+        orgid = parent.href.split("/")[-1]
         ret = sesion.restclient.crearPersona(self, orgid, justificacion)
         return ret
 
@@ -668,3 +673,5 @@ class Group:
                 attr.name: [v for v in attr.values.item]
                 for attr in group.attributes.item
             }
+
+

@@ -9,6 +9,7 @@ from zeep.cache import InMemoryCache
 import requests
 import pprint
 from isimws.exceptions import *
+# from isimws.entities import OrganizationalContainer
 
 
 requests.packages.urllib3.disable_warnings()
@@ -58,24 +59,15 @@ class ISIMClient:
 
         return cont
 
-    def buscarOrganizacion(self, nombre):
+    def buscarOrganizacion(self, perfil, nombre):
 
         url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
         client = self.get_client("ou_client", url)
 
-        ous = client.service.searchContainerByName(self.s, Nil, "Organization", nombre)
-        if len(ous) == 0:
-            ous = client.service.searchContainerByName(
-                self.s, Nil, "OrganizationalUnit", nombre
-            )
+        ous = client.service.searchContainerByName(self.s, Nil, perfil, nombre)
 
-        assert (
-            len(ous) > 0
-        ), f"No se ha encontrado la Unidad Organizativa de nombre: {nombre}. Verifique que sea un filtro LDAP válido."
-        assert (
-            len(ous) == 1
-        ), f"Se ha encontrado más de una Unidad Organizativa de nombre: {nombre}"
-        return ous[0]
+        return ous
+
 
     def buscarPoliticaSuministro(self, wsou, nombre_politica, find_unique=True):
         """
@@ -205,22 +197,20 @@ class ISIMClient:
         assert len(personas) == 1, f"Se ha encontrado más de una persona con: {filtro}"
         return personas[0]
 
-    def buscarServicio(self, parent_ou_name, filtro, find_unique=True):
+    def buscarServicio(self, ou, filtro, find_unique=True):
 
         url = self.addr + "WSServiceServiceService?wsdl"
         client = self.get_client("service_client", url)
-
-        ou = self.buscarOrganizacion(parent_ou_name)
         servicios = client.service.searchServices(self.s, ou, filtro)
 
         if find_unique:
             if len(servicios) == 0:
                 raise NotFoundError(
-                    f"No se ha encontrado el servicio con el filtro: {parent_ou_name} - {filtro}. Verifique que sea un filtro LDAP válido."
+                    f"No se ha encontrado el servicio con el filtro:  {filtro}. Verifique que sea un filtro LDAP válido."
                 )
             assert (
                 len(servicios) == 1
-            ), f"Se ha encontrado más de un servicio con: {parent_ou_name} - {filtro}"
+            ), f"Se ha encontrado más de un servicio con: {filtro}"
             return serialize_object(servicios[0], target_cls=dict)
         else:
             return [serialize_object(s, target_cls=dict) for s in servicios]
@@ -272,4 +262,15 @@ class ISIMClient:
         grps = client.service.getGroupsByService(
             self.s, dn_servicio, profile_name, info
         )
+        return grps
+
+    def buscarActividadesDeSolicitud(self, process_id):
+        """
+        getActivities(session: ns1:WSSession, processId: xsd:long, recurseSubProcesses: xsd:boolean) -> getActivitiesReturn: ns1:WSActivity[]
+        no funciona bien la búsqueda recursiva de actividades
+        """
+        url = self.addr + "WSRequestServiceService?wsdl"
+        client = self.get_client("request_client", url)
+
+        grps = client.service.getActivities(self.s, int(process_id), True)
         return grps

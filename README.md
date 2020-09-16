@@ -141,8 +141,8 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
         - Basic usage
         - Requirements
     - Delete/Restore/Suspend operations for Person classes
-    - Search groups by account/access
-    - Improve container search and managing in entity creation (don't search in role/pp/person create)
-    - Improve activity search by request id
+    - Improve activity search by request id (does not work, currently a support case open to research this)
     - Add operations to services
+    - Generalize role creation (role type)
+    - Improve complex attribute handling (roles/provisioning policies)
 

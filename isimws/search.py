@@ -1,7 +1,9 @@
+from attr import attributes
 from isimws.exceptions import *
 from isimws.entities import (
     Activity,
     Access,
+    OrganizationalContainer,
     Person,
     Service,
     StaticRole,
@@ -73,9 +75,9 @@ def people(
     return personas
 
 
-def provisioning_policy(sesion, name, container_name):
+def provisioning_policy(sesion, name, parent: OrganizationalContainer):
 
-    wsou = sesion.soapclient.buscarOrganizacion(container_name)
+    wsou = parent.wsou
     results = sesion.soapclient.buscarPoliticaSuministro(
         wsou, nombre_politica=name, find_unique=False
     )
@@ -98,6 +100,7 @@ def activities(sesion, by="activityName", filter="*"):
     """
 
     if by == "requestId":
+        # sesion.soapclient.buscarActividadesDeSolicitud(filter)
         results = sesion.restclient.buscarActividad(
             solicitudID=f"/itim/rest/requests/{filter}"
         )
@@ -119,13 +122,36 @@ def access(sesion, by="accessName", filter="*", attributes="", limit=20):
     return accesos
 
 
-def service(sesion, parent_name, by="erservicename", filter="*"):
+def service(sesion, parent:OrganizationalContainer, by="erservicename", filter="*"):
 
     # ret=sesion.restclient.buscarServicio(by,filter,limit,atributos=attributes)
     # servicios=[Service(sesion,service=s) for s in ret]
     ret = sesion.soapclient.buscarServicio(
-        parent_name, f"({by}={filter})", find_unique=False
+        parent.wsou, f"({by}={filter})", find_unique=False
     )
     servicios = [Service(sesion, service=s) for s in ret]
 
     return servicios
+
+
+def organizational_container(sesion, profile_name, filter, by="name"):
+    """[summary]
+
+    Args:
+        sesion (isimws.Session)
+        profile_name (str): ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
+        filter (str): name or attr value
+        by (str, optional): attribute to search by. Defaults to "name".
+
+    Returns:
+        isimws.entities.OrganizationalContainer
+    """
+
+    buscar_por = None if by == "name" else by
+    ret = sesion.restclient.buscarOUs(
+        profile_name, buscar_por=buscar_por, filtro=filter, attributes="dn"
+    )
+
+    ous = [OrganizationalContainer(sesion, organizational_container=ou) for ou in ret]
+
+    return ous

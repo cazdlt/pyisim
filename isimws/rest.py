@@ -51,18 +51,28 @@ class ISIMClient:
             )
         return s, CSRF
 
-    def buscarOUs(self, cat, buscar_por="ou", filtro="*", buscar_igual=False):
+    def buscarOUs(self, profile_name, filtro, buscar_por=None, attributes="", limit=100):
 
-        url = self.__addr + "/itim/rest/organizationcontainers/" + cat
-        tipos = ["bporganizations", "organizationunits", "organizations"]
-        if cat not in tipos:
+        url = self.__addr + "/itim/rest/organizationcontainers/" + profile_name
+        tipos = ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
+        if profile_name not in tipos:
             raise Exception(
                 "No es una categoría de OU válida. Seleccione un tipo de categoría entre las siguientes: "
                 + str(tipos)
             )
 
-        # print(atributos)
-        data = {"attributes": buscar_por}
+        name_attrs={
+            "bporganizations":"ou",
+            "organizationunits":"ou",
+            "organizations":"o",
+            "locations":"l",
+            "admindomains":"ou",
+        }
+
+        if not buscar_por:
+            buscar_por=name_attrs[profile_name]
+            
+        data = {"attributes": attributes,"limit":limit,buscar_por:filtro}
 
         OUs = json.loads(self.s.get(url, params=data).text)
 
@@ -85,10 +95,13 @@ class ISIMClient:
             "limit": limit,
             buscar_por: filtro,
         }
+        headers={
+            "Cache-Control":"no-cache"
+        }
         data = urlencode(data, quote_via=urllib.parse.quote)
 
         try:
-            response = self.s.get(url, params=data).text
+            response = self.s.get(url, params=data,headers=headers).text
             if response.find("ISIMLoginRequired") != -1:
                 # TODO handle this
                 raise Exception
