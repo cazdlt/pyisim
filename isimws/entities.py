@@ -45,7 +45,7 @@ class ProvisioningPolicy:
 
         sesion = sesion.soapclient
         url = sesion.addr + "WSProvisioningPolicyServiceService?wsdl"
-        self.pp_client = sesion.get_client("pp_client", url)
+        self.pp_client = sesion.get_client(url)
 
         local_tz = datetime.datetime.now().astimezone().tzinfo
         self.date = datetime.datetime.now(local_tz).isoformat()
@@ -357,7 +357,7 @@ class StaticRole:
 
         url = sesion.addr + "WSRoleServiceService?wsdl"
 
-        self.role_client = sesion.get_client("role_client", url)
+        self.role_client = sesion.get_client(url)
 
         if role_attrs:
 

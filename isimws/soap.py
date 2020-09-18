@@ -25,14 +25,15 @@ class ISIMClient:
     def login(self, user_, pass_):
         url = self.addr + "WSSessionService?wsdl"
         assert self.cert_path is not None, "No certificate passed"
-        client = self.get_client("session_client", url)
+        client = self.get_client(url)
         sesion = client.service.login(user_, pass_)
         # print(sesion)
         return sesion
 
-    def get_client(self, client_name, url):
+    def get_client(self, url):
 
         # Si ya se inicializó el cliente especificado en client_name, lo devuelve. Si no, lo inicializa, setea y devuelve.
+        client_name=url.split("/")[-1][:-5].lower() #ej. -> https://<ITIMURL>/.../WSSessionService?wsdl -> wssessionservice
         client = getattr(self, client_name, None)
 
         if client is None:
@@ -53,7 +54,7 @@ class ISIMClient:
     def lookupContainer(self, dn):
 
         url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
-        client = self.get_client("ou_client", url)
+        client = self.get_client(url)
 
         cont = client.service.lookupContainer(self.s, dn)
 
@@ -62,7 +63,7 @@ class ISIMClient:
     def buscarOrganizacion(self, perfil, nombre):
 
         url = self.addr + "WSOrganizationalContainerServiceService?wsdl"
-        client = self.get_client("ou_client", url)
+        client = self.get_client(url)
 
         ous = client.service.searchContainerByName(self.s, Nil, perfil, nombre)
 
@@ -81,7 +82,7 @@ class ISIMClient:
         """
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.get_client("pp_client", url)
+        client = self.get_client(url)
 
         politicas = client.service.getPolicies(self.s, wsou, nombre_politica)
 
@@ -99,7 +100,7 @@ class ISIMClient:
     def crearPolitica(self, ou, wsprovisioningpolicy, date):
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.get_client("pp_client", url)
+        client = self.get_client(url)
 
         s = client.service.createPolicy(self.s, ou, wsprovisioningpolicy, date)
 
@@ -108,7 +109,7 @@ class ISIMClient:
     def modificarPolitica(self, ou, wsprovisioningpolicy, date):
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.get_client("pp_client", url)
+        client = self.get_client(url)
 
         s = client.service.modifyPolicy(self.s, ou, wsprovisioningpolicy, date)
 
@@ -116,7 +117,7 @@ class ISIMClient:
 
     def eliminarPolitica(self, ou, dn, date):
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
-        client = self.get_client("pp_client", url)
+        client = self.get_client(url)
 
         s = client.service.deletePolicy(self.s, ou, dn, date)
 
@@ -134,7 +135,7 @@ class ISIMClient:
         """
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.get_client("role_client", url)
+        client = self.get_client(url)
 
         roles = client.service.searchRoles(self.s, filtro)
 
@@ -150,7 +151,7 @@ class ISIMClient:
     def lookupRole(self, dn):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.get_client("role_client", url)
+        client = self.get_client(url)
 
         try:
             r = client.service.lookupRole(self.s, dn)
@@ -161,21 +162,21 @@ class ISIMClient:
     def crearRolEstatico(self, wsrole, wsou):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.get_client("role_client", url)
+        client = self.get_client(url)
 
         return client.service.createStaticRole(self.s, wsou, wsrole)
 
     def modificarRolEstatico(self, role_dn, wsattr_list):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.get_client("role_client", url)
+        client = self.get_client(url)
 
         return client.service.modifyStaticRole(self.s, role_dn, wsattr_list)
 
     def eliminarRolEstatico(self, role_dn, date=None):
 
         url = self.addr + "WSRoleServiceService?wsdl"
-        client = self.get_client("role_client", url)
+        client = self.get_client(url)
 
         if date:
             raise NotImplementedError()
@@ -187,7 +188,7 @@ class ISIMClient:
     def buscarPersona(self, filtro):
 
         url = self.addr + "WSPersonServiceService?wsdl"
-        client = self.get_client("person_client", url)
+        client = self.get_client(url)
 
         personas = client.service.searchPersonsFromRoot(self.s, filtro, Nil)
 
@@ -200,7 +201,7 @@ class ISIMClient:
     def buscarServicio(self, ou, filtro, find_unique=True):
 
         url = self.addr + "WSServiceServiceService?wsdl"
-        client = self.get_client("service_client", url)
+        client = self.get_client(url)
         servicios = client.service.searchServices(self.s, ou, filtro)
 
         if find_unique:
@@ -222,7 +223,7 @@ class ISIMClient:
         """
 
         url = self.addr + "WSSearchDataServiceService?wsdl"
-        client = self.get_client("search_client", url)
+        client = self.get_client(url)
 
         """
         Category puede ser (usar EstaCapitalizacion y quitar _):
@@ -257,7 +258,7 @@ class ISIMClient:
     def buscarGruposPorServicio(self, dn_servicio, profile_name, info):
 
         url = self.addr + "WSGroupServiceService?wsdl"
-        client = self.get_client("group_client", url)
+        client = self.get_client(url)
 
         grps = client.service.getGroupsByService(
             self.s, dn_servicio, profile_name, info
@@ -270,7 +271,7 @@ class ISIMClient:
         no funciona bien la búsqueda recursiva de actividades
         """
         url = self.addr + "WSRequestServiceService?wsdl"
-        client = self.get_client("request_client", url)
+        client = self.get_client(url)
 
         grps = client.service.getActivities(self.s, int(process_id), True)
         return grps
@@ -278,7 +279,7 @@ class ISIMClient:
     def suspenderPersona(self,dn,justification):
         #suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)
         url = self.addr + "WSPersonServiceService?wsdl"
-        client = self.get_client("person_client", url)
+        client = self.get_client(url)
 
         r = client.service.suspendPerson(self.s, dn, justification)
         return r
@@ -287,7 +288,7 @@ class ISIMClient:
     def restaurarPersona(self,dn,justification):
         #restorePerson(password: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restorePersonReturn: ns1:WSRequest
         url = self.addr + "WSPersonServiceService?wsdl"
-        client = self.get_client("person_client", url)
+        client = self.get_client(url)
 
         r = client.service.restorePerson(self.s, dn, True,Nil,Nil,justification)
         return r
@@ -295,7 +296,7 @@ class ISIMClient:
     def eliminarPersona(self,dn,justification):
         #deletePerson(session: ns1:WSSession, personDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> deletePersonReturn: ns1:WSRequest
         url = self.addr + "WSPersonServiceService?wsdl"
-        client = self.get_client("person_client", url)
+        client = self.get_client(url)
 
         r = client.service.deletePerson(self.s, dn, Nil, justification)
         return r

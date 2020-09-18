@@ -2,7 +2,6 @@ import json
 import requests
 import urllib
 from urllib.parse import urlencode
-import os
 from isimws.exceptions import *
 
 requests.packages.urllib3.disable_warnings()
@@ -226,7 +225,6 @@ class ISIMClient:
 
     def solicitarAccesos(self, accesos, persona, justificacion):
         url = self.__addr + "/itim/rest/access/assignments"
-        cwd = os.path.dirname(__file__)
 
         persona_rest = {"self": {"href": persona.href}}
 
