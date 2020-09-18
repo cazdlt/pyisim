@@ -445,11 +445,11 @@ class ISIMClient:
 
         return actividad
 
-    def lookupPersona(self, href):
+    def lookupPersona(self, href,attributes="dn"):
         url = self.__addr + href
 
         params = {
-            "attribute": "*",
+            "attributes": attributes,
             "forms": False,
         }
 

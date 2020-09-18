@@ -178,7 +178,7 @@ class ISIMClient:
         client = self.get_client("role_client", url)
 
         if date:
-            # TODO
+            raise NotImplementedError()
             pass
         else:
             date = Nil
@@ -274,3 +274,30 @@ class ISIMClient:
 
         grps = client.service.getActivities(self.s, int(process_id), True)
         return grps
+
+    def suspenderPersona(self,dn,justification):
+        #suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.get_client("person_client", url)
+
+        r = client.service.suspendPerson(self.s, dn, justification)
+        return r
+
+
+    def restaurarPersona(self,dn,justification):
+        #restorePerson(password: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restorePersonReturn: ns1:WSRequest
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.get_client("person_client", url)
+
+        r = client.service.restorePerson(self.s, dn, True,Nil,Nil,justification)
+        return r
+
+    def eliminarPersona(self,dn,justification):
+        #deletePerson(session: ns1:WSSession, personDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> deletePersonReturn: ns1:WSRequest
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.get_client("person_client", url)
+
+        r = client.service.deletePerson(self.s, dn, Nil, justification)
+        return r
+
+    

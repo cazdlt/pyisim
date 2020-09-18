@@ -140,9 +140,9 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
     - Improve documentation
         - Basic usage
         - Requirements
-    - Delete/Restore/Suspend operations for Person classes
     - Improve activity search by request id (does not work, currently a support case open to research this)
     - Add operations to services
     - Generalize role creation (role type)
     - Improve complex attribute handling (roles/provisioning policies)
+    - Improve dynamic client handling on soap client
 

@@ -30,7 +30,7 @@ def test_search_access(sesion):
 
 
 def test_search_people(sesion):
-    r = search.people(sesion, Person, "employeenumber", "96451425873", limit=1)
+    r = search.people(sesion, "employeenumber", "96451425873", limit=1)
     assert len(r) > 0
 
 
@@ -217,7 +217,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
         "sn": "st",
         "cn": "test",
         "initials": "CC",
-        "employeenumber": random.randint(1, 9999999),
+        "employeenumber": random.randint(1, 99999999),
         "departmentnumber": test_dep,
         "manager": test_manager,
         "title": "test",
@@ -252,6 +252,43 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
         limit=1,
     )[0]
     assert persona_mod.title == persona_creada.title
+
+    # suspender
+    persona_mod.suspender(sesion,"ok")
+    time.sleep(3)
+    persona_sus = search.people(
+        sesion,
+        by="employeenumber",
+        filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )[0]
+    assert persona_sus.erpersonstatus=="INACTIVE"
+
+    #restaurar
+    persona_sus.restaurar(sesion,"ok")
+    time.sleep(3)
+    persona_res = search.people(
+        sesion,
+        by="employeenumber",
+        filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )[0]
+    assert persona_res.erpersonstatus=="ACTIVE"
+
+    #eliminar
+    persona_res.eliminar(sesion,"ok")
+    time.sleep(3)
+    persona_elim = search.people(
+        sesion,
+        by="employeenumber",
+        filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )
+    assert len(persona_elim)==0
+
 
 def test_activites_by_request_id(sesion):
     request_id="7046801252248442711"

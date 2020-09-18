@@ -1,13 +1,5 @@
 from collections import defaultdict
 import datetime
-
-import pytz
-import requests
-from zeep import Client, Settings
-from zeep.xsd import Nil
-from zeep.transports import Transport
-
-import isimws.auth as auth
 from isimws.exceptions import *
 
 
@@ -547,7 +539,7 @@ class Person:
             person_attrs = person["_attributes"]
 
         elif href:
-            r = sesion.restclient.lookupPersona(href)
+            r = sesion.restclient.lookupPersona(href,attributes="*")
             assert (
                 r["_links"]["self"]["href"] == href
             ), "Persona no encontrada o inválida"
@@ -598,16 +590,52 @@ class Person:
             ret = sesion.restclient.solicitarAccesos(accesos, self, justificacion)
         return ret
 
-    # def suspender(self,sesion,justificacion):
-    # TODO
-    #     try:
-    #         dn = self.dn
-    #         ret = sesion.restclient.modificarPersona(self.href, self, justificacion)
-    #         return ret
-    #     except AttributeError:
-    #         raise Exception(
-    #             "Person has no reference to ISIM, search for it or initialize it with href to link it."
-    #         )
+    def suspender(self,sesion,justificacion):
+
+        try:
+            try:
+                dn=self.dn
+            except AttributeError:
+                dn=sesion.restclient.lookupPersona(self.href,attributes="dn")["_attributes"]["dn"]
+                self.dn=dn
+
+            ret = sesion.soapclient.suspenderPersona(dn, justificacion)
+            return ret
+        except AttributeError:
+            raise Exception(
+                "Person has no reference to ISIM, search for it or initialize it with href to link it."
+            )
+
+    def restaurar(self,sesion,justificacion):
+        try:
+            try:
+                dn=self.dn
+            except AttributeError:
+                dn=sesion.restclient.lookupPersona(self.href,attributes="dn")["_attributes"]["dn"]
+                self.dn=dn
+
+            ret = sesion.soapclient.restaurarPersona(self.dn, justificacion)
+            return ret
+        except AttributeError:
+            raise Exception(
+                "Person has no reference to ISIM, search for it or initialize it with href to link it."
+            )
+        
+    def eliminar(self,sesion,justificacion):
+
+        try:
+            try:
+                dn=self.dn
+            except AttributeError:
+                dn=sesion.restclient.lookupPersona(self.href,attributes="dn")["_attributes"]["dn"]
+                self.dn=dn
+
+            ret = sesion.soapclient.eliminarPersona(self.dn, justificacion)
+            return ret
+        except AttributeError:
+            raise Exception(
+                "Person has no reference to ISIM, search for it or initialize it with href to link it."
+            )
 
 
 class Activity:
