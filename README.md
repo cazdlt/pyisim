@@ -144,4 +144,8 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
     - Add operations to services
     - Generalize role creation (role classification / owners)
     - Improve complex attribute handling (roles/provisioning policies)
+        - Haciendo: 
+            - el objeto debe guardar el diccionario
+            - el objeto ws debe ser generado dinámicamente al momento de crear/modificar/etc...
+            - para búsqueda/lookup el __init__debe traducir lo que llega a formato diccionario
 

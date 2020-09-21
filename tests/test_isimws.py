@@ -117,43 +117,97 @@ def test_get_client():
 
 def test_inicializar_politicas(sesion):
 
+    parent=search.organizational_container(sesion,"organizations",test_org)[0]
+    service=search.service(sesion,parent,filter="Directorio Activo")[0]
+
     entitlements = {
-        "Directorio Activo": {
-            "auto": False,
-            "ergroup": {"enforcement": "Default", "values": "return 'test';"},
+        service.dn: {
+            "automatic": False,
+            "workflow":None,
+            "parameters":{
+                "ergroup": [
+                    {
+                        "enforcement": "Default",
+                        "type":"script",
+                        "values": "return 'test';",
+                    },
+                    {
+                        "enforcement": "Excluded",
+                        "type":"null",
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type":"constant",
+                        "values": ["test1","test2"],
+                    },
+                    {
+                        "enforcement": "Default",
+                        "type":"Constant",
+                        "values": ["test3"],
+                    },
+                    {
+                        "enforcement": "MANDATORY",
+                        "type":"REGEX",
+                        "values": r"^[\s\w]+$",
+                    },
+                ],
+                "eradfax": [{
+                    "enforcement": "Allowed", 
+                    "type":"constant",
+                    "values": ["1018117"],
+                }],
+            }
         },
-        "*": {"auto": False},
+        "*": {
+            "automatic": False,
+            "workflow":None,
+            "parameters":{}
+        },
     }
     policy = {
         "description": "test",
         "name": "test",
-        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
-        "priority": 100,
-        "memberships": ["Auditor"],
+        "parent": parent,
+        "priority": 10000,
+        "memberships": [x.dn for x in search.roles(sesion,filter="Auditor")],
+        "enabled":False,
         "entitlements": entitlements,
     }
     pp = ProvisioningPolicy(sesion, policy_attrs=policy)
-
+    print(pp.entitlements)
     print(pp)
 
+    #modificar política
     policy = {
         "description": "test",
         "name": "test",
-        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
+        "parent": parent,
         "priority": 100,
         "memberships": "*",
         "entitlements": {
-            "Directorio Activo": {"auto": False},
+            "ADprofile": {"automatic": False, "workflow":None, "parameters":{}},
         },
     }
     pp = ProvisioningPolicy(sesion, policy_attrs=policy)
+
+    pp.entitlements["ADprofile"]["automatic"]=True
+    print("")
+
+
+    #buscar y modificar política
+    pp = search.provisioning_policy(sesion, "Test TipoServicio", parent)[0]
     print(pp)
+
+    pp.entitlements=entitlements
+    pp.entitlements["*"]["automatic"]=True
+    print("")
+
 
 
 def test_search_provisioning_policy(sesion):
 
-    r = search.provisioning_policy(sesion, "ITIM Global", search.organizational_container(sesion,"organizations",test_org)[0])
-    print(r)
+    r = search.provisioning_policy(sesion, "Test TipoServicio", search.organizational_container(sesion,"organizations",test_org)[0])
+    print(r[0].entitlements)
     assert len(r) > 0
 
 
@@ -162,16 +216,60 @@ def test_crear_modificar_eliminar_politica(sesion):
     # crear
     name = f"test{random.randint(0,999999)}"
     parent=search.organizational_container(sesion,"organizations",test_org)[0]
+    service=search.service(sesion,parent,filter="Directorio Activo")[0]
 
+    entitlements = {
+        service.dn: {
+            "automatic": False,
+            "workflow":None,
+            "parameters":{
+                "ercompany": [
+                    {
+                        "enforcement": "Default",
+                        "type":"script",
+                        "values": "return 'test';",
+                    },
+                    {
+                        "enforcement": "Excluded",
+                        "type":"null",
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type":"constant",
+                        "values": ["test1","test2"],
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type":"Constant",
+                        "values": ["test3"],
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type":"REGEX",
+                        "values": r"^[\s\w]+$",
+                    },
+                ],
+                "eradfax": [{
+                    "enforcement": "Allowed", 
+                    "type":"constant",
+                    "values": ["1018117"],
+                }],
+            }
+        },
+        "*": {
+            "automatic": False,
+            "workflow":None,
+            "parameters":{}
+        },
+    }
     policy = {
         "description": "test",
         "name": name,
         "parent": parent,
-        "priority": 100,
-        "memberships": "*",
-        "entitlements": {
-            "Directorio Activo": {"auto": False},
-        },
+        "priority": 10000,
+        "memberships": [x.dn for x in search.roles(sesion,filter="Auditor")],
+        "enabled":False,
+        "entitlements": entitlements,
     }
     pp = ProvisioningPolicy(sesion, policy_attrs=policy)
     pp.crear(sesion)
@@ -184,6 +282,7 @@ def test_crear_modificar_eliminar_politica(sesion):
     # modificar y validar modificacion
     nueva_desc = "modificacion"
     pp_creada.description = nueva_desc
+    pp_creada.entitlements[service.dn]["automatic"]=True
     pp_creada.modificar(sesion)
     time.sleep(3)
     pp_mod = search.provisioning_policy(sesion, name, parent)[0]
@@ -210,7 +309,6 @@ def test_search_groups(sesion):
 
 def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
 
-    # TODO suspender/restaurar/eliminar
     # required attributes on the Person form (more can be included)
     info_persona = {
         "givenname": "te",
@@ -284,7 +382,6 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
         sesion,
         by="employeenumber",
         filter=info_persona["employeenumber"],
-        attributes="*",
         limit=1,
     )
     assert len(persona_elim)==0

@@ -1,5 +1,6 @@
-from collections import defaultdict
 import datetime
+from collections import defaultdict
+
 from isimws.exceptions import *
 
 
@@ -7,8 +8,6 @@ class ProvisioningPolicy:
     """
     Para usar con el API SOAPWS de ISIM7
     """
-
-    # TODO GETTER/SETTER en atributos complejos (membership/entitlements)
 
     def __init__(
         self,
@@ -24,28 +23,35 @@ class ProvisioningPolicy:
                 name (str): policy name
                 description (str): policy description
                 entitlements (dict): {
-                    service_name:{
-                        "auto":is_automatic,
-                        attr_name:{
-                            "enforcement":enforcement_type (allowed/mandatory/default/excluded),
-                            "values": (ibmjs script (with return clause) or list of constant values)
-                        },
-                        {... more attributes}
+                    service_dn/service_profile_name/*:{
+                        "automatic":True/False,
+                        "workflow":account_request_workflow_name/None,
+                        "parameters:[
+                            attr_name:[
+                                    {
+                                        "enforcement":enforcement_type (allowed/mandatory/default/excluded),
+                                        "type":parameter_type (constant/regex/null/script)
+                                        "value": attribute_value (None, str for regex/script, list for constant values),
+                                    },
+                                    {... more values}
+                                ],
+                            {... more attributes}
+                        ]
                     },
                     {... more services}
                 }
-                memberships (list): list of role names or * if everyone
+                memberships (list): list of role DNs or ["*"] if everyone. TYPE 4 NOT SUPPORTED (Everyone that's not entitled through other policies NOT SUPPORTED)
                 parent (isimws.entities.OrganizationalContainer): parent container
                 priority (int): policy priority.
                 scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
                 enabled (bool, optional): Defaults to True.
-                caption(str,optional)
-                keywords(str,optional)
+                caption(str,optional): Defaults to "".
+                keywords(str,optional): Defaults to "".
         """
 
-        sesion = sesion.soapclient
-        url = sesion.addr + "WSProvisioningPolicyServiceService?wsdl"
-        self.pp_client = sesion.get_client(url)
+        # sesion = sesion.soapclient
+        url = sesion.soapclient.addr + "WSProvisioningPolicyServiceService?wsdl"
+        self.__pp_client = sesion.soapclient.get_client(url)
 
         local_tz = datetime.datetime.now().astimezone().tzinfo
         self.date = datetime.datetime.now(local_tz).isoformat()
@@ -53,13 +59,17 @@ class ProvisioningPolicy:
         if policy_attrs:
             self.description = policy_attrs["description"]
             self.name = policy_attrs["name"]
-            self.ou = policy_attrs["parent"].wsou
-            self.entitlements = self.crearEntitlementList(
-                sesion, policy_attrs["entitlements"]
-            )
-            self.membership = self.crearMembershipList(
-                sesion, policy_attrs["memberships"]
-            )
+            self.ou = policy_attrs["parent"]  # .wsou
+            self.entitlements = policy_attrs["entitlements"]
+            self.membership = policy_attrs["memberships"]
+
+            # probando
+            # self.entitlements = self.__crearEntitlementList(
+            #     sesion.soapclient, policy_attrs["entitlements"]
+            # )
+            # self.membership = self.__crearMembershipList(
+            #     sesion.soapclient, policy_attrs["memberships"]
+            # )
             self.priority = policy_attrs["priority"]
             self.scope = (
                 policy_attrs["scope"] if "scope" in policy_attrs else 2
@@ -79,40 +89,129 @@ class ProvisioningPolicy:
             self.description = provisioning_policy["description"]
             self.name = provisioning_policy["name"]
             self.dn = provisioning_policy["itimDN"]
-            self.ou = provisioning_policy["organizationalContainer"]
+            self.ou = OrganizationalContainer(
+                sesion, dn=provisioning_policy["organizationalContainer"]["itimDN"]
+            )
             self.priority = provisioning_policy["priority"]
             self.scope = provisioning_policy["scope"]
-            self.entitlements = provisioning_policy["entitlements"]
-            for titularidad in self.entitlements.item:
-                if titularidad.parameters.parameters is None:
-                    titularidad.parameters.parameters = {"item": []}
-            self.membership = provisioning_policy["membership"]
+
+            # self.entitlements = provisioning_policy["entitlements"]
+            # for titularidad in self.entitlements.item:
+            #     if titularidad.parameters.parameters is None:
+            #         titularidad.parameters.parameters = {"item": []}
+
+            self.entitlements = self.__traducirWSEntitlements(
+                sesion.soapclient, provisioning_policy["entitlements"]
+            )
+            self.membership = [
+                m["name"] for m in provisioning_policy["membership"]["item"]
+            ]
+
             self.caption = provisioning_policy["caption"]
             self.keywords = provisioning_policy["keywords"]
             self.enabled = provisioning_policy["enabled"]
 
-    def crearEntitlementList(self, sesion, titularidades):
+    def __traducirWSEntitlements(self, sesion, wsentitlements):
         """
-        Recibe dict sacado de crear_politicas.leerCSV():
-        {
-            nombre_servicio1:{
-                "auto":[bool],
-                nombre_attr1:{
-                    "enforcement":[default/allowed/mandatory/excluded]
-                    "script":[bool]
-                    "values[lista de valores/string con el script]
-                },
-                nombre_attr2:{
-                    ...
-                }
+        Convierte WSEntitlements en diccionario estándar para poder modificar
+        Retorna:
+        entitlements (dict): {
+            service_dn/service_profile_name/*:{
+                "automatic":True/False,
+                "workflow":account_request_workflow_name/None,
+                "parameters:[
+                    attr_name:[
+                            {
+                                "enforcement":enforcement_type (allowed/mandatory/default/excluded),
+                                "type":parameter_type (constant/regex/null/script)
+                                "value": attribute_value (None, str for regex/script, list for constant values),
+                            },
+                            {... more values}
+                        ],
+                    {... more attributes}
+                ]
             },
-            nombre_servicio2:{
-                ...
+            {... more services}
+        }
+        """
+
+        enforcement_mapping = {
+            2: "default",
+            1: "allowed",
+            0: "excluded",
+            3: "mandatory",
+        }
+
+        type_mapping = {
+            0: "constant",
+            10: "script",
+            20: "regex",
+        }
+
+        entitlements = {}
+        for titularidad in wsentitlements["item"]:
+            service = titularidad["serviceTarget"]["name"]
+            workflow = titularidad["processDN"]
+            automatic = titularidad["type"] == 1
+            wsparams = titularidad["parameters"]["parameters"]
+            if not wsparams:
+                parameters = {}
+            else:
+                parameters = {}
+                for param in wsparams["item"]:
+                    attr_name = param.name
+                    values = param.values.item
+                    types = param.expressionTypes.item
+                    enforcement = param.enforcementTypes.item
+                    attr_values = list(zip(values, enforcement, types))
+                    attr_values = [
+                        {
+                            "enforcement": enforcement_mapping[val[1]],
+                            "type": 
+                                "constant" if val[0][0] == val[0][-1] == '"'
+                                else "null" if val[0] == "return null;"
+                                else type_mapping[val[2]],
+                            "values": 
+                                [val[0][1:-1]] if val[0][0] == val[0][-1] == '"'
+                                else None if val[0] == "return null;"
+                                else val[0],
+                        }
+                        for val in attr_values
+                    ]
+
+                    parameters[attr_name] = attr_values
+
+            entitlements[service] = {
+                "workflow": workflow,
+                "automatic": automatic,
+                "parameters": parameters,
             }
+
+        return entitlements
+
+    def __crearEntitlementList(self, sesion, titularidades):
+        """
+        {
+            service_dn/service_profile_name/*:{
+                "automatic":True/False,
+                "workflow":account_request_workflow_name/None,
+                "parameters:[
+                    attr_name:[
+                            {
+                                "enforcement":enforcement_type (allowed/mandatory/default/excluded),
+                                "type":parameter_type (constant/regex/null/script)
+                                "value": attribute_value (None, str: for regex/script, list: for constant value),
+                            },
+                            {... more values}
+                        ],
+                    {... more attributes}
+                ]
+            },
+            {... more services}
         }
         """
         # sesion=sesion.soapclient
-        client = self.pp_client
+        client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
         listFactory = client.type_factory("ns0")
@@ -131,24 +230,22 @@ class ProvisioningPolicy:
                 tipo_entitlement = 0
 
             else:  # Servicio específico
-                servicio_dn = sesion.buscarServicio(
-                    self.ou, f"(erservicename={servicio})"
-                )["itimDN"]
+                servicio_dn = servicio
                 tipo_entitlement = 1
 
             serviceTarget = itemFactory.WSServiceTarget(
                 name=servicio_dn, type=tipo_entitlement
             )
 
-            type_ = 1 if attrs["auto"] else 0
+            type_ = 1 if attrs["automatic"] else 0
             process_dn = (
-                sesion.searchWorkflow(attrs["flujo"], self.ou.name)
-                if "flujo" in attrs
+                sesion.searchWorkflow(attrs["workflow"], self.ou.name)
+                if attrs["workflow"]
                 else None
             )
             # print(process_dn)
 
-            parameters = self.crearParameterList(client, attrs)
+            parameters = self.__crearParameterList(client, attrs["parameters"])
 
             wsentitlement = itemFactory.WSProvisioningPolicyEntitlement(
                 ownershipType="Individual",
@@ -165,44 +262,70 @@ class ProvisioningPolicy:
 
         return ws_entitlement_list
 
-    def crearParameterList(self, client, atributos):
+    def __crearParameterList(self, client, atributos):
+        """
+        {
+             attr_name:[
+                     {
+                         "enforcement":enforcement_type (allowed/mandatory/default/excluded),
+                         "type":parameter_type (constant/regex/null/script)
+                         "value": attribute_value (None, str: for regex/script, list: for constant value),
+                     },
+                     {... more values}
+                 ],
+             {... more attributes}
+         }
+        """
         itemFactory = client.type_factory("ns1")
         listFactory = client.type_factory("ns0")
 
         attrs = atributos.copy()
 
-        attrs.pop("auto", "")
-        attrs.pop("flujo", "")
         parameters = []
 
-        for name, params in attrs.items():
+        enforcement_map = {
+            "default": 2,
+            "allowed": 1,
+            "excluded": 0,
+            "mandatory": 3,
+            "optional": 2,
+        }
 
-            is_script = "return " in params["values"]  # params["script"]
-            enforcement_map = {
-                "default": 2,
-                "allowed": 1,
-                "excluded": 0,
-                "mandatory": 3,
-                "optional": 2,
-            }
+        type_map = {
+            "constant": 0,
+            "script": 10,
+            "regex": 20,
+            "null": 10,
+        }
 
-            if is_script:
-                val = params["values"]
-                enforce = [enforcement_map[params["enforcement"].lower()]]
-                types = [10]
-            else:
-                val = list(
-                    map(lambda s: f'"{s}"', params["values"])
-                )  # lo envuelve en ""
-                enforce = [enforcement_map[params["enforcement"].lower()]] * len(val)
-                types = [0] * len(val)
-                # print(val,enforce,types)
+        for name, values in attrs.items():
+            attr_values = []
+            for value in values:
+                if "constant" in value["type"].lower():
+                    val = [f'"{s}"' for s in value["values"]]
+                    enforce = [enforcement_map[value["enforcement"].lower()]] * len(val)
+                    tipo = [0] * len(val)
+                elif "null" in value["type"].lower():
+                    val = ["return null;"]
+                    enforce = [enforcement_map[value["enforcement"].lower()]]
+                    tipo = [10]
+                else:
+                    val = [value["values"]]
+                    enforce = [enforcement_map[value["enforcement"].lower()]]
+                    tipo = [type_map[value["type"].lower()]]
 
-            assert enforce is not None, f"Enforcement no válido {name} - {enforce}"
+                attr_values.append((val, enforce, tipo))
 
-            values = listFactory.ArrayOf_xsd_string(val)
+            # organiza la info al formato requerido (listas planas separadas)
+            values, enforcements, types = list(zip(*attr_values))
+
+            values = [item for elem in values for item in elem]
+            enforcements = [item for elem in enforcements for item in elem]
+            types = [item for elem in types for item in elem]
+
+            values = listFactory.ArrayOf_xsd_string(values)
             expressionTypes = listFactory.ArrayOf_xsd_int(types)
-            enforcementTypes = listFactory.ArrayOf_xsd_int(enforce)
+            enforcementTypes = listFactory.ArrayOf_xsd_int(enforcements)
 
             param = itemFactory.WSServiceAttributeParameter(
                 name=name,
@@ -219,13 +342,13 @@ class ProvisioningPolicy:
 
         return wsparameters
 
-    def crearMembershipList(self, sesion, memberships):
+    def __crearMembershipList(self, sesion, memberships):
         """
         Si recibe ["*"]: Devuelve 2;*
         Si recibe lista con nombres de roles: Devuelve array[1;rol1, 2;rol2, ...]
         """
         # sesion=sesion.soapclient
-        client = self.pp_client
+        client = self.__pp_client
 
         membershipFactory = client.type_factory("ns1")
         listFactory = client.type_factory("ns0")
@@ -240,7 +363,7 @@ class ProvisioningPolicy:
         else:
             lista = []
             for membership in memberships:
-                role_dn = sesion.buscarRol(f"(errolename={membership})")["itimDN"]
+                role_dn = membership
                 mem = membershipFactory.WSProvisioningPolicyMembership(
                     name=role_dn, type=3
                 )
@@ -253,15 +376,17 @@ class ProvisioningPolicy:
 
     def crear(self, sesion):
         sesion = sesion.soapclient
-        client = self.pp_client
+        client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
 
+        ents = self.__crearEntitlementList(sesion, self.entitlements)
+        membs = self.__crearMembershipList(sesion, self.membership)
         wspp = itemFactory.WSProvisioningPolicy(
             description=self.description,
             name=self.name,
-            entitlements=self.entitlements,
-            membership=self.membership,
+            entitlements=ents,
+            membership=membs,
             priority=self.priority,
             scope=self.scope,
             enabled=self.enabled,
@@ -270,22 +395,25 @@ class ProvisioningPolicy:
         del wspp["organizationalContainer"]
         del wspp["itimDN"]
 
-        r = sesion.crearPolitica(self.ou, wspp, self.date)
+        r = sesion.crearPolitica(self.ou.wsou, wspp, self.date)
 
         # la respuesta no envía el DN, entonces no se puede meter de una
         return r
 
     def modificar(self, sesion):
         sesion = sesion.soapclient
-        client = self.pp_client
+        client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
+
+        ents = self.__crearEntitlementList(sesion, self.entitlements)
+        membs = self.__crearMembershipList(sesion, self.membership)
 
         wspp = itemFactory.WSProvisioningPolicy(
             description=self.description,
             name=self.name,
-            entitlements=self.entitlements,
-            membership=self.membership,
+            entitlements=ents,
+            membership=membs,
             priority=self.priority,
             scope=self.scope,
             enabled=self.enabled,
@@ -296,13 +424,13 @@ class ProvisioningPolicy:
 
         del wspp["organizationalContainer"]
 
-        r = sesion.modificarPolitica(self.ou, wspp, self.date)
+        r = sesion.modificarPolitica(self.ou.wsou, wspp, self.date)
 
         return r
 
     def eliminar(self, sesion):
         sesion = sesion.soapclient
-        r = sesion.eliminarPolitica(self.ou, self.dn, self.date)
+        r = sesion.eliminarPolitica(self.ou.wsou, self.dn, self.date)
         return r
 
 
@@ -518,13 +646,21 @@ class StaticRole:
 
         return r
 
+
 class OrganizationalContainer:
-    def __init__(self,sesion,organizational_container):
-        self.name=organizational_container["_links"]["self"]["title"]
-        self.href=organizational_container["_links"]["self"]["href"]
-        self.dn=organizational_container["_attributes"]["dn"]
-        self.wsou=sesion.soapclient.lookupContainer(self.dn)
-        self.profile_name=self.wsou["profileName"]
+    def __init__(self, sesion, dn=None, organizational_container=None):
+        if dn:
+            self.wsou = sesion.soapclient.lookupContainer(dn)
+            self.name = self.wsou.name
+            self.dn = self.wsou["itimDN"]
+            self.profile_name = self.wsou["profileName"]
+        elif organizational_container:
+            self.name = organizational_container["_links"]["self"]["title"]
+            self.href = organizational_container["_links"]["self"]["href"]
+            self.dn = organizational_container["_attributes"]["dn"]
+            self.wsou = sesion.soapclient.lookupContainer(self.dn)
+            self.profile_name = self.wsou["profileName"]
+
 
 class Person:
 
@@ -539,7 +675,7 @@ class Person:
             person_attrs = person["_attributes"]
 
         elif href:
-            r = sesion.restclient.lookupPersona(href,attributes="*")
+            r = sesion.restclient.lookupPersona(href, attributes="*")
             assert (
                 r["_links"]["self"]["href"] == href
             ), "Persona no encontrada o inválida"
@@ -566,7 +702,7 @@ class Person:
 
         return super().__init_subclass__()
 
-    def crear(self, sesion, parent:OrganizationalContainer, justificacion):
+    def crear(self, sesion, parent: OrganizationalContainer, justificacion):
         orgid = parent.href.split("/")[-1]
         ret = sesion.restclient.crearPersona(self, orgid, justificacion)
         return ret
@@ -590,14 +726,16 @@ class Person:
             ret = sesion.restclient.solicitarAccesos(accesos, self, justificacion)
         return ret
 
-    def suspender(self,sesion,justificacion):
+    def suspender(self, sesion, justificacion):
 
         try:
             try:
-                dn=self.dn
+                dn = self.dn
             except AttributeError:
-                dn=sesion.restclient.lookupPersona(self.href,attributes="dn")["_attributes"]["dn"]
-                self.dn=dn
+                dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                    "_attributes"
+                ]["dn"]
+                self.dn = dn
 
             ret = sesion.soapclient.suspenderPersona(dn, justificacion)
             return ret
@@ -606,13 +744,15 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restaurar(self,sesion,justificacion):
+    def restaurar(self, sesion, justificacion):
         try:
             try:
-                dn=self.dn
+                dn = self.dn
             except AttributeError:
-                dn=sesion.restclient.lookupPersona(self.href,attributes="dn")["_attributes"]["dn"]
-                self.dn=dn
+                dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                    "_attributes"
+                ]["dn"]
+                self.dn = dn
 
             ret = sesion.soapclient.restaurarPersona(self.dn, justificacion)
             return ret
@@ -620,15 +760,17 @@ class Person:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
-        
-    def eliminar(self,sesion,justificacion):
+
+    def eliminar(self, sesion, justificacion):
 
         try:
             try:
-                dn=self.dn
+                dn = self.dn
             except AttributeError:
-                dn=sesion.restclient.lookupPersona(self.href,attributes="dn")["_attributes"]["dn"]
-                self.dn=dn
+                dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                    "_attributes"
+                ]["dn"]
+                self.dn = dn
 
             ret = sesion.soapclient.eliminarPersona(self.dn, justificacion)
             return ret
@@ -701,5 +843,3 @@ class Group:
                 attr.name: [v for v in attr.values.item]
                 for attr in group.attributes.item
             }
-
-
