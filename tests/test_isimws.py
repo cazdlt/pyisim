@@ -77,16 +77,20 @@ def test_lookup_rol(sesion):
 
 def test_crear_modificar_eliminar_rol(sesion):
 
+    parent=search.organizational_container(sesion,"organizations",test_org)[0]
+
+    owners=[p.dn for p in search.people(sesion,by="employeenumber",filter="1015463230")]
+    owners_roles=[r.dn for r in search.roles(sesion,filter="ITIM Administrators")]
+
     # creación
     rolinfo = {
         "name": "rol_prueba",
         "description": "rol_prueba",
-        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
-        "classification": "Empresarial",
+        "parent": parent,
+        "classification": "role.classification.business",
         "access_option": 2,
         "access_category": "Role",
-        "owner_roles": None,
-        "owner_cedulas": ["1015463230"],
+        "owners": owners + owners_roles,
     }
     rol = StaticRole(sesion, role_attrs=rolinfo)
     rol.crear(sesion)

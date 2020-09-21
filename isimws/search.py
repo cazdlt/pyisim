@@ -46,7 +46,7 @@ def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
 
 
 def people(
-    sesion, profile=Person, by="cn", filter="*", attributes="cn", embedded="", limit=50
+    sesion, profile=Person, by="cn", filter="*", attributes="dn", embedded="", limit=50
 ):
     """ "Wrapper para buscar/lookup personas o bpperson desde REST API
 

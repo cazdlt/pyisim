@@ -466,7 +466,7 @@ class StaticRole:
         rol=None,
         role_attrs=None,
     ):
-        """[summary]
+        """
 
         Args:
             sesion (isimws.Session): session object
@@ -475,55 +475,34 @@ class StaticRole:
             role_attrs (dict):      name,
                                     description,
                                     parent (isimws.entities.OrganizationalContainer),
-                                    classification,
-                                    access_option,
-                                    access_category=None,
-                                    owner_roles=None,
-                                    owner_cedulas=None,
+                                    classification: str (eg. role.classification.business). Defaults to "".
+                                    access_option (int): 1: disable / 2: enable / 3: shared access
+                                    access_category: access category. Defaults to None.
+                                    owners: list of owner DNs. can be people or roles. Defaults to [].
         """
         sesion = sesion.soapclient
 
         url = sesion.addr + "WSRoleServiceService?wsdl"
 
-        self.role_client = sesion.get_client(url)
+        self.__role_client = sesion.get_client(url)
 
         if role_attrs:
 
             self.name = role_attrs["name"]
             self.description = role_attrs["description"]
-            self.ou = role_attrs["parent"].wsou
+            self.ou = role_attrs["parent"]
+            self.classification = role_attrs["classification"] if role_attrs["classification"] else ""
 
-            assert role_attrs["classification"] in [
-                "Empresarial",
-                "Aplicacion",
-            ], f"El rol {role_attrs['name']} debe ser empresarial o de aplicación."
-            if role_attrs["classification"] == "Empresarial":
-                self.classification = "role.classification.business"
-            else:
-                self.classification = "role.classification.application"
-
-            assert role_attrs["access_option"] in [1, 2, 3]
+            if role_attrs["access_option"] not in [1, 2, 3]:
+                raise ValueError("Access option must be an int. 1: disable / 2: enable / 3: shared access")
             self.access_option = role_attrs["access_option"]
-            if role_attrs["access_option"] == 2:
-                assert (
-                    role_attrs["access_category"] is not None
-                ), "Si el rol es acceso, debe darle una categoría"
+
+            if role_attrs["access_option"] in [2,3]:
+                if not role_attrs["access_category"]:
+                    raise ValueError("Si el rol es acceso, debe darle una categoría")
                 self.access_category = role_attrs["access_category"]
 
-            self.owners = []
-            if role_attrs["owner_cedulas"]:
-                for dueno in role_attrs["owner_cedulas"]:
-                    # print(dueno)
-                    self.owners.append(
-                        sesion.buscarPersona(f"(employeenumber={dueno})")["itimDN"]
-                    )
-
-            if role_attrs["owner_roles"]:
-                for rol in role_attrs["owner_roles"]:
-                    # print(rol)
-                    self.owners.append(
-                        sesion.buscarRol(f"(errolename={rol})")["itimDN"]
-                    )
+            self.owners = role_attrs["owners"] if role_attrs["owners"] else []
 
         else:
             if dn:
@@ -565,7 +544,7 @@ class StaticRole:
         A partir de la información de la instancia, devuelve un objeto WSRole para entregárselo al API de ISIM
         """
         # sesion=sesion.soapclient
-        client = self.role_client
+        client = self.__role_client
 
         itemFactory = client.type_factory("ns1")
         listFactory = client.type_factory("ns0")
@@ -605,11 +584,11 @@ class StaticRole:
     def crear(self, sesion):
         sesion = sesion.soapclient
 
-        client = self.role_client
+        client = self.__role_client
 
         wsrole = self.crearWSRole(sesion)
 
-        r = sesion.crearRolEstatico(wsrole, self.ou)
+        r = sesion.crearRolEstatico(wsrole, self.ou.wsou)
 
         self.dn = r["itimDN"]
         return r
@@ -617,7 +596,7 @@ class StaticRole:
     def modificar(self, sesion):
         sesion = sesion.soapclient
         url = sesion.addr + "WSRoleServiceService?wsdl"
-        client = self.role_client
+        client = self.__role_client
 
         wsrole = self.crearWSRole(sesion)
         wsattributes = wsrole["attributes"]["item"]
