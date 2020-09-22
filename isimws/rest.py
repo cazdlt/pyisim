@@ -85,7 +85,7 @@ class ISIMClient:
         assert perfil.lower() in ("person", "bpperson")
 
         url = self.__addr + "/itim/rest/people"
-        if perfil == "bpperson":
+        if perfil.lower() == "bpperson":
             url = url + "/bpperson"
 
         data = {
@@ -103,7 +103,7 @@ class ISIMClient:
             response = self.s.get(url, params=data,headers=headers).text
             if response.find("ISIMLoginRequired") != -1:
                 # TODO handle this
-                raise Exception
+                raise Exception("Please login.")
             personas = json.loads(response)
         except Exception as e:
             personas = []
@@ -454,3 +454,16 @@ class ISIMClient:
         person = self.s.get(url, params=params)
 
         return json.loads(person.text)
+
+    def lookupCurrentPerson(self,attributes="*",embedded=""):
+        url = self.__addr + "/itim/rest/people/me"
+
+        params = {
+            "attributes": attributes,
+            "embedded": embedded,
+        }
+
+        person = self.s.get(url, params=params)
+
+        return json.loads(person.text)
+

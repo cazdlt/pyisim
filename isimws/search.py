@@ -46,7 +46,13 @@ def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
 
 
 def people(
-    sesion, profile=Person, by="cn", filter="*", attributes="dn", embedded="", limit=50
+    sesion,
+    filter="*",
+    by="cn",
+    profile_name="Person",
+    attributes="*",
+    embedded="",
+    limit=50,
 ):
     """ "Wrapper para buscar/lookup personas o bpperson desde REST API
 
@@ -55,23 +61,23 @@ def people(
         profile (str): Person/BPPerson
         by (str, optional): Atributo por el que buscar. Defaults to "cn".
         filter (str, optional): Filtro por el que buscar. Defaults to "*".
-        attributes (str, optional): Atributos a retornar. Defaults to "cn".
+        attributes (str, optional): Atributos a retornar. Defaults to "dn".
         embedded (str, optional): Atributos embebidos a retornar (ej. manager.cn). Defaults to "".
         limit (int, optional): Defaults to 50.
 
     Returns:
-        [list(dict)]: listado de personas encontradas
+        [list(Person)]: listado de personas encontradas
     """
 
     ret = sesion.restclient.buscarPersonas(
-        profile.profile_name,
+        profile_name,
         atributos=attributes,
         embedded=embedded,
         buscar_por=by,
         filtro=filter,
         limit=limit,
     )
-    personas = [profile(sesion, person=p) for p in ret]
+    personas = [Person(sesion, person=p) for p in ret]
     return personas
 
 
@@ -122,7 +128,7 @@ def access(sesion, by="accessName", filter="*", attributes="", limit=20):
     return accesos
 
 
-def service(sesion, parent:OrganizationalContainer, by="erservicename", filter="*"):
+def service(sesion, parent: OrganizationalContainer, by="erservicename", filter="*"):
 
     # ret=sesion.restclient.buscarServicio(by,filter,limit,atributos=attributes)
     # servicios=[Service(sesion,service=s) for s in ret]

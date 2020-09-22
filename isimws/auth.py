@@ -1,6 +1,6 @@
 import isimws.rest as simrest
 import isimws.soap as simsoap
-
+from isimws.entities import Person
 
 class Session:
     """
@@ -11,3 +11,17 @@ class Session:
         self.username = username
         self.restclient = simrest.ISIMClient(url, username, password, certificate_path)
         self.soapclient = simsoap.ISIMClient(url, username, password, certificate_path)
+
+    def current_person(self,attributes="*",embedded=""):
+        """Returns the current logged in person entity.
+
+        Args:
+            attributes (str, optional): comma separated attributes to return. Defaults to "*".
+            embedded (str, optional): comma separated embedded attributes to return. Defaults to "".
+
+        Returns:
+            isimws.entities.Person: Person entity of the currently logged user.
+        """
+        p=self.restclient.lookupCurrentPerson(attributes,embedded)     
+        return Person(self,person=p)
+

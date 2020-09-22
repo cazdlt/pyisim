@@ -167,14 +167,16 @@ class ProvisioningPolicy:
                     attr_values = [
                         {
                             "enforcement": enforcement_mapping[val[1]],
-                            "type": 
-                                "constant" if val[0][0] == val[0][-1] == '"'
-                                else "null" if val[0] == "return null;"
-                                else type_mapping[val[2]],
-                            "values": 
-                                [val[0][1:-1]] if val[0][0] == val[0][-1] == '"'
-                                else None if val[0] == "return null;"
-                                else val[0],
+                            "type": "constant"
+                            if val[0][0] == val[0][-1] == '"'
+                            else "null"
+                            if val[0] == "return null;"
+                            else type_mapping[val[2]],
+                            "values": [val[0][1:-1]]
+                            if val[0][0] == val[0][-1] == '"'
+                            else None
+                            if val[0] == "return null;"
+                            else val[0],
                         }
                         for val in attr_values
                     ]
@@ -491,13 +493,17 @@ class StaticRole:
             self.name = role_attrs["name"]
             self.description = role_attrs["description"]
             self.ou = role_attrs["parent"]
-            self.classification = role_attrs["classification"] if role_attrs["classification"] else ""
+            self.classification = (
+                role_attrs["classification"] if role_attrs["classification"] else ""
+            )
 
             if role_attrs["access_option"] not in [1, 2, 3]:
-                raise ValueError("Access option must be an int. 1: disable / 2: enable / 3: shared access")
+                raise ValueError(
+                    "Access option must be an int. 1: disable / 2: enable / 3: shared access"
+                )
             self.access_option = role_attrs["access_option"]
 
-            if role_attrs["access_option"] in [2,3]:
+            if role_attrs["access_option"] in [2, 3]:
                 if not role_attrs["access_category"]:
                     raise ValueError("Si el rol es acceso, debe darle una categoría")
                 self.access_category = role_attrs["access_category"]
@@ -633,6 +639,16 @@ class OrganizationalContainer:
             self.name = self.wsou.name
             self.dn = self.wsou["itimDN"]
             self.profile_name = self.wsou["profileName"]
+
+            rest_profile_names={
+                "BusinessPartnerOrganization":"bporganizations",
+                "OrganizationalUnit":"organizationunits",
+                "Organization":"organizations",
+                "Location":"locations",
+                "AdminDomain":"admindomains",
+            }
+            self.href=sesion.restclient.buscarOUs(rest_profile_names[self.profile_name],self.name)[0]["_links"]["self"]["href"]
+
         elif organizational_container:
             self.name = organizational_container["_links"]["self"]["title"]
             self.href = organizational_container["_links"]["self"]["href"]
@@ -651,6 +667,9 @@ class Person:
 
         if person:
             self.href = person["_links"]["self"]["href"]
+            self.dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                "_attributes"
+            ]["dn"]
             person_attrs = person["_attributes"]
 
         elif href:
@@ -660,6 +679,9 @@ class Person:
             ), "Persona no encontrada o inválida"
 
             self.href = href
+            self.dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                "_attributes"
+            ]["dn"]
             person_attrs = r["_attributes"]
 
         for k, v in person_attrs.items():

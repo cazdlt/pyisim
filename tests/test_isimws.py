@@ -30,7 +30,7 @@ def test_search_access(sesion):
 
 
 def test_search_people(sesion):
-    r = search.people(sesion, "employeenumber", "96451425873", limit=1)
+    r = search.people(sesion, by="employeenumber", filter="96451425873", limit=1)
     assert len(r) > 0
 
 

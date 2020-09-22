@@ -60,7 +60,7 @@ MyBPPerson({"sn":"Zamora"}).crear(sess,"my org","New BPPerson")
 ```py
 from isimws import search
 accesses=search.access(sess,filter="*Consulta*",limit=5)
-person=search.people(sesion,MyBPPerson,"givenname","Juan",limit=1)[0]
+person=search.people(sesion,by="givenname",filter="Juan",limit=1)[0]
 person.solicitar_accesos(sesion,accesses,"justification")
 ```
 
@@ -143,5 +143,6 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
     - Improve activity search by request id (does not work, currently a support case open to research this)
     - Add operations to services
     - Publish on PyPi
+    - Normalize request responses
 
 
