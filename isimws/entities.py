@@ -26,7 +26,7 @@ class ProvisioningPolicy:
                     service_dn/service_profile_name/*:{
                         "automatic":True/False,
                         "workflow":account_request_workflow_name/None,
-                        "parameters:[
+                        "parameters:{
                             attr_name:[
                                     {
                                         "enforcement":enforcement_type (allowed/mandatory/default/excluded),
@@ -36,7 +36,7 @@ class ProvisioningPolicy:
                                     {... more values}
                                 ],
                             {... more attributes}
-                        ]
+                        }
                     },
                     {... more services}
                 }
@@ -482,11 +482,11 @@ class StaticRole:
                                     access_category: access category. Defaults to None.
                                     owners: list of owner DNs. can be people or roles. Defaults to [].
         """
-        sesion = sesion.soapclient
+        # sesion = sesion.soapclient
 
-        url = sesion.addr + "WSRoleServiceService?wsdl"
+        url = sesion.soapclient.addr + "WSRoleServiceService?wsdl"
 
-        self.__role_client = sesion.get_client(url)
+        self.__role_client = sesion.soapclient.get_client(url)
 
         if role_attrs:
 
@@ -497,13 +497,14 @@ class StaticRole:
                 role_attrs["classification"] if role_attrs["classification"] else ""
             )
 
-            if role_attrs["access_option"] not in [1, 2, 3]:
+            role_attrs["access_option"]=str(role_attrs["access_option"])
+            if role_attrs["access_option"] not in ["1", "2", "3"]:
                 raise ValueError(
                     "Access option must be an int. 1: disable / 2: enable / 3: shared access"
                 )
             self.access_option = role_attrs["access_option"]
 
-            if role_attrs["access_option"] in [2, 3]:
+            if role_attrs["access_option"] in ["2", "3"]:
                 if not role_attrs["access_category"]:
                     raise ValueError("Si el rol es acceso, debe darle una categoría")
                 self.access_category = role_attrs["access_category"]
@@ -512,7 +513,7 @@ class StaticRole:
 
         else:
             if dn:
-                rol = sesion.lookupRole(dn)
+                rol = sesion.soapclient.lookupRole(dn)
 
             self.name = rol["name"]
             self.description = rol["description"]
@@ -523,7 +524,8 @@ class StaticRole:
                 for attr in rol["attributes"]["item"]
             }
             attrs = defaultdict(list, attrs)
-            self.ou = attrs["erparent"][0]  # dn del contenedor
+            ou = attrs["erparent"][0]  # dn del contenedor
+            self.parent=OrganizationalContainer(sesion,dn=ou)
             if attrs["erroleclassification"]:
                 self.classification = attrs["erroleclassification"][0]
             if attrs["eraccessoption"]:
@@ -562,7 +564,7 @@ class StaticRole:
             client, "erRoleClassification", self.classification
         )
 
-        if self.access_option in [2, 3]:
+        if self.access_option in ["2", "3"]:
             erObjectProfileName = self.crearAtributoRol(
                 client, "erObjectProfileName", self.access_category
             )
@@ -655,6 +657,9 @@ class OrganizationalContainer:
             self.dn = organizational_container["_attributes"]["dn"]
             self.wsou = sesion.soapclient.lookupContainer(self.dn)
             self.profile_name = self.wsou["profileName"]
+
+    def __eq__(self, o) -> bool:
+        return self.dn==o.dn
 
 
 class Person:

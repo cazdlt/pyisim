@@ -107,6 +107,13 @@ def activities(sesion, by="activityName", filter="*"):
 
     if by == "requestId":
         # sesion.soapclient.buscarActividadesDeSolicitud(filter)
+        """ RESPUESTA IBM A getRecurseSubProcess()
+        Your observation is correct. The backend code returns the activities belonging to the first level sub-process only. 
+        I feel the main confusion is due to the lack of documentation around this API and the name of the parameter used. 
+        The intent of introducing this additional boolean flag was to restrict the result to only the direct activities of the main process. 
+        It should have been “getImmediateChildActivities” rather than “recurseSubProcesses”.
+        The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
+        """
         results = sesion.restclient.buscarActividad(
             solicitudID=f"/itim/rest/requests/{filter}"
         )
