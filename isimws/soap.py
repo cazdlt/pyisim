@@ -25,8 +25,8 @@ class ISIMClient:
         url = self.addr + "WSSessionService?wsdl"
         assert self.cert_path is not None, "No certificate passed"
         client = self.get_client(url)
-        sesion = client.service.login(user_, pass_)
-        return sesion
+        session = client.service.login(user_, pass_)
+        return session
 
     def get_client(self, url):
 

@@ -1,4 +1,3 @@
-from attr import attributes
 from isimws.exceptions import *
 from isimws.entities import (
     Activity,
@@ -12,7 +11,7 @@ from isimws.entities import (
 )
 
 
-def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
+def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
     """Buscar grupos.
 
     Args:
@@ -28,21 +27,21 @@ def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
     Returns:
         list: Search results
     """
-    sesion = sesion.soapclient
+    session = session.soapclient
     if by == "account":
         raise NotImplementedError
     elif by == "access":
         raise NotImplementedError
     elif by == "service":
-        ret = sesion.buscarGruposPorServicio(service_dn, group_profile_name, group_info)
+        ret = session.buscarGruposPorServicio(service_dn, group_profile_name, group_info)
     else:
         raise InvalidOptionError("Invalid option")
 
-    return [Group(sesion, group=g) for g in ret]
+    return [Group(session, group=g) for g in ret]
 
 
 def people(
-    sesion,
+    session,
     filter="*",
     by="cn",
     profile_name="Person",
@@ -53,7 +52,7 @@ def people(
     """ "Wrapper para buscar/lookup personas o bpperson desde REST API
 
     Args:
-        sesion ([isimws.auth.Session]): Sesión de isimws
+        session ([isimws.auth.Session]): Sesión de isimws
         profile (str): Person/BPPerson
         by (str, optional): Atributo por el que buscar. Defaults to "cn".
         filter (str, optional): Filtro por el que buscar. Defaults to "*".
@@ -65,7 +64,7 @@ def people(
         [list(Person)]: listado de personas encontradas
     """
 
-    ret = sesion.restclient.buscarPersonas(
+    ret = session.restclient.buscarPersonas(
         profile_name,
         atributos=attributes,
         embedded=embedded,
@@ -73,36 +72,36 @@ def people(
         filtro=filter,
         limit=limit,
     )
-    personas = [Person(sesion, person=p) for p in ret]
+    personas = [Person(session, person=p) for p in ret]
     return personas
 
 
-def provisioning_policy(sesion, name, parent: OrganizationalContainer):
+def provisioning_policy(session, name, parent: OrganizationalContainer):
 
     wsou = parent.wsou
-    results = sesion.soapclient.buscarPoliticaSuministro(
+    results = session.soapclient.buscarPoliticaSuministro(
         wsou, nombre_politica=name, find_unique=False
     )
-    return [ProvisioningPolicy(sesion, provisioning_policy=p) for p in results]
+    return [ProvisioningPolicy(session, provisioning_policy=p) for p in results]
 
 
-def roles(sesion, by="errolename", filter="*", find_unique=False):
-    soap = sesion.soapclient
+def roles(session, by="errolename", filter="*", find_unique=False):
+    soap = session.soapclient
     results = soap.buscarRol(f"({by}={filter})", find_unique)
-    return [StaticRole(sesion, rol=r) for r in results]
+    return [StaticRole(session, rol=r) for r in results]
 
 
-def activities(sesion, by="activityName", filter="*"):
+def activities(session, by="activityName", filter="*"):
     """Busca actividades
 
     Args:
-        sesion (isimws.auth.Session): Sesión de isimws
+        session (isimws.auth.Session): Sesión de isimws
         by (str, optional): Filtros disponibles por ISIM REST API (activityId, nombres de actividad/servicio/participantes) o requestId. Defaults to "activityName".
         filter (str, optional): Filtro. Defaults to "*".
     """
 
     if by == "requestId":
-        # sesion.soapclient.buscarActividadesDeSolicitud(filter)
+        # session.soapclient.buscarActividadesDeSolicitud(filter)
         """ RESPUESTA IBM A getRecurseSubProcess()
         Your observation is correct. The backend code returns the activities belonging to the first level sub-process only. 
         I feel the main confusion is due to the lack of documentation around this API and the name of the parameter used. 
@@ -110,20 +109,20 @@ def activities(sesion, by="activityName", filter="*"):
         It should have been “getImmediateChildActivities” rather than “recurseSubProcesses”.
         The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
         """
-        results = sesion.restclient.buscarActividad(
+        results = session.restclient.buscarActividad(
             solicitudID=f"/itim/rest/requests/{filter}"
         )
     else:
-        results = sesion.restclient.buscarActividad(
+        results = session.restclient.buscarActividad(
             search_attr=by, search_filter=filter
         )
 
-    return [Activity(sesion, activity=a) for a in results]
+    return [Activity(session, activity=a) for a in results]
 
 
-def access(sesion, by="accessName", filter="*", attributes="", limit=20):
+def access(session, by="accessName", filter="*", attributes="", limit=20):
 
-    ret = sesion.restclient.buscarAcceso(
+    ret = session.restclient.buscarAcceso(
         by=by, filtro=filter, atributos=attributes, limit=limit
     )
     accesos = [Access(access=a) for a in ret]
@@ -131,23 +130,23 @@ def access(sesion, by="accessName", filter="*", attributes="", limit=20):
     return accesos
 
 
-def service(sesion, parent: OrganizationalContainer, by="erservicename", filter="*"):
+def service(session, parent: OrganizationalContainer, by="erservicename", filter="*"):
 
-    # ret=sesion.restclient.buscarServicio(by,filter,limit,atributos=attributes)
-    # servicios=[Service(sesion,service=s) for s in ret]
-    ret = sesion.soapclient.buscarServicio(
+    # ret=session.restclient.buscarServicio(by,filter,limit,atributos=attributes)
+    # servicios=[Service(session,service=s) for s in ret]
+    ret = session.soapclient.buscarServicio(
         parent.wsou, f"({by}={filter})", find_unique=False
     )
-    servicios = [Service(sesion, service=s) for s in ret]
+    servicios = [Service(session, service=s) for s in ret]
 
     return servicios
 
 
-def organizational_container(sesion, profile_name, filter, by="name"):
+def organizational_container(session, profile_name, filter, by="name"):
     """[summary]
 
     Args:
-        sesion (isimws.Session)
+        session (isimws.Session)
         profile_name (str): ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
         filter (str): name or attr value
         by (str, optional): attribute to search by. Defaults to "name".
@@ -157,10 +156,10 @@ def organizational_container(sesion, profile_name, filter, by="name"):
     """
 
     buscar_por = None if by == "name" else by
-    ret = sesion.restclient.buscarOUs(
+    ret = session.restclient.buscarOUs(
         profile_name, buscar_por=buscar_por, filtro=filter, attributes="dn"
     )
 
-    ous = [OrganizationalContainer(sesion, organizational_container=ou) for ou in ret]
+    ous = [OrganizationalContainer(session, organizational_container=ou) for ou in ret]
 
     return ous

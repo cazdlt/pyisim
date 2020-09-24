@@ -11,14 +11,14 @@ class ProvisioningPolicy:
 
     def __init__(
         self,
-        sesion,
+        session,
         provisioning_policy=None,
         policy_attrs=None,
     ):
         """Initializes ProvisioningPolicy object
 
         Args:
-            sesion (isimws.Session): Custom ISIM/ Default ISIM Session
+            session (isimws.Session): Custom ISIM/ Default ISIM Session
             policy_attrs(dict):
                 name (str): policy name
                 description (str): policy description
@@ -49,9 +49,9 @@ class ProvisioningPolicy:
                 keywords(str,optional): Defaults to "".
         """
 
-        # sesion = sesion.soapclient
-        url = sesion.soapclient.addr + "WSProvisioningPolicyServiceService?wsdl"
-        self.__pp_client = sesion.soapclient.get_client(url)
+        # session = session.soapclient
+        url = session.soapclient.addr + "WSProvisioningPolicyServiceService?wsdl"
+        self.__pp_client = session.soapclient.get_client(url)
 
         local_tz = datetime.datetime.now().astimezone().tzinfo
         self.date = datetime.datetime.now(local_tz).isoformat()
@@ -65,10 +65,10 @@ class ProvisioningPolicy:
 
             # probando
             # self.entitlements = self.__crearEntitlementList(
-            #     sesion.soapclient, policy_attrs["entitlements"]
+            #     session.soapclient, policy_attrs["entitlements"]
             # )
             # self.membership = self.__crearMembershipList(
-            #     sesion.soapclient, policy_attrs["memberships"]
+            #     session.soapclient, policy_attrs["memberships"]
             # )
             self.priority = policy_attrs["priority"]
             self.scope = (
@@ -85,12 +85,12 @@ class ProvisioningPolicy:
         else:
 
             # if dn: no hay método de lookup en sim
-            #     rol=sesion.lookupProvisioningPolicy(dn)
+            #     rol=session.lookupProvisioningPolicy(dn)
             self.description = provisioning_policy["description"]
             self.name = provisioning_policy["name"]
             self.dn = provisioning_policy["itimDN"]
             self.ou = OrganizationalContainer(
-                sesion, dn=provisioning_policy["organizationalContainer"]["itimDN"]
+                session, dn=provisioning_policy["organizationalContainer"]["itimDN"]
             )
             self.priority = provisioning_policy["priority"]
             self.scope = provisioning_policy["scope"]
@@ -101,7 +101,7 @@ class ProvisioningPolicy:
             #         titularidad.parameters.parameters = {"item": []}
 
             self.entitlements = self.__traducirWSEntitlements(
-                sesion.soapclient, provisioning_policy["entitlements"]
+                session.soapclient, provisioning_policy["entitlements"]
             )
             self.membership = [
                 m["name"] for m in provisioning_policy["membership"]["item"]
@@ -111,7 +111,7 @@ class ProvisioningPolicy:
             self.keywords = provisioning_policy["keywords"]
             self.enabled = provisioning_policy["enabled"]
 
-    def __traducirWSEntitlements(self, sesion, wsentitlements):
+    def __traducirWSEntitlements(self, session, wsentitlements):
         """
         Convierte WSEntitlements en diccionario estándar para poder modificar
         Retorna:
@@ -191,7 +191,7 @@ class ProvisioningPolicy:
 
         return entitlements
 
-    def __crearEntitlementList(self, sesion, titularidades):
+    def __crearEntitlementList(self, session, titularidades):
         """
         {
             service_dn/service_profile_name/*:{
@@ -212,7 +212,7 @@ class ProvisioningPolicy:
             {... more services}
         }
         """
-        # sesion=sesion.soapclient
+        # session=session.soapclient
         client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
@@ -227,7 +227,7 @@ class ProvisioningPolicy:
                 tipo_entitlement = 2
 
             elif "profile" in servicio.lower():  # Todos los servicios de un perfil
-                # servicio_dn=sesion.buscarPerfilServicio(servicio) no sirve búsqueda de perfiles
+                # servicio_dn=session.buscarPerfilServicio(servicio) no sirve búsqueda de perfiles
                 servicio_dn = servicio
                 tipo_entitlement = 0
 
@@ -241,7 +241,7 @@ class ProvisioningPolicy:
 
             type_ = 1 if attrs["automatic"] else 0
             process_dn = (
-                sesion.searchWorkflow(attrs["workflow"], self.ou.name)
+                session.searchWorkflow(attrs["workflow"], self.ou.name)
                 if attrs["workflow"]
                 else None
             )
@@ -344,12 +344,12 @@ class ProvisioningPolicy:
 
         return wsparameters
 
-    def __crearMembershipList(self, sesion, memberships):
+    def __crearMembershipList(self, session, memberships):
         """
         Si recibe ["*"]: Devuelve 2;*
         Si recibe lista con nombres de roles: Devuelve array[1;rol1, 2;rol2, ...]
         """
-        # sesion=sesion.soapclient
+        # session=session.soapclient
         client = self.__pp_client
 
         membershipFactory = client.type_factory("ns1")
@@ -376,14 +376,14 @@ class ProvisioningPolicy:
 
         return membershipList
 
-    def crear(self, sesion):
-        sesion = sesion.soapclient
+    def add(self, session):
+        session = session.soapclient
         client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
 
-        ents = self.__crearEntitlementList(sesion, self.entitlements)
-        membs = self.__crearMembershipList(sesion, self.membership)
+        ents = self.__crearEntitlementList(session, self.entitlements)
+        membs = self.__crearMembershipList(session, self.membership)
         wspp = itemFactory.WSProvisioningPolicy(
             description=self.description,
             name=self.name,
@@ -397,13 +397,13 @@ class ProvisioningPolicy:
         del wspp["organizationalContainer"]
         del wspp["itimDN"]
 
-        r = sesion.crearPolitica(self.ou.wsou, wspp, self.date)
+        r = session.crearPolitica(self.ou.wsou, wspp, self.date)
 
         # la respuesta no envía el DN, entonces no se puede meter de una
         return r
 
-    def modificar(self, sesion, changes={}):
-        sesion = sesion.soapclient
+    def modify(self, session, changes={}):
+        session = session.soapclient
         client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
@@ -411,8 +411,8 @@ class ProvisioningPolicy:
         for attr,value in changes.items():
             setattr(self,attr,value)
 
-        ents = self.__crearEntitlementList(sesion, self.entitlements)
-        membs = self.__crearMembershipList(sesion, self.membership)
+        ents = self.__crearEntitlementList(session, self.entitlements)
+        membs = self.__crearMembershipList(session, self.membership)
 
         wspp = itemFactory.WSProvisioningPolicy(
             description=self.description,
@@ -429,13 +429,13 @@ class ProvisioningPolicy:
 
         del wspp["organizationalContainer"]
 
-        r = sesion.modificarPolitica(self.ou.wsou, wspp, self.date)
+        r = session.modificarPolitica(self.ou.wsou, wspp, self.date)
 
         return r
 
-    def eliminar(self, sesion):
-        sesion = sesion.soapclient
-        r = sesion.eliminarPolitica(self.ou.wsou, self.dn, self.date)
+    def delete(self, session):
+        session = session.soapclient
+        r = session.eliminarPolitica(self.ou.wsou, self.dn, self.date)
         return r
 
 
@@ -466,7 +466,7 @@ class StaticRole:
 
     def __init__(
         self,
-        sesion,
+        session,
         dn=None,
         rol=None,
         role_attrs=None,
@@ -474,7 +474,7 @@ class StaticRole:
         """
 
         Args:
-            sesion (isimws.Session): session object
+            session (isimws.Session): session object
             id (str): for role lookup
             rol (zeep.WSRole): for initialization after search
             role_attrs (dict):      name,
@@ -485,11 +485,11 @@ class StaticRole:
                                     access_category: access category. Defaults to None.
                                     owners: list of owner DNs. can be people or roles. Defaults to [].
         """
-        # sesion = sesion.soapclient
+        # session = session.soapclient
 
-        url = sesion.soapclient.addr + "WSRoleServiceService?wsdl"
+        url = session.soapclient.addr + "WSRoleServiceService?wsdl"
 
-        self.__role_client = sesion.soapclient.get_client(url)
+        self.__role_client = session.soapclient.get_client(url)
 
         if role_attrs:
 
@@ -516,7 +516,7 @@ class StaticRole:
 
         else:
             if dn:
-                rol = sesion.soapclient.lookupRole(dn)
+                rol = session.soapclient.lookupRole(dn)
 
             self.name = rol["name"]
             self.description = rol["description"]
@@ -528,7 +528,7 @@ class StaticRole:
             }
             attrs = defaultdict(list, attrs)
             ou = attrs["erparent"][0]  # dn del contenedor
-            self.parent=OrganizationalContainer(sesion,dn=ou)
+            self.parent=OrganizationalContainer(session,dn=ou)
             if attrs["erroleclassification"]:
                 self.classification = attrs["erroleclassification"][0]
             if attrs["eraccessoption"]:
@@ -549,12 +549,12 @@ class StaticRole:
 
         return attr
 
-    def crearWSRole(self, sesion):
+    def crearWSRole(self, session):
 
         """
         A partir de la información de la instancia, devuelve un objeto WSRole para entregárselo al API de ISIM
         """
-        # sesion=sesion.soapclient
+        # session=session.soapclient
         client = self.__role_client
 
         itemFactory = client.type_factory("ns1")
@@ -592,27 +592,27 @@ class StaticRole:
         # del role["erparent"]
         return role
 
-    def crear(self, sesion):
-        sesion = sesion.soapclient
+    def add(self, session):
+        session = session.soapclient
 
         # client = self.__role_client
 
-        wsrole = self.crearWSRole(sesion)
+        wsrole = self.crearWSRole(session)
 
-        r = sesion.crearRolEstatico(wsrole, self.ou.wsou)
+        r = session.crearRolEstatico(wsrole, self.ou.wsou)
 
         self.dn = r["itimDN"]
         return r
 
-    def modificar(self, sesion,changes={}):
-        sesion = sesion.soapclient
-        # url = sesion.addr + "WSRoleServiceService?wsdl"
+    def modify(self, session,changes={}):
+        session = session.soapclient
+        # url = session.addr + "WSRoleServiceService?wsdl"
         client = self.__role_client
 
         for attr,value in changes.items():
             setattr(self,attr,value)
 
-        wsrole = self.crearWSRole(sesion)
+        wsrole = self.crearWSRole(session)
         wsattributes = wsrole["attributes"]["item"]
 
         errolename = self.crearAtributoRol(client, "errolename", self.name)
@@ -625,25 +625,25 @@ class StaticRole:
 
         # print(wsattributes)
 
-        r = sesion.modificarRolEstatico(self.dn, wsattributes)
+        r = session.modificarRolEstatico(self.dn, wsattributes)
 
         return r
 
-    def eliminar(self, sesion, fecha=None):
-        if fecha:
+    def delete(self, session, date=None):
+        if date:
             raise NotImplementedError(
                 "No se ha implementado la programación de tareas."
             )
 
-        r = sesion.soapclient.eliminarRolEstatico(self.dn, fecha)
+        r = session.soapclient.eliminarRolEstatico(self.dn, date)
 
         return r
 
 
 class OrganizationalContainer:
-    def __init__(self, sesion, dn=None, organizational_container=None):
+    def __init__(self, session, dn=None, organizational_container=None):
         if dn:
-            self.wsou = sesion.soapclient.lookupContainer(dn)
+            self.wsou = session.soapclient.lookupContainer(dn)
             self.name = self.wsou.name
             self.dn = self.wsou["itimDN"]
             self.profile_name = self.wsou["profileName"]
@@ -655,13 +655,13 @@ class OrganizationalContainer:
                 "Location":"locations",
                 "AdminDomain":"admindomains",
             }
-            self.href=sesion.restclient.buscarOUs(rest_profile_names[self.profile_name],self.name)[0]["_links"]["self"]["href"]
+            self.href=session.restclient.buscarOUs(rest_profile_names[self.profile_name],self.name)[0]["_links"]["self"]["href"]
 
         elif organizational_container:
             self.name = organizational_container["_links"]["self"]["title"]
             self.href = organizational_container["_links"]["self"]["href"]
             self.dn = organizational_container["_attributes"]["dn"]
-            self.wsou = sesion.soapclient.lookupContainer(self.dn)
+            self.wsou = session.soapclient.lookupContainer(self.dn)
             self.profile_name = self.wsou["profileName"]
 
     def __eq__(self, o) -> bool:
@@ -672,25 +672,25 @@ class Person:
 
     profile_name = "Person"
 
-    def __init__(self, sesion, person=None, href=None, person_attrs=None):
+    def __init__(self, session, person=None, href=None, person_attrs=None):
 
         self.changes = {}
 
         if person:
             self.href = person["_links"]["self"]["href"]
-            self.dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+            self.dn = session.restclient.lookupPersona(self.href, attributes="dn")[
                 "_attributes"
             ]["dn"]
             person_attrs = person["_attributes"]
 
         elif href:
-            r = sesion.restclient.lookupPersona(href, attributes="*")
+            r = session.restclient.lookupPersona(href, attributes="*")
             assert (
                 r["_links"]["self"]["href"] == href
             ), "Persona no encontrada o inválida"
 
             self.href = href
-            self.dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+            self.dn = session.restclient.lookupPersona(self.href, attributes="dn")[
                 "_attributes"
             ]["dn"]
             person_attrs = r["_attributes"]
@@ -714,12 +714,12 @@ class Person:
 
         return super().__init_subclass__()
 
-    def crear(self, sesion, parent: OrganizationalContainer, justificacion):
+    def add(self, session, parent: OrganizationalContainer, justification):
         orgid = parent.href.split("/")[-1]
-        ret = sesion.restclient.crearPersona(self, orgid, justificacion)
+        ret = session.restclient.crearPersona(self, orgid, justification)
         return ret
 
-    def modificar(self, sesion, justificacion, changes={}):
+    def modify(self, session, justification, changes={}):
         try:
             href = self.href
             
@@ -727,8 +727,8 @@ class Person:
             # for attr,value in changes.items():
             #     setattr(self,attr,value)
 
-            ret = sesion.restclient.modificarPersona(
-                self.href, self.changes, justificacion
+            ret = session.restclient.modificarPersona(
+                self.href, self.changes, justification
             )
             return ret
         except AttributeError:
@@ -736,60 +736,60 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def solicitar_accesos(self, sesion, accesos, justificacion):
+    def request_access(self, session, accesos, justification):
 
         ret = {}
         if len(accesos) > 0:
-            ret = sesion.restclient.solicitarAccesos(accesos, self, justificacion)
+            ret = session.restclient.solicitarAccesos(accesos, self, justification)
         return ret
 
-    def suspender(self, sesion, justificacion):
+    def suspend(self, session, justification):
 
         try:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            ret = sesion.soapclient.suspenderPersona(dn, justificacion)
+            ret = session.soapclient.suspenderPersona(dn, justification)
             return ret
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restaurar(self, sesion, justificacion):
+    def restore(self, session, justification):
         try:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            ret = sesion.soapclient.restaurarPersona(self.dn, justificacion)
+            ret = session.soapclient.restaurarPersona(self.dn, justification)
             return ret
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def eliminar(self, sesion, justificacion):
+    def delete(self, session, justification):
 
         try:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = sesion.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            ret = sesion.soapclient.eliminarPersona(self.dn, justificacion)
+            ret = session.soapclient.eliminarPersona(self.dn, justification)
             return ret
         except AttributeError:
             raise Exception(
@@ -798,10 +798,10 @@ class Person:
 
 
 class Activity:
-    def __init__(self, sesion, activity=None, id=None):
+    def __init__(self, session, activity=None, id=None):
 
         if id:
-            activity = sesion.restclient.lookupActividad(str(id))
+            activity = session.restclient.lookupActividad(str(id))
             if "_attributes" not in activity.keys():
                 raise NotFoundError(f"Actividad no encontrada {id}")
 
@@ -813,7 +813,7 @@ class Activity:
         self.status = activity["_attributes"]["status"]["key"].split(".")[-1]
         self.requestee = activity["_links"]["requestee"]["title"]
 
-    def completar(self, sesion, resultado, justificacion):
+    def complete(self, session, resultado, justification):
         """Permite OTs, Aprobaciones, RFIs"""
         act_dict = {"_attributes": {}, "_links": {"workitem": {}}}
         act_dict["_attributes"]["type"] = self.type
@@ -821,7 +821,7 @@ class Activity:
         act_dict["_links"]["workitem"]["href"] = self.workitem_href
 
         assert self.status == "PENDING", "La actividad ya ha sido completada."
-        r = sesion.restclient.completarActividades([act_dict], resultado, justificacion)
+        r = session.restclient.completarActividades([act_dict], resultado, justification)
 
         return r
 
@@ -835,10 +835,10 @@ class Access:
 
 
 class Service:
-    def __init__(self, sesion, service=None):
+    def __init__(self, session, service=None):
 
         # if id:
-        #     service=sesion.restclient.lookupServicio(str(id))
+        #     service=session.restclient.lookupServicio(str(id))
         #     if "_attributes" not in service.keys():
         #         raise NotFoundError(f"Servicio no encontrado {id}")
 
@@ -849,7 +849,7 @@ class Service:
 
 
 class Group:
-    def __init__(self, sesion, group=None):
+    def __init__(self, session, group=None):
         if group:
             self.name = group["name"]
             self.dn = group["itimDN"]

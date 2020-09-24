@@ -27,14 +27,14 @@ info_persona={
     "departmentnumber":"IBM",
 }
 persona = Person(sess, person_attrs=info_persona)
-persona.crear(sess,"my org","my justification")
+persona.add(sess,"my org","my justification")
 ```
 - Modifying people
 ```py
 from isimws import search
 persona = search.people(sess,Person,"employeenumber","1015463230",limit=1)[0]
 persona.title="CEO"
-persona.modificar(sess,"my justification")
+persona.modify(sess,"my justification")
 ```
 
 - Custom Person/BPPerson entities
@@ -53,22 +53,22 @@ class MyBPPerson(Person):
 
         super().__init__(person_attrs=info)
 
-MyBPPerson({"sn":"Zamora"}).crear(sess,"my org","New BPPerson")  
+MyBPPerson({"sn":"Zamora"}).add(sess,"my org","New BPPerson")  
 ```
 
 - Access request 
 ```py
 from isimws import search
 accesses=search.access(sess,filter="*Consulta*",limit=5)
-person=search.people(sesion,by="givenname",filter="Juan",limit=1)[0]
-person.solicitar_accesos(sesion,accesses,"justification")
+person=search.people(session,by="givenname",filter="Juan",limit=1)[0]
+person.request_access(session,accesses,"justification")
 ```
 
 - Approve activity
 ```py
 request_id="9585474949338"
-actividad=search.activities(sesion,by="requestId",filter=request_id,limit=1)[0]
-actividad.completar(sess,"Aprobado","justification")
+actividad=search.activities(session,by="requestId",filter=request_id,limit=1)[0]
+actividad.complete(sess,"Aprobado","justification")
 ```
 
 - Fulfill RFI
@@ -78,8 +78,8 @@ form=formulario_rfi=[{
                 "name":"description",
                 "value":[dn_rol],
             },...]
-actividad=search.activities(sesion,by="requestId",filter=request_id)[0]
-actividad.completar(sess,form,"justification")
+actividad=search.activities(session,by="requestId",filter=request_id)[0]
+actividad.complete(sess,form,"justification")
 ```
 
 - Update property files (ISIM VA)
@@ -98,7 +98,7 @@ s=Session(u,p,url,cert)
 property_file="CustomLabels.properties"
 property_name="scriptframework.properties"
 property_value="ITIM.java.access.util"
-update_property.create_or_update_property(sesion,property_file,property_name,property_value)
+update_property.create_or_update_property(session,property_file,property_name,property_value)
 ```
 
 - Functionalities
@@ -135,8 +135,6 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
         - Create/Search/Update property files
 
 - TODO:
-    - Improve project structure
-        - Use english for the high level interface
     - Improve documentation
         - Basic usage
         - Requirements
@@ -144,5 +142,7 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
     - Add operations to services
     - Publish on PyPi
     - Normalize request responses
+    - Translate docstrings and exceptions into english
+        - And, if it's in spanish, everything else in the high level API (entities/search/auth)
 
 

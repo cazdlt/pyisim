@@ -110,7 +110,7 @@ class ISIMClient:
 
         return list(personas)
 
-    def crearPersona(self, person, orgid, justificacion):
+    def crearPersona(self, person, orgid, justification):
 
         url = self.__addr + "/itim/rest/people"
 
@@ -125,7 +125,7 @@ class ISIMClient:
         person_data.pop("changes", "")
 
         data = {
-            "justification": justificacion,
+            "justification": justification,
             "profileName": person.profile_name,
             "orgID": orgid,
             "_attributes": person_data,
@@ -141,11 +141,11 @@ class ISIMClient:
         ret = self.s.post(url, json=data, headers=headers)
         return json.loads(ret.text)
 
-    def modificarPersona(self, href, changes, justificacion):
+    def modificarPersona(self, href, changes, justification):
         url = self.__addr + href
 
         data = {
-            "justification": justificacion,
+            "justification": justification,
             "_attributes": changes,
         }
 
@@ -223,7 +223,7 @@ class ISIMClient:
 
         return list(actividades)
 
-    def solicitarAccesos(self, accesos, persona, justificacion):
+    def solicitarAccesos(self, accesos, persona, justification):
         url = self.__addr + "/itim/rest/access/assignments"
 
         persona_rest = {"self": {"href": persona.href}}
@@ -240,7 +240,7 @@ class ISIMClient:
         # persona: {'self': {'href': '/itim/rest/people/ZX...bnNpb25lcw'}}
         # accesos: [{'_links':{'access': {'href': '/itim/rest/access/32...7126878451'}}},...]
         data = {
-            "justification": justificacion,
+            "justification": justification,
             "requests": [
                 {
                     "requestee": {
@@ -298,7 +298,7 @@ class ISIMClient:
         return rfi_form
 
     # falta tener en cuenta cuando llegan varias actividades
-    def completarActividades(self, actividades, resultado, justificacion="ok"):
+    def completarActividades(self, actividades, resultado, justification="ok"):
 
         url = self.__addr + "/itim/rest/workitems"
 
@@ -331,7 +331,7 @@ class ISIMClient:
                 "_links": {"self": {"href": workitem}},
                 "action": {"code": resultCode},
                 "label": activityLabel,
-                "justification": justificacion,
+                "justification": justification,
             }
 
             if activityType == "RFI":
@@ -345,7 +345,7 @@ class ISIMClient:
                 action = {
                     "action": {"code": resultCode},
                     "label": activityLabel,
-                    "justification": justificacion,
+                    "justification": justification,
                 }
 
                 if len(resultado) > 0:

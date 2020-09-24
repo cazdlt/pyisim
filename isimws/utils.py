@@ -1,4 +1,4 @@
-def activity_batch_complete(sesion, actividades, resultado, justificacion):
+def activity_batch_complete(session, actividades, resultado, justification):
 
     acts_dict = []
 
@@ -11,6 +11,6 @@ def activity_batch_complete(sesion, actividades, resultado, justificacion):
 
             acts_dict.append(act_dict)
 
-    r = sesion.restclient.completarActividades(acts_dict, resultado, justificacion)
+    r = session.restclient.completarActividades(acts_dict, resultado, justification)
 
     return r

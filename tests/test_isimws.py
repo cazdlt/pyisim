@@ -20,67 +20,39 @@ from secret import (
 
 
 @pytest.fixture
-def sesion():
+def session():
     return Session(test_url, admin_login, admin_pw, cert)
 
 
-def test_search_access(sesion):
-    r = search.access(sesion, filter="*Consulta*", limit=2)
+def test_search_access(session):
+    r = search.access(session, filter="*Consulta*", limit=2)
     assert len(r) > 0
 
 
-def test_search_people(sesion):
-    r = search.people(sesion, by="employeenumber", filter="96451425873", limit=1)
+def test_search_people(session):
+    r = search.people(session, by="employeenumber", filter="1015463230", limit=1)
     assert len(r) > 0
 
 
-def test_search_service(sesion):
-    r = search.service(sesion, search.organizational_container(sesion,"organizations",test_org)[0], filter="SAP NW")
+def test_search_service(session):
+    r = search.service(session, search.organizational_container(session,"organizations",test_org)[0], filter="SAP NW")
     assert len(r) > 0
     assert r[0].name == "SAP NW"
 
 
-def test_search_roles(sesion):
-    r = search.roles(sesion, filter="SAP*")
+def test_search_roles(session):
+    r = search.roles(session, filter="SAP*")
 
     assert len(r) > 0
     assert "SAP" in r[0].name.upper()
     assert "ou=roles" in r[0].dn
 
 
-def test_new_rol(sesion):
-    rol = {
-        "name": "rol_prueba",
-        "description": "rol_prueba",
-        "parent": search.organizational_container(sesion,"organizations",test_org)[0],
-        "classification": "Empresarial",
-        "access_option": 2,
-        "access_category": "Role",
-        "owner_roles": None,
-        "owner_cedulas": ["1015463230"],
-    }
-    r = StaticRole(sesion, role_attrs=rol)
-    print(r)
+def test_new_rol(session):
+    parent=search.organizational_container(session,"organizations",test_org)[0]
 
-
-def test_lookup_rol(sesion):
-    dn = f"erglobalid=00000000000000000001,ou=roles,erglobalid=00000000000000000000,ou={test_org},dc={test_org}"
-    r = StaticRole(sesion, dn=dn)
-    assert r.name == "ITIM Administrators"
-
-    dn = "not found"
-    try:
-        r = StaticRole(sesion, dn=dn)
-    except NotFoundError:
-        assert True
-
-
-def test_crear_modificar_eliminar_rol(sesion):
-
-    parent=search.organizational_container(sesion,"organizations",test_org)[0]
-
-    owners=[p.dn for p in search.people(sesion,by="employeenumber",filter="1015463230")]
-    owners_roles=[r.dn for r in search.roles(sesion,filter="ITIM Administrators")]
+    owners=[p.dn for p in search.people(session,by="employeenumber",filter="1015463230")]
+    owners_roles=[r.dn for r in search.roles(session,filter="ITIM Administrators")]
 
     # creación
     rolinfo = {
@@ -92,8 +64,41 @@ def test_crear_modificar_eliminar_rol(sesion):
         "access_category": "Role",
         "owners": owners + owners_roles,
     }
-    rol = StaticRole(sesion, role_attrs=rolinfo)
-    rol.crear(sesion)
+    r = StaticRole(session, role_attrs=rolinfo)
+    print(r)
+
+
+def test_lookup_rol(session):
+    dn = f"erglobalid=00000000000000000001,ou=roles,erglobalid=00000000000000000000,ou={test_org},dc={test_org}"
+    r = StaticRole(session, dn=dn)
+    assert r.name == "ITIM Administrators"
+
+    dn = "not found"
+    try:
+        r = StaticRole(session, dn=dn)
+    except NotFoundError:
+        assert True
+
+
+def test_crear_modificar_eliminar_rol(session):
+
+    parent=search.organizational_container(session,"organizations",test_org)[0]
+
+    owners=[p.dn for p in search.people(session,by="employeenumber",filter="1015463230")]
+    owners_roles=[r.dn for r in search.roles(session,filter="ITIM Administrators")]
+
+    # creación
+    rolinfo = {
+        "name": "rol_prueba",
+        "description": "rol_prueba",
+        "parent": parent,
+        "classification": "role.classification.business",
+        "access_option": 2,
+        "access_category": "Role",
+        "owners": owners + owners_roles,
+    }
+    rol = StaticRole(session, role_attrs=rolinfo)
+    rol.add(session)
     assert hasattr(rol, "dn")
 
     # mod
@@ -101,15 +106,15 @@ def test_crear_modificar_eliminar_rol(sesion):
         "name":"rol_prueba_mod"
     }
     rol.description = "prueba_desc"
-    rol.modificar(sesion,changes)
+    rol.modify(session,changes)
     assert (
-        StaticRole(sesion, dn=rol.dn).name == rol.name
+        StaticRole(session, dn=rol.dn).name == rol.name
     )  # busca el rol en sim y lo compara con el nuevo
 
     # del
-    rol.eliminar(sesion)
+    rol.delete(session)
     try:
-        r = StaticRole(sesion, dn=rol.dn)
+        r = StaticRole(session, dn=rol.dn)
     except NotFoundError:
         assert True
     else:
@@ -122,10 +127,10 @@ def test_get_client():
     s.soapclient.login(admin_login, admin_pw)
 
 
-def test_inicializar_politicas(sesion):
+def test_inicializar_politicas(session):
 
-    parent=search.organizational_container(sesion,"organizations",test_org)[0]
-    service=search.service(sesion,parent,filter="Directorio Activo")[0]
+    parent=search.organizational_container(session,"organizations",test_org)[0]
+    service=search.service(session,parent,filter="Directorio Activo")[0]
 
     entitlements = {
         service.dn: {
@@ -176,11 +181,11 @@ def test_inicializar_politicas(sesion):
         "name": "test",
         "parent": parent,
         "priority": 10000,
-        "memberships": [x.dn for x in search.roles(sesion,filter="Auditor")],
+        "memberships": [x.dn for x in search.roles(session,filter="Auditor")],
         "enabled":False,
         "entitlements": entitlements,
     }
-    pp = ProvisioningPolicy(sesion, policy_attrs=policy)
+    pp = ProvisioningPolicy(session, policy_attrs=policy)
     print(pp.entitlements)
     print(pp)
 
@@ -195,14 +200,14 @@ def test_inicializar_politicas(sesion):
             "ADprofile": {"automatic": False, "workflow":None, "parameters":{}},
         },
     }
-    pp = ProvisioningPolicy(sesion, policy_attrs=policy)
+    pp = ProvisioningPolicy(session, policy_attrs=policy)
 
     pp.entitlements["ADprofile"]["automatic"]=True
     print("")
 
 
     #buscar y modificar política
-    pp = search.provisioning_policy(sesion, "Test TipoServicio", parent)[0]
+    pp = search.provisioning_policy(session, "Test TipoServicio", parent)[0]
     print(pp)
 
     pp.entitlements=entitlements
@@ -211,19 +216,19 @@ def test_inicializar_politicas(sesion):
 
 
 
-def test_search_provisioning_policy(sesion):
+def test_search_provisioning_policy(session):
 
-    r = search.provisioning_policy(sesion, "Test TipoServicio", search.organizational_container(sesion,"organizations",test_org)[0])
+    r = search.provisioning_policy(session, "Test TipoServicio", search.organizational_container(session,"organizations",test_org)[0])
     print(r[0].entitlements)
     assert len(r) > 0
 
 
-def test_crear_modificar_eliminar_politica(sesion):
+def test_crear_modificar_eliminar_politica(session):
 
     # crear
     name = f"test{random.randint(0,999999)}"
-    parent=search.organizational_container(sesion,"organizations",test_org)[0]
-    service=search.service(sesion,parent,filter="Directorio Activo")[0]
+    parent=search.organizational_container(session,"organizations",test_org)[0]
+    service=search.service(session,parent,filter="Directorio Activo")[0]
 
     entitlements = {
         service.dn: {
@@ -274,16 +279,16 @@ def test_crear_modificar_eliminar_politica(sesion):
         "name": name,
         "parent": parent,
         "priority": 10000,
-        "memberships": [x.dn for x in search.roles(sesion,filter="Auditor")],
+        "memberships": [x.dn for x in search.roles(session,filter="Auditor")],
         "enabled":False,
         "entitlements": entitlements,
     }
-    pp = ProvisioningPolicy(sesion, policy_attrs=policy)
-    pp.crear(sesion)
+    pp = ProvisioningPolicy(session, policy_attrs=policy)
+    pp.add(session)
 
     # buscar pol creada
     time.sleep(3)
-    pp_creada = search.provisioning_policy(sesion, name, parent)[0]
+    pp_creada = search.provisioning_policy(session, name, parent)[0]
     assert pp_creada.name == name
 
     # modificar y validar modificacion
@@ -296,31 +301,31 @@ def test_crear_modificar_eliminar_politica(sesion):
     }
     # pp_creada.description = nueva_desc
     pp_creada.entitlements[service.dn]["automatic"]=True
-    pp_creada.modificar(sesion,changes)
+    pp_creada.modify(session,changes)
     time.sleep(3)
-    pp_mod = search.provisioning_policy(sesion, name, parent)[0]
+    pp_mod = search.provisioning_policy(session, name, parent)[0]
     assert pp_mod.description == nueva_desc
 
     # eliminar y validar eliminación
     time.sleep(120)  # tiene que terminar de evaluar la creación/mod
-    pp_mod.eliminar(sesion)
+    pp_mod.delete(session)
     time.sleep(10)
-    pp_elim = search.provisioning_policy(sesion, name, parent)
+    pp_elim = search.provisioning_policy(session, name, parent)
     assert len(pp_elim) == 0
 
 
-def test_search_groups(sesion):
+def test_search_groups(session):
     # TODO Search by account/access
     # by service
-    parent=search.organizational_container(sesion,"organizations",test_org)[0]
-    service_dn = search.service(sesion, parent, filter="Directorio Activo")[0].dn
+    parent=search.organizational_container(session,"organizations",test_org)[0]
+    service_dn = search.service(session, parent, filter="Directorio Activo")[0].dn
     r = search.groups(
-        sesion, by="service", service_dn=service_dn, group_info="Administrators"
+        session, by="service", service_dn=service_dn, group_info="Administrators"
     )
     print(r)
 
 
-def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
+def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
 
     # required attributes on the Person form (more can be included)
     info_persona = {
@@ -336,14 +341,14 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
         "businesscategory": "test",
         "mobile": "test@test.com",
     }
-    persona = Person(sesion, person_attrs=info_persona)
+    persona = Person(session, person_attrs=info_persona)
 
     # crear y validar
-    parent=search.organizational_container(sesion,"organizations",test_org)[0]
-    persona.crear(sesion, parent, "ok")
+    parent=search.organizational_container(session,"organizations",test_org)[0]
+    persona.add(session, parent, "ok")
     time.sleep(2)
     persona_creada = search.people(
-        sesion,
+        session,
         by="employeenumber",
         filter=info_persona["employeenumber"],
         attributes="*",
@@ -354,26 +359,28 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     # modificar
     persona_creada.title = "este no va" #se sobreescribe con changes
     persona_creada.mobile="estesi@test.org"
+
+    nuevo_cargo_real="nuevo cargo si va"
     changes={
-        "title":"nuevo cargo",
+        "title":nuevo_cargo_real,
         "mail":"estetambien@test.org"
     }
-    persona_creada.modificar(sesion,"ok",changes)
+    persona_creada.modify(session,"ok",changes)
     time.sleep(3)
     persona_mod = search.people(
-        sesion,
+        session,
         by="employeenumber",
         filter=info_persona["employeenumber"],
         attributes="*",
         limit=1,
     )[0]
-    assert persona_mod.title == persona_creada.title
+    assert persona_mod.title == nuevo_cargo_real
 
     # suspender
-    persona_mod.suspender(sesion,"ok")
+    persona_mod.suspend(session,"ok")
     time.sleep(3)
     persona_sus = search.people(
-        sesion,
+        session,
         by="employeenumber",
         filter=info_persona["employeenumber"],
         attributes="*",
@@ -382,10 +389,10 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     assert persona_sus.erpersonstatus=="INACTIVE"
 
     #restaurar
-    persona_sus.restaurar(sesion,"ok")
+    persona_sus.restore(session,"ok")
     time.sleep(3)
     persona_res = search.people(
-        sesion,
+        session,
         by="employeenumber",
         filter=info_persona["employeenumber"],
         attributes="*",
@@ -394,10 +401,10 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     assert persona_res.erpersonstatus=="ACTIVE"
 
     #eliminar
-    persona_res.eliminar(sesion,"ok")
+    persona_res.delete(session,"ok")
     time.sleep(3)
     persona_elim = search.people(
-        sesion,
+        session,
         by="employeenumber",
         filter=info_persona["employeenumber"],
         limit=1,
@@ -405,17 +412,17 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     assert len(persona_elim)==0
 
 
-def test_activites_by_request_id(sesion):
+def test_activites_by_request_id(session):
     request_id="7046801252248442711"
-    res=search.activities(sesion,by="requestId",filter=request_id)
+    res=search.activities(session,by="requestId",filter=request_id)
 
-def test_search_ou(sesion):
+def test_search_ou(session):
     #TODO
     name="Colpensiones"
-    search.organizational_container(sesion,"organizations",name)
+    search.organizational_container(session,"organizations",name)
 
     name="Cromasoft Ltda"
-    search.organizational_container(sesion,"bporganizations",name)
+    search.organizational_container(session,"bporganizations",name)
     
     name="Despacho del Presidente"
-    search.organizational_container(sesion,"organizationunits",name)
+    search.organizational_container(session,"organizationunits",name)
