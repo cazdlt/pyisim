@@ -140,7 +140,7 @@ update_property.create_or_update_property(sesion,property_file,property_name,pro
     - Improve documentation
         - Basic usage
         - Requirements
-    - Improve activity search by request id (does not work, currently a support case open to research this)
+    - Improve activity search by request id (does not work with the default methods)
     - Add operations to services
     - Publish on PyPi
     - Normalize request responses

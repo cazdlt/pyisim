@@ -30,17 +30,13 @@ def groups(sesion, by, service_dn=None, group_profile_name="", group_info=""):
     """
     sesion = sesion.soapclient
     if by == "account":
-        raise NotImplementedError("No implementado aún")
+        raise NotImplementedError
     elif by == "access":
-        raise NotImplementedError("No implementado aún")
+        raise NotImplementedError
     elif by == "service":
-        assert (
-            group_profile_name is not None
-        ), "Debe ingresar el parámetro groupProfileName"
-        assert group_info is not None, "Debe ingresar el parámetro groupInfo"
         ret = sesion.buscarGruposPorServicio(service_dn, group_profile_name, group_info)
     else:
-        raise InvalidOptionError("Opción inválida")
+        raise InvalidOptionError("Invalid option")
 
     return [Group(sesion, group=g) for g in ret]
 

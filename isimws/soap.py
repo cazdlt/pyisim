@@ -7,7 +7,6 @@ from zeep.cache import InMemoryCache
 
 # from isim_classes import StaticRole
 import requests
-import pprint
 from isimws.exceptions import *
 # from isimws.entities import OrganizationalContainer
 
@@ -27,7 +26,6 @@ class ISIMClient:
         assert self.cert_path is not None, "No certificate passed"
         client = self.get_client(url)
         sesion = client.service.login(user_, pass_)
-        # print(sesion)
         return sesion
 
     def get_client(self, url):

@@ -31,7 +31,7 @@ class ProvisioningPolicy:
                                     {
                                         "enforcement":enforcement_type (allowed/mandatory/default/excluded),
                                         "type":parameter_type (constant/regex/null/script)
-                                        "value": attribute_value (None, str for regex/script, list for constant values),
+                                        "values": attribute_value (None, str for regex/script, list for constant values),
                                     },
                                     {... more values}
                                 ],
@@ -124,7 +124,7 @@ class ProvisioningPolicy:
                             {
                                 "enforcement":enforcement_type (allowed/mandatory/default/excluded),
                                 "type":parameter_type (constant/regex/null/script)
-                                "value": attribute_value (None, str for regex/script, list for constant values),
+                                "values": attribute_value (None, str for regex/script, list for constant values),
                             },
                             {... more values}
                         ],
@@ -202,7 +202,7 @@ class ProvisioningPolicy:
                             {
                                 "enforcement":enforcement_type (allowed/mandatory/default/excluded),
                                 "type":parameter_type (constant/regex/null/script)
-                                "value": attribute_value (None, str: for regex/script, list: for constant value),
+                                "values": attribute_value (None, str: for regex/script, list: for constant value),
                             },
                             {... more values}
                         ],
@@ -271,7 +271,7 @@ class ProvisioningPolicy:
                      {
                          "enforcement":enforcement_type (allowed/mandatory/default/excluded),
                          "type":parameter_type (constant/regex/null/script)
-                         "value": attribute_value (None, str: for regex/script, list: for constant value),
+                         "values": attribute_value (None, str: for regex/script, list: for constant value),
                      },
                      {... more values}
                  ],
@@ -595,7 +595,7 @@ class StaticRole:
     def crear(self, sesion):
         sesion = sesion.soapclient
 
-        client = self.__role_client
+        # client = self.__role_client
 
         wsrole = self.crearWSRole(sesion)
 
@@ -606,7 +606,7 @@ class StaticRole:
 
     def modificar(self, sesion,changes={}):
         sesion = sesion.soapclient
-        url = sesion.addr + "WSRoleServiceService?wsdl"
+        # url = sesion.addr + "WSRoleServiceService?wsdl"
         client = self.__role_client
 
         for attr,value in changes.items():
