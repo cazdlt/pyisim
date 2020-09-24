@@ -97,8 +97,11 @@ def test_crear_modificar_eliminar_rol(sesion):
     assert hasattr(rol, "dn")
 
     # mod
-    rol.name = "rol_prueba_mod"
-    rol.modificar(sesion)
+    changes={
+        "name":"rol_prueba_mod"
+    }
+    rol.description = "prueba_desc"
+    rol.modificar(sesion,changes)
     assert (
         StaticRole(sesion, dn=rol.dn).name == rol.name
     )  # busca el rol en sim y lo compara con el nuevo
@@ -285,9 +288,15 @@ def test_crear_modificar_eliminar_politica(sesion):
 
     # modificar y validar modificacion
     nueva_desc = "modificacion"
-    pp_creada.description = nueva_desc
+    nuevos_ents=pp_creada.entitlements
+    nuevos_ents[service.dn]["automatic"]=True
+    changes={
+        "description":nueva_desc,
+        # "entitlements":nuevos_ents,
+    }
+    # pp_creada.description = nueva_desc
     pp_creada.entitlements[service.dn]["automatic"]=True
-    pp_creada.modificar(sesion)
+    pp_creada.modificar(sesion,changes)
     time.sleep(3)
     pp_mod = search.provisioning_policy(sesion, name, parent)[0]
     assert pp_mod.description == nueva_desc
@@ -343,8 +352,13 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(sesion):
     assert persona_creada.employeenumber == str(info_persona["employeenumber"])
 
     # modificar
-    persona_creada.title = "nuevo cargo"
-    persona_creada.modificar(sesion, "ok")
+    persona_creada.title = "este no va" #se sobreescribe con changes
+    persona_creada.mobile="estesi@test.org"
+    changes={
+        "title":"nuevo cargo",
+        "mail":"estetambien@test.org"
+    }
+    persona_creada.modificar(sesion,"ok",changes)
     time.sleep(3)
     persona_mod = search.people(
         sesion,

@@ -402,11 +402,14 @@ class ProvisioningPolicy:
         # la respuesta no envía el DN, entonces no se puede meter de una
         return r
 
-    def modificar(self, sesion):
+    def modificar(self, sesion, changes={}):
         sesion = sesion.soapclient
         client = self.__pp_client
 
         itemFactory = client.type_factory("ns1")
+
+        for attr,value in changes.items():
+            setattr(self,attr,value)
 
         ents = self.__crearEntitlementList(sesion, self.entitlements)
         membs = self.__crearMembershipList(sesion, self.membership)
@@ -601,10 +604,13 @@ class StaticRole:
         self.dn = r["itimDN"]
         return r
 
-    def modificar(self, sesion):
+    def modificar(self, sesion,changes={}):
         sesion = sesion.soapclient
         url = sesion.addr + "WSRoleServiceService?wsdl"
         client = self.__role_client
+
+        for attr,value in changes.items():
+            setattr(self,attr,value)
 
         wsrole = self.crearWSRole(sesion)
         wsattributes = wsrole["attributes"]["item"]
@@ -713,9 +719,14 @@ class Person:
         ret = sesion.restclient.crearPersona(self, orgid, justificacion)
         return ret
 
-    def modificar(self, sesion, justificacion):
+    def modificar(self, sesion, justificacion, changes={}):
         try:
             href = self.href
+            
+            self.changes.update(changes)
+            # for attr,value in changes.items():
+            #     setattr(self,attr,value)
+
             ret = sesion.restclient.modificarPersona(
                 self.href, self.changes, justificacion
             )
