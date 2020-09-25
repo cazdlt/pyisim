@@ -12,3 +12,4 @@ passwords.txt
 build/
 dist/
 *.egg-info
+publish.txt
