@@ -41,7 +41,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    download_url=f'{URL}/archive/{VERSION}.tar.gz',
+    download_url=f'{URL}/archive/v{VERSION}.tar.gz',
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*","pycolp"]),
     install_requires=REQUIRED,
     extras_require=EXTRAS,

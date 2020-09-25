@@ -76,16 +76,19 @@ person.request_access(session,accesses,"justification")
 ```py
 request_id="9585474949338"
 actividad=search.activities(session,by="requestId",filter=request_id,limit=1)[0]
-actividad.complete(sess,"Aprobado","justification")
+actividad.complete(sess,"approve","justification")
 ```
 
 - Fulfill RFI
 ```py
 request_id="123483274614"
-form=formulario_rfi=[{
-                "name":"description",
-                "value":[dn_rol],
-            },...]
+form=[
+    {
+        "name":"description",
+        "value":[dn_rol],
+    },
+    ...
+]
 actividad=search.activities(session,by="requestId",filter=request_id)[0]
 actividad.complete(sess,form,"justification")
 ```
@@ -119,6 +122,9 @@ update_property.create_or_update_property(session,property_file,property_name,pr
         - Lookup
         - Request access (and search/lookup)
         - Create custom Person entities (BPPerson, etc..)
+        - Suspend
+        - Restore
+        - Delete
     - Activities
         - Search
         - Lookup

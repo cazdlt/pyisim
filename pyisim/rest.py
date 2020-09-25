@@ -303,16 +303,16 @@ class ISIMClient:
         url = self.__addr + "/itim/rest/workitems"
 
         resultCodes = {
-            "Aprobado": "AA",
-            "Rechazado": "AR",
-            "Correcto": "SS",
-            "Aviso": "SW",
-            "Error": "SF",
+            "approve": "AA",
+            "reject": "AR",
+            "successful": "SS",
+            "warning": "SW",
+            "failure": "SF",
         }
 
         body = []
         if len(actividades) == 0:
-            raise Exception("No hay actividades para completar")
+            raise Exception("Nothing to complete")
 
         for activity in actividades:
             activityType = activity["_attributes"]["type"]
@@ -320,9 +320,9 @@ class ISIMClient:
             workitem = activity["_links"]["workitem"]["href"]
 
             if activityType == "APPROVAL":
-                assert resultado in ["Aprobado", "Rechazado"]
+                assert resultado in ["approve", "reject"]
             elif activityType == "WORK_ORDER":
-                assert resultado in ["Correcto", "Aviso", "Error"]
+                assert resultado in ["successful", "warning", "failure"]
             elif activityType == "RFI":
                 assert isinstance(resultado, list)
 

@@ -803,7 +803,7 @@ class Activity:
         if id:
             activity = session.restclient.lookupActividad(str(id))
             if "_attributes" not in activity.keys():
-                raise NotFoundError(f"Actividad no encontrada {id}")
+                raise NotFoundError(f"Activity not found: {id}")
 
         self.request_href = activity["_links"]["request"]["href"]
         self.href = activity["_links"]["self"]["href"]
@@ -813,15 +813,22 @@ class Activity:
         self.status = activity["_attributes"]["status"]["key"].split(".")[-1]
         self.requestee = activity["_links"]["requestee"]["title"]
 
-    def complete(self, session, resultado, justification):
-        """Permite OTs, Aprobaciones, RFIs"""
+    def complete(self, session, result, justification):
+
+        """Allos to complete:
+            Approvals   (result: approve/reject)
+            Work Orders (result: successful/warning/failure)
+            RFI         (result=[
+                            {'name':attr_name,'value':attr_value}, ...
+                        ])
+        """
         act_dict = {"_attributes": {}, "_links": {"workitem": {}}}
         act_dict["_attributes"]["type"] = self.type
         act_dict["_attributes"]["name"] = self.name
         act_dict["_links"]["workitem"]["href"] = self.workitem_href
 
-        assert self.status == "PENDING", "La actividad ya ha sido completada."
-        r = session.restclient.completarActividades([act_dict], resultado, justification)
+        assert self.status == "PENDING", "Activity is already complete."
+        r = session.restclient.completarActividades([act_dict], result.lower(), justification)
 
         return r
 
