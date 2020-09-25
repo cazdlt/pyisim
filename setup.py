@@ -4,10 +4,7 @@
 
 import io
 import os
-import sys
-from shutil import rmtree
-
-from setuptools import find_packages, setup, Command
+from setuptools import find_packages, setup
 
 # Package meta-data.
 NAME = 'pyisim'
@@ -44,12 +41,12 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    download_url=f'{URL}/archive/v{VERSION}.tar.gz',
+    download_url=f'{URL}/archive/{VERSION}.tar.gz',
     packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*","pycolp"]),
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
-    keywords = ['isim', 'ibm-security', 'iam'],
+    keywords = ['isim', 'ibm-security', 'iam',"itim"],
     license='MIT',
     classifiers=[
         # How mature is this project? Common values are

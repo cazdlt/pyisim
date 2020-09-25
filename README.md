@@ -1,7 +1,15 @@
 # isim
+[![PyPI version shields.io](https://img.shields.io/pypi/v/pyisim)](https://pypi.python.org/pypi/pyisim/)
+[![PyPI status](https://img.shields.io/pypi/status/pyisim)](https://pypi.python.org/pypi/pyisim/)
+[![PyPI license](https://img.shields.io/pypi/l/pyisim)](https://pypi.python.org/pypi/pyisim/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<!-- https://img.shields.io/pypi/l/pyisim -->
+
 Python client for IBM Security Identity Manager (ISIM/ITIM) web services (SOAP and REST APIs) <br>
 Tested on ISIM 7.0.1 FP13 and ISIM 7.0.2 FP2
 Due to API limitations some functionalities are served through ISIM's REST API and some other through ISIM SOAP Web Services. <br>
+
+This is my first package, and still on development, but I've been using it for months by now so I wanted to share.
 
 
 Usage example:
@@ -140,7 +148,6 @@ update_property.create_or_update_property(session,property_file,property_name,pr
         - Requirements
     - Improve activity search by request id (does not work with the default methods)
     - Add operations to services
-    - Publish on PyPi
     - Normalize request responses
     - Translate docstrings and exceptions into english
         - And, if it's in spanish, everything else in the high level API (entities/search/auth)
