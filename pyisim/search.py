@@ -1,5 +1,5 @@
-from isimws.exceptions import *
-from isimws.entities import (
+from pyisim.exceptions import *
+from pyisim.entities import (
     Activity,
     Access,
     OrganizationalContainer,
@@ -52,7 +52,7 @@ def people(
     """ "Wrapper para buscar/lookup personas o bpperson desde REST API
 
     Args:
-        session ([isimws.auth.Session]): Sesión de isimws
+        session ([pyisim.auth.Session]): Sesión de pyisim
         profile (str): Person/BPPerson
         by (str, optional): Atributo por el que buscar. Defaults to "cn".
         filter (str, optional): Filtro por el que buscar. Defaults to "*".
@@ -95,7 +95,7 @@ def activities(session, by="activityName", filter="*"):
     """Busca actividades
 
     Args:
-        session (isimws.auth.Session): Sesión de isimws
+        session (pyisim.auth.Session): Sesión de pyisim
         by (str, optional): Filtros disponibles por ISIM REST API (activityId, nombres de actividad/servicio/participantes) o requestId. Defaults to "activityName".
         filter (str, optional): Filtro. Defaults to "*".
     """
@@ -146,13 +146,13 @@ def organizational_container(session, profile_name, filter, by="name"):
     """[summary]
 
     Args:
-        session (isimws.Session)
+        session (pyisim.Session)
         profile_name (str): ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
         filter (str): name or attr value
         by (str, optional): attribute to search by. Defaults to "name".
 
     Returns:
-        isimws.entities.OrganizationalContainer
+        pyisim.entities.OrganizationalContainer
     """
 
     buscar_por = None if by == "name" else by

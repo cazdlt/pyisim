@@ -8,7 +8,7 @@ Usage example:
 
 - Login
 ```py
-from isimws.auth import Session
+from pyisim.auth import Session
 user="itim manager"
 password="secret"
 cert="./my_certificate.cer"
@@ -19,7 +19,7 @@ sess=Session(url,user,password,cert)
 *Every example after assumes you have already a valid Session object named sess*
 - Creating people
 ```py
-from isimws.entities import Person
+from pyisim.entities import Person
 info_persona={
     "employeenumber": "1015463230",
     "correo": "cazdlt@gmail.com",
@@ -31,7 +31,7 @@ persona.add(sess,"my org","my justification")
 ```
 - Modifying people
 ```py
-from isimws import search
+from pyisim import search
 persona = search.people(sess,Person,"employeenumber","1015463230",limit=1)[0]
 persona.title="CEO"
 persona.modify(sess,"my justification")
@@ -39,8 +39,8 @@ persona.modify(sess,"my justification")
 
 - Custom Person/BPPerson entities
 ```py
-from isimws import Person
-from isimws import search
+from pyisim import Person
+from pyisim import search
 
 class MyBPPerson(Person):
     
@@ -58,7 +58,7 @@ MyBPPerson({"sn":"Zamora"}).add(sess,"my org","New BPPerson")
 
 - Access request 
 ```py
-from isimws import search
+from pyisim import search
 accesses=search.access(sess,filter="*Consulta*",limit=5)
 person=search.people(session,by="givenname",filter="Juan",limit=1)[0]
 person.request_access(session,accesses,"justification")
@@ -84,8 +84,8 @@ actividad.complete(sess,form,"justification")
 
 - Update property files (ISIM VA)
 ```py
-from isimws.va.auth import Session
-from isimws.va.configure import update_property
+from pyisim.va.auth import Session
+from pyisim.va.configure import update_property
 
 
 u="admin@local"

@@ -1,5 +1,5 @@
-from isimws.va.configure import update_property
-from isimws.va.auth import Session
+from pyisim.va.configure import update_property
+from pyisim.va.auth import Session
 import pytest
 from secret import va_login, va_pw, va_url
 

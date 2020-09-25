@@ -2,7 +2,7 @@ import json
 import requests
 import urllib
 from urllib.parse import urlencode
-from isimws.exceptions import *
+from pyisim.exceptions import *
 
 requests.packages.urllib3.disable_warnings()
 

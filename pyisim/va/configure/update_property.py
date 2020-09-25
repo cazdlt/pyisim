@@ -1,7 +1,4 @@
-import requests
 import json
-from requests.auth import HTTPBasicAuth
-
 
 def list_files(session):
 

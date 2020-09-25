@@ -7,8 +7,8 @@ from zeep.cache import InMemoryCache
 
 # from isim_classes import StaticRole
 import requests
-from isimws.exceptions import *
-# from isimws.entities import OrganizationalContainer
+from pyisim.exceptions import *
+# from pyisim.entities import OrganizationalContainer
 
 
 requests.packages.urllib3.disable_warnings()

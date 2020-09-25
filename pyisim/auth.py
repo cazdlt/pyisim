@@ -1,6 +1,6 @@
-import isimws.rest as simrest
-import isimws.soap as simsoap
-from isimws.entities import Person
+import pyisim.rest as simrest
+import pyisim.soap as simsoap
+from pyisim.entities import Person
 
 class Session:
     """
@@ -20,7 +20,7 @@ class Session:
             embedded (str, optional): comma separated embedded attributes to return. Defaults to "".
 
         Returns:
-            isimws.entities.Person: Person entity of the currently logged user.
+            pyisim.entities.Person: Person entity of the currently logged user.
         """
         p=self.restclient.lookupCurrentPerson(attributes,embedded)     
         return Person(self,person=p)

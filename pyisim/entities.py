@@ -1,7 +1,7 @@
 import datetime
 from collections import defaultdict
 
-from isimws.exceptions import *
+from pyisim.exceptions import *
 
 
 class ProvisioningPolicy:
@@ -18,7 +18,7 @@ class ProvisioningPolicy:
         """Initializes ProvisioningPolicy object
 
         Args:
-            session (isimws.Session): Custom ISIM/ Default ISIM Session
+            session (pyisim.Session): Custom ISIM/ Default ISIM Session
             policy_attrs(dict):
                 name (str): policy name
                 description (str): policy description
@@ -41,7 +41,7 @@ class ProvisioningPolicy:
                     {... more services}
                 }
                 memberships (list): list of role DNs or ["*"] if everyone. TYPE 4 NOT SUPPORTED (Everyone that's not entitled through other policies NOT SUPPORTED)
-                parent (isimws.entities.OrganizationalContainer): parent container
+                parent (pyisim.entities.OrganizationalContainer): parent container
                 priority (int): policy priority.
                 scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
                 enabled (bool, optional): Defaults to True.
@@ -474,12 +474,12 @@ class StaticRole:
         """
 
         Args:
-            session (isimws.Session): session object
+            session (pyisim.Session): session object
             id (str): for role lookup
             rol (zeep.WSRole): for initialization after search
             role_attrs (dict):      name,
                                     description,
-                                    parent (isimws.entities.OrganizationalContainer),
+                                    parent (pyisim.entities.OrganizationalContainer),
                                     classification: str (eg. role.classification.business). Defaults to "".
                                     access_option (int): 1: disable / 2: enable / 3: shared access
                                     access_category: access category. Defaults to None.

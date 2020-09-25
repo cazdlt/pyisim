@@ -1,11 +1,11 @@
 from random import randint
-from isimws.exceptions import NotFoundError
+from pyisim.exceptions import NotFoundError
 import pytest
 import time
 import random
-from isimws import search
-from isimws.auth import Session
-from isimws.entities import Person, ProvisioningPolicy, StaticRole
+from pyisim import search
+from pyisim.auth import Session
+from pyisim.entities import Person, ProvisioningPolicy, StaticRole
 from secret import (
     admin_login,
     admin_pw,
