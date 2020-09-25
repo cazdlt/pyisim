@@ -3,9 +3,12 @@ webservice
 **__pycache__
 .pytest_cache
 .venv
-isimws.egg-info
 pycolp
 *.cer
 secret.py
 passwords.txt
 .git*
+.pypirc
+build/
+dist/
+*.egg-info
