@@ -815,13 +815,18 @@ class Activity:
 
     def complete(self, session, result, justification):
 
-        """Allos to complete:
+        """Allows to complete:
             Approvals   (result: approve/reject)
             Work Orders (result: successful/warning/failure)
             RFI         (result=[
                             {'name':attr_name,'value':attr_value}, ...
                         ])
         """
+
+
+        if not self.type in["APPROVAL","WORK_ORDER","RFI"]:
+            raise NotImplementedError("Can only complete approvals, work orders and RFIs (for now)")
+        
         act_dict = {"_attributes": {}, "_links": {"workitem": {}}}
         act_dict["_attributes"]["type"] = self.type
         act_dict["_attributes"]["name"] = self.name

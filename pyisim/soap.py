@@ -263,16 +263,34 @@ class ISIMClient:
         )
         return grps
 
-    def buscarActividadesDeSolicitud(self, process_id):
-        """
-        getActivities(session: ns1:WSSession, processId: xsd:long, recurseSubProcesses: xsd:boolean) -> getActivitiesReturn: ns1:WSActivity[]
-        no funciona bien la búsqueda recursiva de actividades
-        """
+    def buscarActividadesRecursivo(self,process_id,act_list):
         url = self.addr + "WSRequestServiceService?wsdl"
         client = self.get_client(url)
 
-        grps = client.service.getActivities(self.s, int(process_id), True)
-        return grps
+        acts = client.service.getActivities(self.s, int(process_id), False)
+        act_list.extend(acts)
+
+        subprocesses=client.service.getChildProcesses(self.s, int(process_id))
+        for s in subprocesses:
+                self.buscarActividadesRecursivo(s.requestId,act_list)
+        return "ok"
+
+    def buscarActividadesDeSolicitud(self, process_id):
+        """
+        The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
+        """
+        url = self.addr + "WSRequestServiceService?wsdl"
+        client = self.get_client(url)
+        
+        actividades=[]
+        self.buscarActividadesRecursivo(int(process_id),actividades)
+
+        #Filtra solo las actividades manuales (M) y pendientes (R)
+        manuales_pendientes=[a for a in actividades if a.activityType =="M" and a.state=="R"]
+
+        # acts = client.service.getActivities(self.s, int(process_id), True)
+        # subprocesses
+        return manuales_pendientes
 
     def suspenderPersona(self,dn,justification):
         #suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)

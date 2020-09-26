@@ -92,32 +92,25 @@ def roles(session, by="errolename", filter="*", find_unique=False):
 
 
 def activities(session, by="activityName", filter="*"):
-    """Busca actividades
+    """
+    Returns PENDING activities
 
     Args:
         session (pyisim.auth.Session): Sesión de pyisim
-        by (str, optional): Filtros disponibles por ISIM REST API (activityId, nombres de actividad/servicio/participantes) o requestId. Defaults to "activityName".
+        by (str, optional): "requestId" o filtros disponibles por ISIM REST API (activityId, nombres de actividad/servicio/participantes). Defaults to "activityName".
         filter (str, optional): Filtro. Defaults to "*".
     """
 
     if by == "requestId":
-        # session.soapclient.buscarActividadesDeSolicitud(filter)
-        """ RESPUESTA IBM A getRecurseSubProcess()
-        Your observation is correct. The backend code returns the activities belonging to the first level sub-process only. 
-        I feel the main confusion is due to the lack of documentation around this API and the name of the parameter used. 
-        The intent of introducing this additional boolean flag was to restrict the result to only the direct activities of the main process. 
-        It should have been “getImmediateChildActivities” rather than “recurseSubProcesses”.
-        The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
-        """
-        results = session.restclient.buscarActividad(
-            solicitudID=f"/itim/rest/requests/{filter}"
-        )
+        results=session.soapclient.buscarActividadesDeSolicitud(filter)
+        return [Activity(session, id=a.id) for a in results]
+
     else:
         results = session.restclient.buscarActividad(
             search_attr=by, search_filter=filter
         )
 
-    return [Activity(session, activity=a) for a in results]
+        return [Activity(session, activity=a) for a in results]
 
 
 def access(session, by="accessName", filter="*", attributes="", limit=20):

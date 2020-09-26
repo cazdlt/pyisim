@@ -413,8 +413,27 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
 
 
 def test_activites_by_request_id(session):
-    request_id="7046801252248442711"
+
+    #group access
+    request_id="5101169363690384727"
     res=search.activities(session,by="requestId",filter=request_id)
+    print(res)
+
+    #role access
+    request_id="4395986706018163961"
+    res=search.activities(session,by="requestId",filter=request_id)
+    print(res)
+
+    #recert
+    request_id="4873926809151916308"
+    res=search.activities(session,by="requestId",filter=request_id)
+    print(res)
+
+    #new user rfi
+    request_id="4773504143421693102"
+    res=search.activities(session,by="requestId",filter=request_id)
+    print(res)
+    
 
 def test_search_ou(session):
     #TODO
