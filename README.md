@@ -132,7 +132,7 @@ update_property.create_or_update_property(session,property_file,property_name,pr
             - Approvals
             - Work Orders
             - RFIs
-    - Static roles
+    - Static and dynamic roles
         - Search
         - Lookup
         - Add
@@ -152,10 +152,11 @@ update_property.create_or_update_property(session,property_file,property_name,pr
     - Improve documentation
         - Basic usage
         - Requirements
-    - Improve activity search by request id (does not work with the default methods)
     - Add operations to services
     - Normalize request responses
     - Translate docstrings and exceptions into english
         - And, if it's in spanish, everything else in the high level API (entities/search/auth)
 
-
+- Changes since last version:
+    - Improved activity search by request id
+    - Dynamic Role handling

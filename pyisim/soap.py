@@ -8,6 +8,7 @@ from zeep.cache import InMemoryCache
 # from isim_classes import StaticRole
 import requests
 from pyisim.exceptions import *
+
 # from pyisim.entities import OrganizationalContainer
 
 
@@ -31,7 +32,8 @@ class ISIMClient:
     def get_client(self, url):
 
         # Si ya se inicializó el cliente especificado en client_name, lo devuelve. Si no, lo inicializa, setea y devuelve.
-        client_name=url.split("/")[-1][:-5].lower() #ej. -> https://<ITIMURL>/.../WSSessionService?wsdl -> wssessionservice
+        # ej. -> https://<ITIMURL>/.../WSSessionService?wsdl -> wssessionservice
+        client_name = url.split("/")[-1][:-5].lower()
         client = getattr(self, client_name, None)
 
         if client is None:
@@ -66,7 +68,6 @@ class ISIMClient:
         ous = client.service.searchContainerByName(self.s, Nil, perfil, nombre)
 
         return ous
-
 
     def buscarPoliticaSuministro(self, wsou, nombre_politica, find_unique=True):
         """
@@ -171,14 +172,13 @@ class ISIMClient:
 
         return client.service.modifyStaticRole(self.s, role_dn, wsattr_list)
 
-    def eliminarRolEstatico(self, role_dn, date=None):
+    def eliminarRol(self, role_dn, date=None):
 
         url = self.addr + "WSRoleServiceService?wsdl"
         client = self.get_client(url)
 
         if date:
             raise NotImplementedError()
-            pass
         else:
             date = Nil
         return client.service.removeRole(self.s, role_dn, date)
@@ -263,16 +263,16 @@ class ISIMClient:
         )
         return grps
 
-    def buscarActividadesRecursivo(self,process_id,act_list):
+    def buscarActividadesRecursivo(self, process_id, act_list):
         url = self.addr + "WSRequestServiceService?wsdl"
         client = self.get_client(url)
 
         acts = client.service.getActivities(self.s, int(process_id), False)
         act_list.extend(acts)
 
-        subprocesses=client.service.getChildProcesses(self.s, int(process_id))
+        subprocesses = client.service.getChildProcesses(self.s, int(process_id))
         for s in subprocesses:
-                self.buscarActividadesRecursivo(s.requestId,act_list)
+            self.buscarActividadesRecursivo(s.requestId, act_list)
         return "ok"
 
     def buscarActividadesDeSolicitud(self, process_id):
@@ -281,40 +281,63 @@ class ISIMClient:
         """
         url = self.addr + "WSRequestServiceService?wsdl"
         client = self.get_client(url)
-        
-        actividades=[]
-        self.buscarActividadesRecursivo(int(process_id),actividades)
 
-        #Filtra solo las actividades manuales (M) y pendientes (R)
-        manuales_pendientes=[a for a in actividades if a.activityType =="M" and a.state=="R"]
+        actividades = []
+        self.buscarActividadesRecursivo(int(process_id), actividades)
+
+        # Filtra solo las actividades manuales (M) y pendientes (R)
+        manuales_pendientes = [
+            a for a in actividades if a.activityType == "M" and a.state == "R"
+        ]
 
         # acts = client.service.getActivities(self.s, int(process_id), True)
         # subprocesses
         return manuales_pendientes
 
-    def suspenderPersona(self,dn,justification):
-        #suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)
+    def suspenderPersona(self, dn, justification):
+        # suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)
         url = self.addr + "WSPersonServiceService?wsdl"
         client = self.get_client(url)
 
         r = client.service.suspendPerson(self.s, dn, justification)
         return r
 
-
-    def restaurarPersona(self,dn,justification):
-        #restorePerson(password: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restorePersonReturn: ns1:WSRequest
+    def restaurarPersona(self, dn, justification):
+        # restorePerson(password: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restorePersonReturn: ns1:WSRequest
         url = self.addr + "WSPersonServiceService?wsdl"
         client = self.get_client(url)
 
-        r = client.service.restorePerson(self.s, dn, True,Nil,Nil,justification)
+        r = client.service.restorePerson(self.s, dn, True, Nil, Nil, justification)
         return r
 
-    def eliminarPersona(self,dn,justification):
-        #deletePerson(session: ns1:WSSession, personDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> deletePersonReturn: ns1:WSRequest
+    def eliminarPersona(self, dn, justification):
+        # deletePerson(session: ns1:WSSession, personDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> deletePersonReturn: ns1:WSRequest
         url = self.addr + "WSPersonServiceService?wsdl"
         client = self.get_client(url)
 
         r = client.service.deletePerson(self.s, dn, Nil, justification)
         return r
 
-    
+    def crearRolDinamico(self, wsrole, wsou, date=None):
+
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        return client.service.createDynamicRole(self.s, wsou, wsrole, date)
+
+    def modificarRolDinamico(self, role_dn, wsattr_list, date=None):
+
+        url = self.addr + "WSRoleServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        return client.service.modifyDynamicRole(self.s, role_dn, wsattr_list, date)

@@ -6,9 +6,11 @@ from pyisim.entities import (
     Person,
     Service,
     StaticRole,
+    DynamicRole,
     ProvisioningPolicy,
     Group,
 )
+import builtins
 
 
 def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
@@ -33,7 +35,9 @@ def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
     elif by == "access":
         raise NotImplementedError
     elif by == "service":
-        ret = session.buscarGruposPorServicio(service_dn, group_profile_name, group_info)
+        ret = session.buscarGruposPorServicio(
+            service_dn, group_profile_name, group_info
+        )
     else:
         raise InvalidOptionError("Invalid option")
 
@@ -88,7 +92,15 @@ def provisioning_policy(session, name, parent: OrganizationalContainer):
 def roles(session, by="errolename", filter="*", find_unique=False):
     soap = session.soapclient
     results = soap.buscarRol(f"({by}={filter})", find_unique)
-    return [StaticRole(session, rol=r) for r in results]
+
+    is_dynamic = [
+        any(builtins.filter(lambda i: i.name == "erjavascript", r.attributes.item))
+        for r in results
+    ]
+    return [
+        DynamicRole(session, rol=r) if is_dynamic[i] else StaticRole(session, rol=r)
+        for i, r in enumerate(results)
+    ]
 
 
 def activities(session, by="activityName", filter="*"):
@@ -102,7 +114,7 @@ def activities(session, by="activityName", filter="*"):
     """
 
     if by == "requestId":
-        results=session.soapclient.buscarActividadesDeSolicitud(filter)
+        results = session.soapclient.buscarActividadesDeSolicitud(filter)
         return [Activity(session, id=a.id) for a in results]
 
     else:

@@ -408,8 +408,8 @@ class ProvisioningPolicy:
 
         itemFactory = client.type_factory("ns1")
 
-        for attr,value in changes.items():
-            setattr(self,attr,value)
+        for attr, value in changes.items():
+            setattr(self, attr, value)
 
         ents = self.__crearEntitlementList(session, self.entitlements)
         membs = self.__crearMembershipList(session, self.membership)
@@ -439,31 +439,7 @@ class ProvisioningPolicy:
         return r
 
 
-class StaticRole:
-    """
-    Para usar con el API SOAPWS de ISIM7
-    Los atributos se llenan correctamente únicamente al crear un nueva instancia de StaticRole
-    Para enviar al API:
-        Instanciar con atributos necesarios
-        llamar el método crearWSRole()
-        llamar simsoap.crearRolEstatico() con lo retornado del método
-
-    access_option:
-        1: No acceso
-        2: Acceso
-        3: Acceso común
-
-    classification:
-        Empresarial
-        Aplicacion
-
-    access_category: El nombre de la categoría del acceso del rol tal como se ve en la consola de administración
-
-    owner roles: Lista de nombres de roles dueños del acceso
-    owner_cedulas: Lista de cédulas de personas dueñas del acceso
-
-    """
-
+class Role:
     def __init__(
         self,
         session,
@@ -484,6 +460,8 @@ class StaticRole:
                                     access_option (int): 1: disable / 2: enable / 3: shared access
                                     access_category: access category. Defaults to None.
                                     owners: list of owner DNs. can be people or roles. Defaults to [].
+                                    rule: required only if dynamic role.
+                                    scope: required for dynamic roles
         """
         # session = session.soapclient
 
@@ -500,7 +478,7 @@ class StaticRole:
                 role_attrs["classification"] if role_attrs["classification"] else ""
             )
 
-            role_attrs["access_option"]=str(role_attrs["access_option"])
+            role_attrs["access_option"] = str(role_attrs["access_option"])
             if role_attrs["access_option"] not in ["1", "2", "3"]:
                 raise ValueError(
                     "Access option must be an int. 1: disable / 2: enable / 3: shared access"
@@ -514,6 +492,14 @@ class StaticRole:
 
             self.owners = role_attrs["owners"] if role_attrs["owners"] else []
 
+            if "rule" in role_attrs:
+                self.rule = role_attrs["rule"]
+
+            self.scope = role_attrs["scope"] if "scope" in role_attrs else 2
+
+            if self.type not in ["static", "dynamic"]:
+                raise Exception("Invalid role type.")
+
         else:
             if dn:
                 rol = session.soapclient.lookupRole(dn)
@@ -526,15 +512,36 @@ class StaticRole:
                 attr["name"]: [i for i in attr["values"]["item"]]
                 for attr in rol["attributes"]["item"]
             }
+
+            if self.type == "static":
+                if "erjavascript" in attrs:
+                    raise ValueError(
+                        "Static roles can't. have a rule (LDAP filter) defined. This might be a dynamic role."
+                    )
+            elif self.type == "dynamic":
+                if "erjavascript" not in attrs:
+                    raise ValueError(
+                        "Dynamic roles must have a rule (LDAP filter) defined. This might be a static role."
+                    )
+            else:
+                raise Exception("Invalid role type.")
+
             attrs = defaultdict(list, attrs)
             ou = attrs["erparent"][0]  # dn del contenedor
-            self.parent=OrganizationalContainer(session,dn=ou)
+            self.parent = OrganizationalContainer(session, dn=ou)
             if attrs["erroleclassification"]:
                 self.classification = attrs["erroleclassification"][0]
             if attrs["eraccessoption"]:
                 self.access_option = attrs["eraccessoption"][0]
             if attrs["erobjectprofilename"]:
                 self.access_category = attrs["erobjectprofilename"][0]
+
+            if attrs["erjavascript"]:
+                self.rule = attrs["erjavascript"][0]
+
+            if attrs["erscope"]:
+                self.scope = attrs["erscope"]
+
             self.owners = attrs["owner"]
 
     def crearAtributoRol(self, client, name, values):
@@ -579,6 +586,12 @@ class StaticRole:
             owner = self.crearAtributoRol(client, "owner", self.owners)
             lista_atributos.append(owner)
 
+        if self.type == "dynamic":
+            rule = self.crearAtributoRol(client, "erjavascript", self.rule)
+            scope = self.crearAtributoRol(client, "erscope", self.scope)
+            lista_atributos.append(rule)
+            lista_atributos.append(scope)
+
         array_attributes = listFactory.ArrayOf_tns1_WSAttribute(lista_atributos)
 
         role = itemFactory.WSRole(
@@ -599,18 +612,22 @@ class StaticRole:
 
         wsrole = self.crearWSRole(session)
 
-        r = session.crearRolEstatico(wsrole, self.ou.wsou)
+        if self.type == "static":
+            r = session.crearRolEstatico(wsrole, self.ou.wsou)
+            self.dn = r["itimDN"]
+        else:
+            r = session.crearRolDinamico(wsrole, self.ou.wsou)
 
-        self.dn = r["itimDN"]
+        # self.dn = r["itimDN"]
         return r
 
-    def modify(self, session,changes={}):
+    def modify(self, session, changes={}):
         session = session.soapclient
         # url = session.addr + "WSRoleServiceService?wsdl"
         client = self.__role_client
 
-        for attr,value in changes.items():
-            setattr(self,attr,value)
+        for attr, value in changes.items():
+            setattr(self, attr, value)
 
         wsrole = self.crearWSRole(session)
         wsattributes = wsrole["attributes"]["item"]
@@ -625,7 +642,10 @@ class StaticRole:
 
         # print(wsattributes)
 
-        r = session.modificarRolEstatico(self.dn, wsattributes)
+        if self.type == "static":
+            r = session.modificarRolEstatico(self.dn, wsattributes)
+        else:
+            r = session.modificarRolDinamico(self.dn, wsattributes)
 
         return r
 
@@ -635,9 +655,76 @@ class StaticRole:
                 "No se ha implementado la programación de tareas."
             )
 
-        r = session.soapclient.eliminarRolEstatico(self.dn, date)
+        r = session.soapclient.eliminarRol(self.dn, date)
 
         return r
+
+
+class DynamicRole(Role):
+
+    type = "dynamic"
+
+    def __init__(
+        self,
+        session,
+        dn=None,
+        rol=None,
+        role_attrs=None,
+    ):
+        """
+        Args:
+        session (pyisim.Session): session object
+        dn (str): for role lookup
+        rol (zeep.WSRole): for initialization after search
+        role_attrs (dict):      name,
+                                description,
+                                parent (pyisim.entities.OrganizationalContainer),
+                                classification: str (eg. role.classification.business). Defaults to "".
+                                access_option (int): 1: disable / 2: enable / 3: shared access
+                                access_category: access category. Defaults to None.
+                                owners: list of owner DNs. can be people or roles. Defaults to [].
+                                rule: LDAP filter. Required.
+                                scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
+        """
+
+        if role_attrs and "rule" not in role_attrs:
+            raise ValueError("Dynamic roles must have a rule (LDAP filter) defined")
+
+        super().__init__(session, dn, rol, role_attrs)
+
+
+class StaticRole(Role):
+
+    type = "static"
+
+    def __init__(
+        self,
+        session,
+        dn=None,
+        rol=None,
+        role_attrs=None,
+    ):
+        """
+        Args:
+        session (pyisim.Session): session object
+        dn (str): for role lookup
+        rol (zeep.WSRole): for initialization after search
+        role_attrs (dict):      name,
+                                description,
+                                parent (pyisim.entities.OrganizationalContainer),
+                                classification: str (eg. role.classification.business). Defaults to "".
+                                access_option (int): 1: disable / 2: enable / 3: shared access
+                                access_category: access category. Defaults to None.
+                                owners: list of owner DNs. can be people or roles. Defaults to [].
+        """
+
+        if role_attrs and "rule" in role_attrs:
+            raise ValueError("Static roles can't have a rule (LDAP filter) defined")
+
+        if role_attrs and "scope" in role_attrs:
+            raise ValueError("Static roles can't have a scope defined")
+
+        super().__init__(session, dn, rol, role_attrs)
 
 
 class OrganizationalContainer:
@@ -648,14 +735,16 @@ class OrganizationalContainer:
             self.dn = self.wsou["itimDN"]
             self.profile_name = self.wsou["profileName"]
 
-            rest_profile_names={
-                "BusinessPartnerOrganization":"bporganizations",
-                "OrganizationalUnit":"organizationunits",
-                "Organization":"organizations",
-                "Location":"locations",
-                "AdminDomain":"admindomains",
+            rest_profile_names = {
+                "BusinessPartnerOrganization": "bporganizations",
+                "OrganizationalUnit": "organizationunits",
+                "Organization": "organizations",
+                "Location": "locations",
+                "AdminDomain": "admindomains",
             }
-            self.href=session.restclient.buscarOUs(rest_profile_names[self.profile_name],self.name)[0]["_links"]["self"]["href"]
+            self.href = session.restclient.buscarOUs(
+                rest_profile_names[self.profile_name], self.name
+            )[0]["_links"]["self"]["href"]
 
         elif organizational_container:
             self.name = organizational_container["_links"]["self"]["title"]
@@ -665,7 +754,7 @@ class OrganizationalContainer:
             self.profile_name = self.wsou["profileName"]
 
     def __eq__(self, o) -> bool:
-        return self.dn==o.dn
+        return self.dn == o.dn
 
 
 class Person:
@@ -722,7 +811,7 @@ class Person:
     def modify(self, session, justification, changes={}):
         try:
             href = self.href
-            
+
             self.changes.update(changes)
             # for attr,value in changes.items():
             #     setattr(self,attr,value)
@@ -816,24 +905,27 @@ class Activity:
     def complete(self, session, result, justification):
 
         """Allows to complete:
-            Approvals   (result: approve/reject)
-            Work Orders (result: successful/warning/failure)
-            RFI         (result=[
-                            {'name':attr_name,'value':attr_value}, ...
-                        ])
+        Approvals   (result: approve/reject)
+        Work Orders (result: successful/warning/failure)
+        RFI         (result=[
+                        {'name':attr_name,'value':attr_value}, ...
+                    ])
         """
 
+        if not self.type in ["APPROVAL", "WORK_ORDER", "RFI"]:
+            raise NotImplementedError(
+                "Can only complete approvals, work orders and RFIs (for now)"
+            )
 
-        if not self.type in["APPROVAL","WORK_ORDER","RFI"]:
-            raise NotImplementedError("Can only complete approvals, work orders and RFIs (for now)")
-        
         act_dict = {"_attributes": {}, "_links": {"workitem": {}}}
         act_dict["_attributes"]["type"] = self.type
         act_dict["_attributes"]["name"] = self.name
         act_dict["_links"]["workitem"]["href"] = self.workitem_href
 
         assert self.status == "PENDING", "Activity is already complete."
-        r = session.restclient.completarActividades([act_dict], result.lower(), justification)
+        r = session.restclient.completarActividades(
+            [act_dict], result.lower(), justification
+        )
 
         return r
 
