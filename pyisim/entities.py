@@ -3,6 +3,11 @@ from collections import defaultdict
 
 from pyisim.exceptions import *
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pyisim.auth import Session
+
 
 class ProvisioningPolicy:
     """
@@ -487,7 +492,7 @@ class Role:
 
             if role_attrs["access_option"] in ["2", "3"]:
                 if not role_attrs["access_category"]:
-                    raise ValueError("Si el rol es acceso, debe darle una categoría")
+                    raise ValueError("If the role is an access, it must have category.")
                 self.access_category = role_attrs["access_category"]
 
             self.owners = role_attrs["owners"] if role_attrs["owners"] else []
@@ -825,11 +830,13 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def request_access(self, session, accesos, justification):
+    def request_access(
+        self, session: "Session", accesses: list["Access"], justification: str
+    ):
 
         ret = {}
-        if len(accesos) > 0:
-            ret = session.restclient.solicitarAccesos(accesos, self, justification)
+        if len(accesses) > 0:
+            ret = session.restclient.solicitarAccesos(accesses, self, justification)
         return ret
 
     def suspend(self, session, justification):
@@ -923,9 +930,7 @@ class Activity:
         act_dict["_links"]["workitem"]["href"] = self.workitem_href
 
         assert self.status == "PENDING", "Activity is already complete."
-        r = session.restclient.completarActividades(
-            [act_dict], result, justification
-        )
+        r = session.restclient.completarActividades([act_dict], result, justification)
 
         return r
 

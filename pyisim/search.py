@@ -50,7 +50,6 @@ def people(
     by="cn",
     profile_name="Person",
     attributes="*",
-    embedded="",
     limit=50,
 ):
     """ "Wrapper para buscar/lookup personas o bpperson desde REST API
@@ -58,10 +57,9 @@ def people(
     Args:
         session ([pyisim.auth.Session]): Sesión de pyisim
         profile (str): Person/BPPerson
-        by (str, optional): Atributo por el que buscar. Defaults to "cn".
-        filter (str, optional): Filtro por el que buscar. Defaults to "*".
-        attributes (str, optional): Atributos a retornar. Defaults to "dn".
-        embedded (str, optional): Atributos embebidos a retornar (ej. manager.cn). Defaults to "".
+        by (str, optional): LDAP Attribute to search by. Defaults to "cn".
+        filter (str, optional): Filter to search by. Defaults to "*".
+        attributes (str, optional): Attributes to return in the Person instance. Defaults to "dn".
         limit (int, optional): Defaults to 50.
 
     Returns:
@@ -71,7 +69,7 @@ def people(
     ret = session.restclient.buscarPersonas(
         profile_name,
         atributos=attributes,
-        embedded=embedded,
+        embedded="",
         buscar_por=by,
         filtro=filter,
         limit=limit,
@@ -80,7 +78,7 @@ def people(
     return personas
 
 
-def provisioning_policy(session, name, parent: OrganizationalContainer):
+def provisioning_policy(session, name: str, parent: OrganizationalContainer):
 
     wsou = parent.wsou
     results = session.soapclient.buscarPoliticaSuministro(
@@ -108,9 +106,9 @@ def activities(session, by="activityName", filter="*"):
     Returns PENDING activities
 
     Args:
-        session (pyisim.auth.Session): Sesión de pyisim
-        by (str, optional): "requestId" o filtros disponibles por ISIM REST API (activityId, nombres de actividad/servicio/participantes). Defaults to "activityName".
-        filter (str, optional): Filtro. Defaults to "*".
+        session (pyisim.auth.Session): PyISIM Session
+        by (str, optional): "requestId" oor filters available in ISIMs REST API docs (activityId, activityName, serviceName, participantName). Defaults to "activityName".
+        filter (str, optional): Search filter. Defaults to "*".
     """
 
     if by == "requestId":

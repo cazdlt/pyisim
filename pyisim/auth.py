@@ -2,9 +2,10 @@ import pyisim.rest as simrest
 import pyisim.soap as simsoap
 from pyisim.entities import Person
 
+
 class Session:
     """
-    Maneja sesión conjunta de REST y SOAP
+    Handles user session in REST and SOAP APis
     """
 
     def __init__(self, url, username, password, certificate_path):
@@ -12,7 +13,7 @@ class Session:
         self.restclient = simrest.ISIMClient(url, username, password, certificate_path)
         self.soapclient = simsoap.ISIMClient(url, username, password, certificate_path)
 
-    def current_person(self,attributes="*",embedded=""):
+    def current_person(self, attributes="*", embedded=""):
         """Returns the current logged in person entity.
 
         Args:
@@ -22,6 +23,5 @@ class Session:
         Returns:
             pyisim.entities.Person: Person entity of the currently logged user.
         """
-        p=self.restclient.lookupCurrentPerson(attributes,embedded)     
-        return Person(self,person=p)
-
+        p = self.restclient.lookupCurrentPerson(attributes, embedded)
+        return Person(self, person=p)

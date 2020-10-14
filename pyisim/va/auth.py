@@ -4,7 +4,7 @@ from requests.auth import HTTPBasicAuth
 
 class Session:
     """
-    Maneja sesión conjunta de REST y SOAP
+    Handles REST API Session in ISIM Virtual Appliance
     """
 
     def __init__(self, username, password, base_url, certificate_path):
