@@ -18,9 +18,5 @@ class ContratoNoEncontradoError(Exception):
     pass
 
 
-class NotImplementedError(Exception):
-    pass
-
-
 class InvalidOptionError(Exception):
     pass

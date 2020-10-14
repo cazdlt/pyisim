@@ -120,7 +120,7 @@ def test_crear_modificar_eliminar_rol(session):
     # del
     rol.delete(session)
     try:
-        r = StaticRole(session, dn=rol.dn)
+        StaticRole(session, dn=rol.dn)
     except NotFoundError:
         assert True
     else:
@@ -467,7 +467,7 @@ def test_crear_modificar_eliminar_dynrol(session):
     owners_roles = [r.dn for r in search.roles(session, filter="ITIM Administrators")]
 
     # creación
-    name="dynrol_prueba"
+    name = "dynrol_prueba"
     rolinfo = {
         "name": name,
         "description": "dynrol_prueba",
@@ -481,9 +481,9 @@ def test_crear_modificar_eliminar_dynrol(session):
     rol = DynamicRole(session, role_attrs=rolinfo)
     rol.add(session)
     time.sleep(3)
-    rol_creado=search.roles(session,filter=name)
-    assert rol_creado[0].name==name
-    rol_creado=rol_creado[0]
+    rol_creado = search.roles(session, filter=name)
+    assert rol_creado[0].name == name
+    rol_creado = rol_creado[0]
 
     # mod
     changes = {"name": "dynrol_prueba_mod", "rule": "(departmentnumber=ROLETEST)"}
@@ -491,14 +491,14 @@ def test_crear_modificar_eliminar_dynrol(session):
     rol_creado.modify(session, changes)
     time.sleep(3)
 
-    #esto hace lookup en SIM y compara con los atributos de acá
+    # esto hace lookup en SIM y compara con los atributos de acá
     assert DynamicRole(session, dn=rol_creado.dn).description == rol_creado.description
 
     # del
     rol_creado.delete(session)
     time.sleep(3)
     try:
-        r = DynamicRole(session, dn=rol_creado.dn)
+        DynamicRole(session, dn=rol_creado.dn)
     except NotFoundError:
         assert True
     else:

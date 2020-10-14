@@ -175,3 +175,4 @@ update_property.create_or_update_property(session,property_file,property_name,pr
     -   Dynamic Role handling
     -   Fixed RFI completion
     -   Some translations
+    -   Improved project (entities) structure

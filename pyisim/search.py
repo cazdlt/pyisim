@@ -1,4 +1,4 @@
-from pyisim.exceptions import *
+from pyisim.exceptions import InvalidOptionError
 from pyisim.entities import (
     Activity,
     Access,

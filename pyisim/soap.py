@@ -7,7 +7,7 @@ from zeep.cache import InMemoryCache
 
 # from isim_classes import StaticRole
 import requests
-from pyisim.exceptions import *
+from pyisim.exceptions import NotFoundError
 
 # from pyisim.entities import OrganizationalContainer
 
@@ -279,8 +279,8 @@ class ISIMClient:
         """
         The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
         """
-        url = self.addr + "WSRequestServiceService?wsdl"
-        client = self.get_client(url)
+        # url = self.addr + "WSRequestServiceService?wsdl"
+        # client = self.get_client(url)
 
         actividades = []
         self.buscarActividadesRecursivo(int(process_id), actividades)

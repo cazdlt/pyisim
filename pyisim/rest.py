@@ -2,7 +2,7 @@ import json
 import requests
 import urllib
 from urllib.parse import urlencode
-from pyisim.exceptions import *
+from pyisim.exceptions import NotFoundError, MultipleFoundError,AuthenticationError
 
 requests.packages.urllib3.disable_warnings()
 
@@ -36,7 +36,7 @@ class ISIMClient:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         # cookies={"j_username_tmp":user_,"j_password_tmp":pass_}
         data_login = {"j_username": user_, "j_password": pass_}
-        r2 = s.post(url, headers=headers, data=data_login)
+        s.post(url, headers=headers, data=data_login)
 
         # print(r2)
         url = self.__addr + "/itim/rest/systemusers/me"
@@ -111,7 +111,7 @@ class ISIMClient:
                 # TODO handle this
                 raise Exception("Please login.")
             personas = json.loads(response)
-        except Exception as e:
+        except Exception:
             personas = []
 
         return list(personas)
@@ -414,24 +414,24 @@ class ISIMClient:
 
         return servicios
 
-    def eliminarServicio(self, nombre):
+    # def eliminarServicio(self, nombre):
 
-        url = self.__addr + "/itim/rest/services"
+    #     url = self.__addr + "/itim/rest/services"
 
-        servicio = self.buscarServicio(nombre)
-        servicio_href = servicio[0]["_links"]["self"]["href"]
-        servicio_id = servicio_href.split("/")[-1]
+    #     servicio = self.buscarServicio(nombre)
+    #     servicio_href = servicio[0]["_links"]["self"]["href"]
+    #     servicio_id = servicio_href.split("/")[-1]
 
-        url_del = f"{url}/{servicio_id}"
+    #     url_del = f"{url}/{servicio_id}"
 
-        headers = {
-            "CSRFToken": self.CSRF,
-            "Content-Type": "application/json",
-            "Accept": "*/*",
-            "X-HTTP-Method-Override": "submit-in-batch",
-        }
+    #     headers = {
+    #         "CSRFToken": self.CSRF,
+    #         "Content-Type": "application/json",
+    #         "Accept": "*/*",
+    #         "X-HTTP-Method-Override": "submit-in-batch",
+    #     }
 
-        return self.s.delete(url_del, headers=headers)
+    #     return self.s.delete(url_del, headers=headers)
 
     def lookupSolicitud(self, requestID):
         url = self.__addr + "/itim/rest/requests"
