@@ -50,28 +50,36 @@ class ISIMClient:
             )
         return s, CSRF
 
-    def buscarOUs(self, profile_name, filtro, buscar_por=None, attributes="", limit=100):
+    def buscarOUs(
+        self, profile_name, filtro, buscar_por=None, attributes="", limit=100
+    ):
 
         url = self.__addr + "/itim/rest/organizationcontainers/" + profile_name
-        tipos = ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
+        tipos = [
+            "bporganizations",
+            "organizationunits",
+            "organizations",
+            "locations",
+            "admindomains",
+        ]
         if profile_name not in tipos:
             raise Exception(
                 "No es una categoría de OU válida. Seleccione un tipo de categoría entre las siguientes: "
                 + str(tipos)
             )
 
-        name_attrs={
-            "bporganizations":"ou",
-            "organizationunits":"ou",
-            "organizations":"o",
-            "locations":"l",
-            "admindomains":"ou",
+        name_attrs = {
+            "bporganizations": "ou",
+            "organizationunits": "ou",
+            "organizations": "o",
+            "locations": "l",
+            "admindomains": "ou",
         }
 
         if not buscar_por:
-            buscar_por=name_attrs[profile_name]
-            
-        data = {"attributes": attributes,"limit":limit,buscar_por:filtro}
+            buscar_por = name_attrs[profile_name]
+
+        data = {"attributes": attributes, "limit": limit, buscar_por: filtro}
 
         OUs = json.loads(self.s.get(url, params=data).text)
 
@@ -94,13 +102,11 @@ class ISIMClient:
             "limit": limit,
             buscar_por: filtro,
         }
-        headers={
-            "Cache-Control":"no-cache"
-        }
+        headers = {"Cache-Control": "no-cache"}
         data = urlencode(data, quote_via=urllib.parse.quote)
 
         try:
-            response = self.s.get(url, params=data,headers=headers).text
+            response = self.s.get(url, params=data, headers=headers).text
             if response.find("ISIMLoginRequired") != -1:
                 # TODO handle this
                 raise Exception("Please login.")
@@ -311,6 +317,10 @@ class ISIMClient:
         }
 
         body = []
+
+        if isinstance(resultado, str):
+            resultado = resultado.lower()
+
         if len(actividades) == 0:
             raise Exception("Nothing to complete")
 
@@ -443,7 +453,7 @@ class ISIMClient:
 
         return actividad
 
-    def lookupPersona(self, href,attributes="dn"):
+    def lookupPersona(self, href, attributes="dn"):
         url = self.__addr + href
 
         params = {
@@ -455,7 +465,7 @@ class ISIMClient:
 
         return json.loads(person.text)
 
-    def lookupCurrentPerson(self,attributes="*",embedded=""):
+    def lookupCurrentPerson(self, attributes="*", embedded=""):
         url = self.__addr + "/itim/rest/people/me"
 
         params = {
@@ -466,4 +476,3 @@ class ISIMClient:
         person = self.s.get(url, params=params)
 
         return json.loads(person.text)
-

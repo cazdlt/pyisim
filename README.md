@@ -160,3 +160,4 @@ update_property.create_or_update_property(session,property_file,property_name,pr
 - Changes since last version:
     - Improved activity search by request id
     - Dynamic Role handling
+    - Minor fixes to activity completion
