@@ -1,5 +1,70 @@
 from collections import defaultdict
 from .organizational_container import OrganizationalContainer
+import dataclasses
+from typing import Dict, List, Literal, TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from pyisim.auth import Session
+
+
+@dataclasses.dataclass
+class RoleAttributes:
+
+    name: str
+    """
+    Role name
+    """
+    description: str
+    """
+    Role description
+    """
+    parent: OrganizationalContainer
+    """
+    Role Business Unit
+    """
+    classification: str
+    """
+    Role classification.
+    Optional. Defaults to "".
+    Example: "role.classification.business"
+    """
+    access_option: Literal[1, 2, 3]
+    """
+    Defines if role is an access.
+
+    Options:
+    * 1: Access disabled
+    * 2: Access enabled
+    * 3: Shared access
+    """
+    access_category: str = None
+    """
+    Role access category.
+    Required if role is an access.
+    Example: "Role:Access:Azure"
+    """
+    owners: List[str] = dataclasses.field(default_factory=list)
+    """
+    Role owners.
+    List of owner DNs.
+    Can be Person DNs or Role DNs
+    """
+    rule: str = None
+    """
+    Dynamic Role rule.
+    LDAP Filter syntax.
+    Required if dynamic role.
+    """
+    scope: Literal[1,2] = 2
+    """
+    Dynamic Role scope.
+    Only used in dynamic roles.
+    Defaults to 2.
+
+    Options:
+    * 1: One level
+    * 2: Subtree
+    """
 
 
 class Role:
@@ -7,28 +72,18 @@ class Role:
 
     def __init__(
         self,
-        session,
-        dn=None,
+        session: "Session",
+        dn: str = None,
         rol=None,
-        role_attrs=None,
+        role_attrs: Union[RoleAttributes,Dict] = None,
     ):
         """
-
         Args:
-            session (pyisim.Session): session object
-            id (str): for role lookup
-            rol (zeep.WSRole): for initialization after search
-            role_attrs (dict):      name,
-                                    description,
-                                    parent (pyisim.entities.OrganizationalContainer),
-                                    classification: str (eg. role.classification.business). Defaults to "".
-                                    access_option (int): 1: disable / 2: enable / 3: shared access
-                                    access_category: access category. Defaults to None.
-                                    owners: list of owner DNs. can be people or roles. Defaults to [].
-                                    rule: required only if dynamic role.
-                                    scope: required for dynamic roles
+            session (Session): Active ISIM Session
+            dn (str, optional): Initialize with role DN for lookup into ISIM Directory Server. Defaults to None.
+            rol (WSRole, optional): SOAP ProvisioningPolicy object to initialize after search operations. Defaults to None.
+            role_attrs (Union[RoleAttributes,Dict], optional): Provisioning Policy attributes for initialization. Defaults to None.
         """
-        # session = session.soapclient
 
         url = session.soapclient.addr + "WSRoleServiceService?wsdl"
 
@@ -109,7 +164,7 @@ class Role:
 
             self.owners = attrs["owner"]
 
-    def crearAtributoRol(self, client, name, values):
+    def __crearAtributoRol(self, client, name, values):
         itemFactory = client.type_factory("ns1")
         listFactory = client.type_factory("ns0")
 
@@ -121,7 +176,7 @@ class Role:
 
         return attr
 
-    def crearWSRole(self, session):
+    def __crearWSRole(self, session):
 
         """
         A partir de la información de la instancia, devuelve un objeto WSRole para entregárselo al API de ISIM
@@ -132,15 +187,15 @@ class Role:
         itemFactory = client.type_factory("ns1")
         listFactory = client.type_factory("ns0")
 
-        eraccesoption = self.crearAtributoRol(
+        eraccesoption = self.__crearAtributoRol(
             client, "eraccessoption", self.access_option
         )
-        erRoleClassification = self.crearAtributoRol(
+        erRoleClassification = self.__crearAtributoRol(
             client, "erRoleClassification", self.classification
         )
 
         if self.access_option in ["2", "3"]:
-            erObjectProfileName = self.crearAtributoRol(
+            erObjectProfileName = self.__crearAtributoRol(
                 client, "erObjectProfileName", self.access_category
             )
             lista_atributos = [eraccesoption, erRoleClassification, erObjectProfileName]
@@ -148,12 +203,12 @@ class Role:
             lista_atributos = [eraccesoption, erRoleClassification]
 
         if self.owners is not None:
-            owner = self.crearAtributoRol(client, "owner", self.owners)
+            owner = self.__crearAtributoRol(client, "owner", self.owners)
             lista_atributos.append(owner)
 
         if self.type == "dynamic":
-            rule = self.crearAtributoRol(client, "erjavascript", self.rule)
-            scope = self.crearAtributoRol(client, "erscope", self.scope)
+            rule = self.__crearAtributoRol(client, "erjavascript", self.rule)
+            scope = self.__crearAtributoRol(client, "erscope", self.scope)
             lista_atributos.append(rule)
             lista_atributos.append(scope)
 
@@ -170,12 +225,24 @@ class Role:
         # del role["erparent"]
         return role
 
-    def add(self, session):
+    def add(self, session: "Session"):
+        """
+        Requests to add the role into ISIM
+
+        If role is static, and request succeeds, DN gets initialized immediatly.
+        If role is dynamic, request process is sent to ISIM for evaluation.
+
+        Args:
+            session (Session): Active ISIM Session
+
+        Returns:
+            zeep.Response: SOAP Response to the request
+        """
         session = session.soapclient
 
         # client = self.__role_client
 
-        wsrole = self.crearWSRole(session)
+        wsrole = self.__crearWSRole(session)
 
         if self.type == "static":
             r = session.crearRolEstatico(wsrole, self.ou.wsou)
@@ -186,7 +253,17 @@ class Role:
         # self.dn = r["itimDN"]
         return r
 
-    def modify(self, session, changes={}):
+    def modify(self, session:"Session", changes={}):
+        """
+        Requests to modify the role in ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+            changes (dict, optional): [description]. Defaults to {}.
+
+        Returns:
+            zeep.Response: SOAP Response to the request
+        """
         session = session.soapclient
         # url = session.addr + "WSRoleServiceService?wsdl"
         client = self.__role_client
@@ -194,11 +271,11 @@ class Role:
         for attr, value in changes.items():
             setattr(self, attr, value)
 
-        wsrole = self.crearWSRole(session)
+        wsrole = self.__crearWSRole(session)
         wsattributes = wsrole["attributes"]["item"]
 
-        errolename = self.crearAtributoRol(client, "errolename", self.name)
-        description = self.crearAtributoRol(
+        errolename = self.__crearAtributoRol(client, "errolename", self.name)
+        description = self.__crearAtributoRol(
             client, "description", wsrole["description"]
         )
 
@@ -214,7 +291,17 @@ class Role:
 
         return r
 
-    def delete(self, session, date=None):
+    def delete(self, session: "Session", date=None):
+        """
+        Requests to delete role from ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+            date (datetime, optional): Not implemented yet. Defaults to None.
+
+        Returns:
+            zeep.Response: SOAP Response to the request
+        """
         if date:
             raise NotImplementedError(
                 "No se ha implementado la programación de tareas."
@@ -227,66 +314,65 @@ class Role:
 
 class DynamicRole(Role):
 
+
     type = "dynamic"
 
     def __init__(
         self,
-        session,
-        dn=None,
+        session: "Session",
+        dn: str = None,
         rol=None,
-        role_attrs=None,
+        role_attrs: Union[RoleAttributes,Dict] = None,
     ):
         """
+        Child class for representing Static Roles.
+        Inherits methods and behavior from Role class
+
         Args:
-        session (pyisim.Session): session object
-        dn (str): for role lookup
-        rol (zeep.WSRole): for initialization after search
-        role_attrs (dict):      name,
-                                description,
-                                parent (pyisim.entities.OrganizationalContainer),
-                                classification: str (eg. role.classification.business). Defaults to "".
-                                access_option (int): 1: disable / 2: enable / 3: shared access
-                                access_category: access category. Defaults to None.
-                                owners: list of owner DNs. can be people or roles. Defaults to [].
-                                rule: LDAP filter. Required.
-                                scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
+            session (Session): Active ISIM Session
+            dn (str, optional): Initialize with role DN for lookup into ISIM Directory Server. Defaults to None.
+            rol (WSRole, optional): SOAP ProvisioningPolicy object to initialize after search operations. Defaults to None.
+            role_attrs (Union[RoleAttributes,Dict], optional): Provisioning Policy attributes for initialization. Defaults to None.
         """
 
-        if role_attrs and "rule" not in role_attrs:
+        if dataclasses.is_dataclass(role_attrs):
+            role_attrs = dataclasses.asdict(role_attrs)
+
+        if role_attrs and role_attrs["rule"] is None:
             raise ValueError("Dynamic roles must have a rule (LDAP filter) defined")
 
         super().__init__(session, dn, rol, role_attrs)
 
 
 class StaticRole(Role):
+    
 
     type = "static"
 
     def __init__(
         self,
-        session,
-        dn=None,
+        session: "Session",
+        dn: str = None,
         rol=None,
-        role_attrs=None,
+        role_attrs: Union[RoleAttributes,Dict] = None,
     ):
         """
-        Args:
-        session (pyisim.Session): session object
-        dn (str): for role lookup
-        rol (zeep.WSRole): for initialization after search
-        role_attrs (dict):      name,
-                                description,
-                                parent (pyisim.entities.OrganizationalContainer),
-                                classification: str (eg. role.classification.business). Defaults to "".
-                                access_option (int): 1: disable / 2: enable / 3: shared access
-                                access_category: access category. Defaults to None.
-                                owners: list of owner DNs. can be people or roles. Defaults to [].
-        """
+        Child class for representing Static Roles.
+        Inherits methods and behavior from Role class
 
-        if role_attrs and "rule" in role_attrs:
+        Args:
+            session (Session): Active ISIM Session
+            dn (str, optional): Initialize with role DN for lookup into ISIM Directory Server. Defaults to None.
+            rol (WSRole, optional): SOAP ProvisioningPolicy object to initialize after search operations. Defaults to None.
+            role_attrs (Union[RoleAttributes,Dict], optional): Provisioning Policy attributes for initialization. Defaults to None.
+        """
+        if dataclasses.is_dataclass(role_attrs):
+            role_attrs = dataclasses.asdict(role_attrs)
+
+        if role_attrs and "rule" in role_attrs and role_attrs["rule"] is not None:
             raise ValueError("Static roles can't have a rule (LDAP filter) defined")
 
-        if role_attrs and "scope" in role_attrs:
+        if role_attrs and "scope" in role_attrs and role_attrs["scope"] is not None:
             raise ValueError("Static roles can't have a scope defined")
 
         super().__init__(session, dn, rol, role_attrs)

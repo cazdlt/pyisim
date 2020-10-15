@@ -1,50 +1,137 @@
 import datetime
 from .organizational_container import OrganizationalContainer
+from typing import Dict, List, Literal, Optional, TYPE_CHECKING, TypeVar, Union
+import dataclasses
+
+if TYPE_CHECKING:
+    from pyisim.auth import Session
+
+
+@dataclasses.dataclass
+class ProvisioningPolicyParameterValue:
+    enforcement: Literal["allowed", "mandatory", "default", "excluded"]
+    """
+    Parameter enforcement type
+    """
+    type: Literal["constant", "regex", "null", "script"]
+    """
+    Parameter type
+    """
+    values: Union[None, str, list]
+    """
+    Parameter values
+    Options:
+    * str if type is regex or script
+    * list if type is constant value
+    * can be None if type is null
+
+    """
+
+
+@dataclasses.dataclass
+class ProvisioningPolicyEntitlementValue:
+
+    automatic: bool
+    """
+    True if entitlement is automatic
+    """
+    parameters: Dict[str,  List[ProvisioningPolicyParameterValue]]
+    """
+    Dictionary representing entitlement parameters:
+    Keys: parameter name (attribute name)
+    Values: List of parameter values for each attribute.
+    """
+    workflow: Optional[str]=None
+    """
+    Account request workflow name.
+    Optional. Defaults to None.
+    """
+    
+
+
+@dataclasses.dataclass
+class ProvisioningPolicyAttributes:
+
+    name: str
+    """
+    Provisioning Policy name
+    """
+
+    description: str
+    """
+    Provisioning Policy description
+    """
+
+    parent: OrganizationalContainer
+    """
+    Provisioning Policy Business Unit
+    """
+
+    entitlements: Dict[str,ProvisioningPolicyEntitlementValue]
+    """
+    Dictionary of policy entitlements
+    Keys (str): service dn / service profile name / "*" for all services
+    Values: Entitlement values for the target 
+    """
+
+    memberships: List[str]
+    """
+    Provisioning Policy membership list.
+    Options:
+    * List of role DNs
+    * "*" for everyone
+    * "Everyone that's not entitled through other policies" is not supported yet
+    """
+
+    priority: int
+    """
+    Provisioning Policy priority.
+    Integer between 1 and 10000000
+    """
+    
+    scope: Literal[1, 2]=2
+    """
+    Provisioning Policy scope.
+    Defaults to 2.
+
+    Options:
+    * 1: One level
+    * 2: Subtree
+    """
+
+    enabled: bool=True
+    """
+    Optional. Defaults to true.
+    """
+
+    caption: str =""
+    """
+    Provisioning Policy caption.
+    Optional. Defaults  to "".
+    """
+
+    keywords: str =""
+    """
+    Provisioning Policy keywords.
+    Optional. Defaults  to "".
+    """
+
 
 
 class ProvisioningPolicy:
-    """
-    Para usar con el API SOAPWS de ISIM7
-    """
+
 
     def __init__(
         self,
-        session,
+        session: "Session",
         provisioning_policy=None,
-        policy_attrs=None,
+        policy_attrs: Union[ProvisioningPolicyAttributes,Dict]=None,
     ):
-        """Initializes ProvisioningPolicy object
-
+        """
         Args:
-            session (pyisim.Session): Custom ISIM/ Default ISIM Session
-            policy_attrs(dict):
-                name (str): policy name
-                description (str): policy description
-                entitlements (dict): {
-                    service_dn/service_profile_name/*:{
-                        "automatic":True/False,
-                        "workflow":account_request_workflow_name/None,
-                        "parameters:{
-                            attr_name:[
-                                    {
-                                        "enforcement":enforcement_type (allowed/mandatory/default/excluded),
-                                        "type":parameter_type (constant/regex/null/script)
-                                        "values": attribute_value (None, str for regex/script, list for constant values),
-                                    },
-                                    {... more values}
-                                ],
-                            {... more attributes}
-                        }
-                    },
-                    {... more services}
-                }
-                memberships (list): list of role DNs or ["*"] if everyone. TYPE 4 NOT SUPPORTED (Everyone that's not entitled through other policies NOT SUPPORTED)
-                parent (pyisim.entities.OrganizationalContainer): parent container
-                priority (int): policy priority.
-                scope (int, optional): policy scope (1=ONE_LEVEL / 2=SUBTREE). Defaults to 2.
-                enabled (bool, optional): Defaults to True.
-                caption(str,optional): Defaults to "".
-                keywords(str,optional): Defaults to "".
+            session (pyisim.Session): Custom / Default ISIM Session
+            provisioning_policy (zeep.xsd.ProvisioningPolicy): SOAP ProvisioningPolicy object to initialize after search operations
+            policy_attrs(dict or ProvisioningPolicyAttributes): Provisioning Policy attributes for initialization
         """
 
         # session = session.soapclient
@@ -53,6 +140,9 @@ class ProvisioningPolicy:
 
         local_tz = datetime.datetime.now().astimezone().tzinfo
         self.date = datetime.datetime.now(local_tz).isoformat()
+
+        if dataclasses.is_dataclass(policy_attrs):
+            policy_attrs = dataclasses.asdict(policy_attrs)
 
         if policy_attrs:
             self.description = policy_attrs["description"]
@@ -374,7 +464,16 @@ class ProvisioningPolicy:
 
         return membershipList
 
-    def add(self, session):
+    def add(self, session: "Session"):
+        """
+        Requests to add provisioning policy into ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+
+        Returns:
+            zeep.Response: SOAP Response to the request
+        """
         session = session.soapclient
         client = self.__pp_client
 
@@ -400,7 +499,20 @@ class ProvisioningPolicy:
         # la respuesta no envía el DN, entonces no se puede meter de una
         return r
 
-    def modify(self, session, changes={}):
+    def modify(self, session: "Session", changes={}):
+        """
+        Requests to modify the provisioning policy in ISIM.
+        Policy needs to be initialized (must have a DN attribute)
+
+        Changes can be done through the changes dictionary or by modifying the instance attributes directly
+
+        Args:
+            session (Session): Active ISIM Session
+            changes (dict, optional): Dictionary with attribute changes in the policy. Defaults to {}.
+
+        Returns:
+            zeep.Response: SOAP Response to the request
+        """
         session = session.soapclient
         client = self.__pp_client
 
@@ -431,7 +543,17 @@ class ProvisioningPolicy:
 
         return r
 
-    def delete(self, session):
+    def delete(self, session: "Session"):
+        """
+        Requests to modify the provisioning policy in ISIM.
+
+        Args:
+            session (Session): Active ISIM Session
+
+        Returns:
+            zeep.Response: SOAP Response to the request
+        """
+
         session = session.soapclient
         r = session.eliminarPolitica(self.ou.wsou, self.dn, self.date)
         return r

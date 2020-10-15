@@ -1,3 +1,4 @@
+from pyisim.entities.role import RoleAttributes
 from random import randint
 from pyisim.exceptions import NotFoundError
 import pytest
@@ -503,3 +504,132 @@ def test_crear_modificar_eliminar_dynrol(session):
         assert True
     else:
         assert False
+
+def test_crear_modificar_eliminar_rol_dataclasss(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+
+    owners = [
+        p.dn for p in search.people(session, by="employeenumber", filter="1015463230")
+    ]
+    owners_roles = [r.dn for r in search.roles(session, filter="ITIM Administrators")]
+
+    # creación
+    rolinfo = {
+        "name": "rol_prueba",
+        "description": "rol_prueba",
+        "parent": parent,
+        "classification": "role.classification.business",
+        "access_option": 2,
+        "access_category": "Role",
+        "owners": owners + owners_roles,
+    }
+    role_atrrs=RoleAttributes(**rolinfo)
+    rol = StaticRole(session, role_attrs=role_atrrs)
+    rol.add(session)
+    assert hasattr(rol, "dn")
+
+    # mod
+    changes = {"name": "rol_prueba_mod"}
+    rol.description = "prueba_desc"
+    rol.modify(session, changes)
+    assert (
+        StaticRole(session, dn=rol.dn).name == rol.name
+    )  # busca el rol en sim y lo compara con el nuevo
+
+    # del
+    rol.delete(session)
+    try:
+        StaticRole(session, dn=rol.dn)
+    except NotFoundError:
+        assert True
+    else:
+        assert False
+
+def test_crear_modificar_eliminar_politica_dataclass(session):
+
+    # crear
+    name = f"test{random.randint(0,999999)}"
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, filter="Directorio Activo")[0]
+
+    entitlements = {
+        service.dn: {
+            "automatic": False,
+            "workflow": None,
+            "parameters": {
+                "ercompany": [
+                    {
+                        "enforcement": "Default",
+                        "type": "script",
+                        "values": "return 'test';",
+                    },
+                    {
+                        "enforcement": "Excluded",
+                        "type": "null",
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type": "constant",
+                        "values": ["test1", "test2"],
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type": "Constant",
+                        "values": ["test3"],
+                    },
+                    {
+                        "enforcement": "Allowed",
+                        "type": "REGEX",
+                        "values": r"^[\s\w]+$",
+                    },
+                ],
+                "eradfax": [
+                    {
+                        "enforcement": "Allowed",
+                        "type": "constant",
+                        "values": ["1018117"],
+                    }
+                ],
+            },
+        },
+        "*": {"automatic": False, "workflow": None, "parameters": {}},
+    }
+    policy = {
+        "description": "test",
+        "name": name,
+        "parent": parent,
+        "priority": 10000,
+        "memberships": [x.dn for x in search.roles(session, filter="Auditor")],
+        "enabled": False,
+        "entitlements": entitlements,
+    }
+    pp = ProvisioningPolicy(session, policy_attrs=policy)
+    pp.add(session)
+
+    # buscar pol creada
+    time.sleep(3)
+    pp_creada = search.provisioning_policy(session, name, parent)[0]
+    assert pp_creada.name == name
+
+    # modificar y validar modificacion
+    nueva_desc = "modificacion"
+    nuevos_ents = pp_creada.entitlements
+    nuevos_ents[service.dn]["automatic"] = True
+    changes = {
+        "description": nueva_desc,
+        # "entitlements":nuevos_ents,
+    }
+    # pp_creada.description = nueva_desc
+    pp_creada.entitlements[service.dn]["automatic"] = True
+    pp_creada.modify(session, changes)
+    time.sleep(3)
+    pp_mod = search.provisioning_policy(session, name, parent)[0]
+    assert pp_mod.description == nueva_desc
+
+    # eliminar y validar eliminación
+    time.sleep(120)  # tiene que terminar de evaluar la creación/mod
+    pp_mod.delete(session)
+    time.sleep(10)
+    pp_elim = search.provisioning_policy(session, name, parent)
+    assert len(pp_elim) == 0
