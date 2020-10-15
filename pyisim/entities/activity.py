@@ -34,9 +34,9 @@ class Activity:
 
         Result values:
 
-        * For approvals: "approve" / "reject"
-        * For work orders: "successful" / "warning" / "failure"
-        * For RFIs: List of {"name":attr_name, "value":attr_value}
+            * For approvals: "approve" / "reject"
+            * For work orders: "successful" / "warning" / "failure"
+            * For RFIs: List of {"name":attr_name, "value":attr_value}
 
         Args:
             session (Session): Active ISIM Session
