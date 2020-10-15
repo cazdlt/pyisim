@@ -1,8 +1,19 @@
 from pyisim.exceptions import NotFoundError
+from typing import Dict, List, TYPE_CHECKING, Union
 
+if TYPE_CHECKING:
+    from pyisim.auth import Session
 
 class Activity:
-    def __init__(self, session, activity=None, id=None):
+    def __init__(self, session: "Session", activity=None, id: str=None):
+        """
+        Represents an ISIM Activity. Can do lookup using the id attribute.
+
+        Args:
+            session (Session): Active ISIM Session
+            activity (zeep.WSActivity, optional): Activity object returned from ISIM REST API. Defaults to None.
+            id (str, optional): Activity ID for lookup. Defaults to None.
+        """
 
         if id:
             activity = session.restclient.lookupActividad(str(id))
@@ -17,15 +28,24 @@ class Activity:
         self.status = activity["_attributes"]["status"]["key"].split(".")[-1]
         self.requestee = activity["_links"]["requestee"]["title"]
 
-    def complete(self, session, result, justification):
-
-        """Allows to complete:
-        Approvals   (result: approve/reject)
-        Work Orders (result: successful/warning/failure)
-        RFI         (result=[
-                        {'name':attr_name,'value':attr_value}, ...
-                    ])
+    def complete(self, session:"Session", result:Union[str,List[Dict[str,str]]], justification:str):
         """
+        Completes the activity. As of now, only allows RFIs, Work Orders and Approval operations.
+
+        Result values:
+
+        * For approvals: "approve" / "reject"
+        * For work orders: "successful" / "warning" / "failure"
+        * For RFIs: List of {"name":attr_name, "value":attr_value}
+
+        Args:
+            session (Session): Active ISIM Session
+            result (Union[str,List[Dict[str,str]]]): Result value.    
+            justification (str): Activity justification
+
+        Returns:
+            dict: REST API Response
+        """      
 
         if self.type not in ["APPROVAL", "WORK_ORDER", "RFI"]:
             raise NotImplementedError(

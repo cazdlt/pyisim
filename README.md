@@ -22,7 +22,7 @@ from pyisim.auth import Session
 user="itim manager"
 password="secret"
 cert="./my_certificate.cer"
-url="isim.deltaits.com"
+url="iam.isim.com"
 sess=Session(url,user,password,cert)
 ```
 
@@ -161,13 +161,17 @@ update_property.create_or_update_property(session,property_file,property_name,pr
         -   Create/Search/Update property files
 
 -   TODO:
-
+    - DN Lookup for Person entities
     -   Improve documentation
         -   Basic usage
         -   Requirements
     -   Add operations to services
+        - DN Lookup
+        - Add
+        - Modify
+        - Delete
+        - Test connection
     -   Normalize request responses
-    -   Translate docstrings and exceptions into english for the high level API
     -   Use typehints
 
 -   Changes since last version:

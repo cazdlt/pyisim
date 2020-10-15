@@ -1,12 +1,12 @@
 from pyisim.va.configure import update_property
-from pyisim.va.auth import Session
+from pyisim.va.auth import VASession
 import pytest
 from secret import va_login, va_pw, va_url
 
 
 @pytest.fixture
 def session():
-    s = Session(va_login, va_pw, va_url, None)
+    s = VASession(va_login, va_pw, va_url, None)
     return s
 
 

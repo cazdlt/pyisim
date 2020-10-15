@@ -1,5 +1,18 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pyisim.auth import Session
+
 class OrganizationalContainer:
-    def __init__(self, session, dn=None, organizational_container=None):
+    def __init__(self, session: "Session", dn:str=None, organizational_container: dict=None):
+        """
+        Represents an ISIM Business Unit. Can do lookup using the DN parameter or searched using the pyisim.search.organizational_container() module function
+
+        Args:
+            session (Session): Active ISIM Session
+            dn (str, optional): Organizationl Container DN. Defaults to None.
+            organizational_container (dict, optional): Used for initialization after search operations. Defaults to None.
+        """
         if dn:
             self.wsou = session.soapclient.lookupContainer(dn)
             self.name = self.wsou.name

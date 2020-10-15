@@ -2,7 +2,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 
-class Session:
+class VASession:
     """
     Handles REST API Session in ISIM Virtual Appliance
     """

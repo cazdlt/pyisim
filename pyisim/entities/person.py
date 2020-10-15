@@ -7,10 +7,22 @@ if TYPE_CHECKING:
 
 
 class Person:
+    """
+    Represents a Person object in ISIMs directory server
+
+    Can be subclassed to represent Business Partner Persons or custom Person entities defined in your system
+    """
 
     profile_name = "Person"
 
-    def __init__(self, session, person=None, href=None, person_attrs=None):
+    def __init__(self, session: "Session", person:dict=None, href:str=None, person_attrs:dict=None):
+        """
+        Args:
+            session (Session): Active ISIM Session
+            person (dict, optional): Used for initialization after search operations. Defaults to None.
+            href (str, optional): Used for initialization for lookup  operations. Defaults to None.
+            person_attrs: Dictionary of person attributes
+        """
 
         self.changes = {}
 
@@ -52,12 +64,36 @@ class Person:
 
         return super().__init_subclass__()
 
-    def add(self, session, parent: "OrganizationalContainer", justification):
+    def add(self, session: "Session", parent: "OrganizationalContainer", justification:str):
+        """
+        Request to add the specified person into ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+            parent (OrganizationalContainer): Person Business Unit
+            justification (str): Request justificacion
+
+        Returns:
+            dict: ISIM REST API Response
+        """
         orgid = parent.href.split("/")[-1]
         ret = session.restclient.crearPersona(self, orgid, justification)
         return ret
 
-    def modify(self, session, justification, changes={}):
+    def modify(self, session:"Session", justification:str, changes={}):
+        """
+        Requests to modify the person in ISIM.
+
+        Changes can be specified by modifying the instance attributes or through the changes dictionary
+
+        Args:
+            session (Session): Active ISIM Session
+            justification (str): Request justification
+            changes (dict, optional): Attribute changes dictionary. Defaults to {}.
+
+        Returns:
+            dict: ISIM REST API Response
+        """
         try:
             # href = self.href
 
@@ -77,13 +113,34 @@ class Person:
     def request_access(
         self, session: "Session", accesses: List["Access"], justification: str
     ):
+        """
+        Requests access to the person
+
+        Args:
+            session (Session): Active ISIM Session
+            accesses (List[pyisim.entities.Access]): List of accesses to request
+            justification (str): Request justification
+
+        Returns:
+            dict: ISIM REST API Response
+        """
 
         ret = {}
         if len(accesses) > 0:
             ret = session.restclient.solicitarAccesos(accesses, self, justification)
         return ret
 
-    def suspend(self, session, justification):
+    def suspend(self, session:"Session", justification:str):
+        """
+        Requests to suspend the person in ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+            justification (str): Request justification
+
+        Returns:
+            dict: ISIM SOAP API Response
+        """
 
         try:
             try:
@@ -101,7 +158,17 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restore(self, session, justification):
+    def restore(self, session:"Session", justification:str):
+        """
+        Requests to restore the person in ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+            justification (str): Request justification
+
+        Returns:
+            dict: ISIM SOAP API Response
+        """
         try:
             try:
                 dn = self.dn
@@ -118,7 +185,17 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def delete(self, session, justification):
+    def delete(self, session:"Session", justification:str):
+        """
+        Requests to delete the person in ISIM
+
+        Args:
+            session (Session): Active ISIM Session
+            justification (str): Request justification
+
+        Returns:
+            dict: ISIM SOAP API Response
+        """
 
         try:
             try:
