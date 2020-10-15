@@ -10,7 +10,11 @@ from pyisim.entities import (
     ProvisioningPolicy,
     Group,
 )
-import builtins
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pyisim.auth import Session
 
 
 def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
@@ -46,7 +50,7 @@ def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
 
 def people(
     session,
-    filter="*",
+    search_filter="*",
     by="cn",
     profile_name="Person",
     attributes="*",
@@ -58,7 +62,7 @@ def people(
         session ([pyisim.auth.Session]): Sesión de pyisim
         profile (str): Person/BPPerson
         by (str, optional): LDAP Attribute to search by. Defaults to "cn".
-        filter (str, optional): Filter to search by. Defaults to "*".
+        search_filter (str, optional): Filter to search by. Defaults to "*".
         attributes (str, optional): Attributes to return in the Person instance. Defaults to "dn".
         limit (int, optional): Defaults to 50.
 
@@ -71,7 +75,7 @@ def people(
         atributos=attributes,
         embedded="",
         buscar_por=by,
-        filtro=filter,
+        filtro=search_filter,
         limit=limit,
     )
     personas = [Person(session, person=p) for p in ret]
@@ -87,12 +91,12 @@ def provisioning_policy(session, name: str, parent: OrganizationalContainer):
     return [ProvisioningPolicy(session, provisioning_policy=p) for p in results]
 
 
-def roles(session, by="errolename", filter="*", find_unique=False):
+def roles(session, by="errolename", search_filter="*", find_unique=False):
     soap = session.soapclient
-    results = soap.buscarRol(f"({by}={filter})", find_unique)
+    results = soap.buscarRol(f"({by}={search_filter})", find_unique)
 
     is_dynamic = [
-        any(builtins.filter(lambda i: i.name == "erjavascript", r.attributes.item))
+        any(filter(lambda i: i.name == "erjavascript", r.attributes.item))
         for r in results
     ]
     return [
@@ -101,57 +105,57 @@ def roles(session, by="errolename", filter="*", find_unique=False):
     ]
 
 
-def activities(session, by="activityName", filter="*"):
+def activities(session, by="activityName", search_filter="*"):
     """
     Returns PENDING activities
 
     Args:
         session (pyisim.auth.Session): PyISIM Session
         by (str, optional): "requestId" oor filters available in ISIMs REST API docs (activityId, activityName, serviceName, participantName). Defaults to "activityName".
-        filter (str, optional): Search filter. Defaults to "*".
+        search_filter (str, optional): Search filter. Defaults to "*".
     """
 
     if by == "requestId":
-        results = session.soapclient.buscarActividadesDeSolicitud(filter)
+        results = session.soapclient.buscarActividadesDeSolicitud(search_filter)
         return [Activity(session, id=a.id) for a in results]
 
     else:
         results = session.restclient.buscarActividad(
-            search_attr=by, search_filter=filter
+            search_attr=by, search_filter=search_filter
         )
 
         return [Activity(session, activity=a) for a in results]
 
 
-def access(session, by="accessName", filter="*", attributes="", limit=20):
+def access(session, by="accessName", search_filter="*", attributes="", limit=20):
 
     ret = session.restclient.buscarAcceso(
-        by=by, filtro=filter, atributos=attributes, limit=limit
+        by=by, filtro=search_filter, atributos=attributes, limit=limit
     )
     accesos = [Access(access=a) for a in ret]
 
     return accesos
 
 
-def service(session, parent: OrganizationalContainer, by="erservicename", filter="*"):
+def service(session, parent: OrganizationalContainer, by="erservicename", search_filter="*"):
 
-    # ret=session.restclient.buscarServicio(by,filter,limit,atributos=attributes)
+    # ret=session.restclient.buscarServicio(by,search_filter,limit,atributos=attributes)
     # servicios=[Service(session,service=s) for s in ret]
     ret = session.soapclient.buscarServicio(
-        parent.wsou, f"({by}={filter})", find_unique=False
+        parent.wsou, f"({by}={search_filter})", find_unique=False
     )
     servicios = [Service(session, service=s) for s in ret]
 
     return servicios
 
 
-def organizational_container(session, profile_name, filter, by="name"):
+def organizational_container(session, profile_name, search_filter, by="name"):
     """[summary]
 
     Args:
         session (pyisim.Session)
         profile_name (str): ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
-        filter (str): name or attr value
+        search_filter (str): name or attr value
         by (str, optional): attribute to search by. Defaults to "name".
 
     Returns:
@@ -160,7 +164,7 @@ def organizational_container(session, profile_name, filter, by="name"):
 
     buscar_por = None if by == "name" else by
     ret = session.restclient.buscarOUs(
-        profile_name, buscar_por=buscar_por, filtro=filter, attributes="dn"
+        profile_name, buscar_por=buscar_por, filtro=search_filter, attributes="dn"
     )
 
     ous = [OrganizationalContainer(session, organizational_container=ou) for ou in ret]

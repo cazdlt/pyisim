@@ -75,8 +75,8 @@ MyBPPerson({"sn":"Zamora"}).add(sess,"my org","New BPPerson")
 
 ```py
 from pyisim import search
-accesses=search.access(sess,filter="*Consulta*",limit=5)
-person=search.people(session,by="givenname",filter="Juan",limit=1)[0]
+accesses=search.access(sess,search_filter="*Consulta*",limit=5)
+person=search.people(session,by="givenname",search_filter="Juan",limit=1)[0]
 person.request_access(session,accesses,"justification")
 ```
 
@@ -84,7 +84,7 @@ person.request_access(session,accesses,"justification")
 
 ```py
 request_id="9585474949338"
-actividad=search.activities(session,by="requestId",filter=request_id,limit=1)[0]
+actividad=search.activities(session,by="requestId",search_filter=request_id,limit=1)[0]
 actividad.complete(sess,"approve","justification")
 ```
 
@@ -99,7 +99,7 @@ form=[
     },
     ...
 ]
-actividad=search.activities(session,by="requestId",filter=request_id)[0]
+actividad=search.activities(session,by="requestId",search_filter=request_id)[0]
 actividad.complete(sess,form,"justification")
 ```
 

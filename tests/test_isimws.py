@@ -26,12 +26,12 @@ def session():
 
 
 def test_search_access(session):
-    r = search.access(session, filter="*Consulta*", limit=2)
+    r = search.access(session, search_filter="*Consulta*", limit=2)
     assert len(r) > 0
 
 
 def test_search_people(session):
-    r = search.people(session, by="employeenumber", filter="1015463230", limit=1)
+    r = search.people(session, by="employeenumber", search_filter="1015463230", limit=1)
     assert len(r) > 0
 
 
@@ -39,14 +39,14 @@ def test_search_service(session):
     r = search.service(
         session,
         search.organizational_container(session, "organizations", test_org)[0],
-        filter="SAP NW",
+        search_filter="SAP NW",
     )
     assert len(r) > 0
     assert r[0].name == "SAP NW"
 
 
 def test_search_roles(session):
-    r = search.roles(session, filter="SAP*")
+    r = search.roles(session, search_filter="SAP*")
 
     assert len(r) > 0
     assert "SAP" in r[0].name.upper()
@@ -57,9 +57,9 @@ def test_new_rol(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", filter="1015463230")
+        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, filter="ITIM Administrators")]
+    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
 
     # creación
     rolinfo = {
@@ -92,9 +92,9 @@ def test_crear_modificar_eliminar_rol(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", filter="1015463230")
+        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, filter="ITIM Administrators")]
+    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
 
     # creación
     rolinfo = {
@@ -137,7 +137,7 @@ def test_get_client():
 def test_inicializar_politicas(session):
 
     parent = search.organizational_container(session, "organizations", test_org)[0]
-    service = search.service(session, parent, filter="Directorio Activo")[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
 
     entitlements = {
         service.dn: {
@@ -186,7 +186,7 @@ def test_inicializar_politicas(session):
         "name": "test",
         "parent": parent,
         "priority": 10000,
-        "memberships": [x.dn for x in search.roles(session, filter="Auditor")],
+        "memberships": [x.dn for x in search.roles(session, search_filter="Auditor")],
         "enabled": False,
         "entitlements": entitlements,
     }
@@ -235,7 +235,7 @@ def test_crear_modificar_eliminar_politica(session):
     # crear
     name = f"test{random.randint(0,999999)}"
     parent = search.organizational_container(session, "organizations", test_org)[0]
-    service = search.service(session, parent, filter="Directorio Activo")[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
 
     entitlements = {
         service.dn: {
@@ -284,7 +284,7 @@ def test_crear_modificar_eliminar_politica(session):
         "name": name,
         "parent": parent,
         "priority": 10000,
-        "memberships": [x.dn for x in search.roles(session, filter="Auditor")],
+        "memberships": [x.dn for x in search.roles(session, search_filter="Auditor")],
         "enabled": False,
         "entitlements": entitlements,
     }
@@ -323,7 +323,7 @@ def test_search_groups(session):
     # TODO Search by account/access
     # by service
     parent = search.organizational_container(session, "organizations", test_org)[0]
-    service_dn = search.service(session, parent, filter="Directorio Activo")[0].dn
+    service_dn = search.service(session, parent, search_filter="Directorio Activo")[0].dn
     r = search.groups(
         session, by="service", service_dn=service_dn, group_info="Administrators"
     )
@@ -355,7 +355,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
     persona_creada = search.people(
         session,
         by="employeenumber",
-        filter=info_persona["employeenumber"],
+        search_filter=info_persona["employeenumber"],
         attributes="*",
         limit=1,
     )[0]
@@ -372,7 +372,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
     persona_mod = search.people(
         session,
         by="employeenumber",
-        filter=info_persona["employeenumber"],
+        search_filter=info_persona["employeenumber"],
         attributes="*",
         limit=1,
     )[0]
@@ -384,7 +384,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
     persona_sus = search.people(
         session,
         by="employeenumber",
-        filter=info_persona["employeenumber"],
+        search_filter=info_persona["employeenumber"],
         attributes="*",
         limit=1,
     )[0]
@@ -396,7 +396,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
     persona_res = search.people(
         session,
         by="employeenumber",
-        filter=info_persona["employeenumber"],
+        search_filter=info_persona["employeenumber"],
         attributes="*",
         limit=1,
     )[0]
@@ -408,7 +408,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
     persona_elim = search.people(
         session,
         by="employeenumber",
-        filter=info_persona["employeenumber"],
+        search_filter=info_persona["employeenumber"],
         limit=1,
     )
     assert len(persona_elim) == 0
@@ -418,22 +418,22 @@ def test_activites_by_request_id(session):
 
     # group access
     request_id = "5101169363690384727"
-    res = search.activities(session, by="requestId", filter=request_id)
+    res = search.activities(session, by="requestId", search_filter=request_id)
     print(res)
 
     # role access
     request_id = "4395986706018163961"
-    res = search.activities(session, by="requestId", filter=request_id)
+    res = search.activities(session, by="requestId", search_filter=request_id)
     print(res)
 
     # recert
     request_id = "4873926809151916308"
-    res = search.activities(session, by="requestId", filter=request_id)
+    res = search.activities(session, by="requestId", search_filter=request_id)
     print(res)
 
     # new user rfi
     request_id = "4773504143421693102"
-    res = search.activities(session, by="requestId", filter=request_id)
+    res = search.activities(session, by="requestId", search_filter=request_id)
     print(res)
 
 
@@ -451,11 +451,11 @@ def test_search_ou(session):
 def test_search_dynrole(session):
 
     # solo dinámico
-    r = search.roles(session, filter="Logonhours GDD")
+    r = search.roles(session, search_filter="Logonhours GDD")
     print(r)
 
     # ambos
-    r = search.roles(session, filter="*Logonhours*")
+    r = search.roles(session, search_filter="*Logonhours*")
     print(r)
 
 
@@ -463,9 +463,9 @@ def test_crear_modificar_eliminar_dynrol(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", filter="1015463230")
+        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, filter="ITIM Administrators")]
+    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
 
     # creación
     name = "dynrol_prueba"
@@ -482,7 +482,7 @@ def test_crear_modificar_eliminar_dynrol(session):
     rol = DynamicRole(session, role_attrs=rolinfo)
     rol.add(session)
     time.sleep(3)
-    rol_creado = search.roles(session, filter=name)
+    rol_creado = search.roles(session, search_filter=name)
     assert rol_creado[0].name == name
     rol_creado = rol_creado[0]
 
@@ -510,9 +510,9 @@ def test_crear_modificar_eliminar_rol_dataclasss(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", filter="1015463230")
+        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, filter="ITIM Administrators")]
+    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
 
     # creación
     rolinfo = {
@@ -551,7 +551,7 @@ def test_crear_modificar_eliminar_politica_dataclass(session):
     # crear
     name = f"test{random.randint(0,999999)}"
     parent = search.organizational_container(session, "organizations", test_org)[0]
-    service = search.service(session, parent, filter="Directorio Activo")[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
 
     entitlements = {
         service.dn: {
@@ -600,7 +600,7 @@ def test_crear_modificar_eliminar_politica_dataclass(session):
         "name": name,
         "parent": parent,
         "priority": 10000,
-        "memberships": [x.dn for x in search.roles(session, filter="Auditor")],
+        "memberships": [x.dn for x in search.roles(session, search_filter="Auditor")],
         "enabled": False,
         "entitlements": entitlements,
     }

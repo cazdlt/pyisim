@@ -208,7 +208,7 @@ class ISIMClient:
         return {"_links": {tipo: {"href": json_["_links"]["self"]["href"]}}}
 
     def buscarActividad(
-        self, solicitudID="", search_attr="activityName", search_filter="*"
+        self, search_attr="activityName", search_filter="*"
     ):
 
         url = self.__addr + "/itim/rest/activities"
@@ -221,11 +221,6 @@ class ISIMClient:
         headers = {"Cache-Control": "no-cache"}
 
         actividades = json.loads(self.s.get(url, params=data, headers=headers).text)
-        if solicitudID:
-            actividades = filter(
-                lambda a: a["_links"]["request"]["href"] == solicitudID, actividades
-            )
-            return list(actividades)
 
         return list(actividades)
 
