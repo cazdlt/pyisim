@@ -229,7 +229,6 @@ def organizational_container(
     Organizational container search.
 
     Profile names:
-
         * bporganizations
         * organizationunits
         * organizations
