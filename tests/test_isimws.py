@@ -446,7 +446,7 @@ def test_activites_by_request_id(session):
 
 
 def test_search_ou(session):
-    name = "Colpensiones"
+    name = test_org
     search.organizational_container(session, "organizations", name)
 
     name = "Cromasoft Ltda"

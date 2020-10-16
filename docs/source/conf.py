@@ -31,7 +31,12 @@ release = "0.2"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.coverage", "sphinx.ext.napoleon","sphinx_rtd_theme",]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.napoleon",
+    "sphinx_rtd_theme",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -41,7 +46,7 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["ejemplo*"]
 
-autoclass_content="both"
+autoclass_content = "both"
 
 
 # -- Options for HTML output -------------------------------------------------

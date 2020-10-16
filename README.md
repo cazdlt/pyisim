@@ -164,8 +164,6 @@ update_property.create_or_update_property(s,property_file,property_name,property
 -   TODO (in priority order):
 
     -   DN Lookup for Person entities
-    -   Improve documentation
-        -   Basic usage
     -   Add operations to services
         -   DN Lookup
         -   Add
@@ -173,6 +171,7 @@ update_property.create_or_update_property(s,property_file,property_name,property
         -   Delete
         -   Test connection
     -   Normalize request responses
+    -   Add some complex use cases to the documentation
 
 -   Changes since last version:
     -   Improved activity search by request id
