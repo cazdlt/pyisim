@@ -112,7 +112,7 @@ from pyisim.va.configure import update_property
 
 u="admin@local"
 p="secret"
-url="isimva.deltaits.com"
+url="iam.isimva.com"
 cert="./mycert.cer"
 
 s=Session(u,p,url,cert)
@@ -158,21 +158,21 @@ update_property.create_or_update_property(session,property_file,property_name,pr
     -   Services
         -   Search
     -   ISIM VA Utilities:
+        -   Authentication
         -   Create/Search/Update property files
 
--   TODO:
-    - DN Lookup for Person entities
+-   TODO (in priority order):
+
+    -   DN Lookup for Person entities
     -   Improve documentation
         -   Basic usage
-        -   Requirements
     -   Add operations to services
-        - DN Lookup
-        - Add
-        - Modify
-        - Delete
-        - Test connection
+        -   DN Lookup
+        -   Add
+        -   Modify
+        -   Delete
+        -   Test connection
     -   Normalize request responses
-    -   Use typehints
 
 -   Changes since last version:
     -   Improved activity search by request id
@@ -180,3 +180,5 @@ update_property.create_or_update_property(session,property_file,property_name,pr
     -   Fixed RFI completion
     -   Some translations
     -   Improved project (entities) structure
+    -   Docstrings for everything
+    -   Dataclasses for complex attributes in role and provisioning policy handling

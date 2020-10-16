@@ -5,7 +5,7 @@ from pyisim.entities import Person
 
 class Session:
     """
-    Handles user session in REST and SOAP APis
+    Handles user session for the IBM Security Identity Manager application
     """
 
     def __init__(self, url:str, username:str, password:str, certificate_path:str):

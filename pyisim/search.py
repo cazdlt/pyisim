@@ -1,3 +1,4 @@
+from pyisim.entities.role import Role
 from pyisim.exceptions import InvalidOptionError
 from pyisim.entities import (
     Activity,
@@ -11,28 +12,31 @@ from pyisim.entities import (
     Group,
 )
 
-from typing import TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
 
 
-def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
-    """Buscar grupos.
+def groups(session:"Session", by:str, service_dn:str=None, group_profile_name="", group_info="") -> List[Group]:
+    """
+    Service group search.
 
     Args:
-        by (string): "account", "access" or "service"
-        dn (string): account or access dn
-        groupProfileName (string, optional): Group profile name if searching by service. Defaults to None.
-        groupInfo (string, optional): Group name or description if searching by service. Defaults to None.
+        session (Session): Active ISIM Session
+        by (str): "account", "access" or "service"
+        service_dn (str, optional): Parent service DN if searching by service. Defaults to None.
+        group_profile_name (str, optional): Group profile name if searching by service. Defaults to None.
+        group_info (str, optional): Group name or description if searching by service. Defaults to None.
 
     Raises:
-        NotImplementedError: Search by account or access not implemented yet.
-        InvalidOptionError
+        NotImplementedError: Search by account and access not implement
+
 
     Returns:
-        list: Search results
+        List[Group]: Search results
     """
+
     session = session.soapclient
     if by == "account":
         raise NotImplementedError
@@ -49,25 +53,26 @@ def groups(session, by, service_dn=None, group_profile_name="", group_info=""):
 
 
 def people(
-    session,
+    session: "Session",
     search_filter="*",
     by="cn",
     profile_name="Person",
     attributes="*",
     limit=50,
-):
-    """ "Wrapper para buscar/lookup personas o bpperson desde REST API
+) -> List[Person]:
+    """
+    Person search
 
     Args:
-        session ([pyisim.auth.Session]): Sesión de pyisim
-        profile (str): Person/BPPerson
-        by (str, optional): LDAP Attribute to search by. Defaults to "cn".
+        session (Session): Active ISIM Session
         search_filter (str, optional): Filter to search by. Defaults to "*".
-        attributes (str, optional): Attributes to return in the Person instance. Defaults to "dn".
+        by (str, optional): LDAP Attribute to search by. Defaults to "cn".
+        profile_name (str, optional): Person/BPPerson. Defaults to "Person".
+        attributes (str, optional): Attributes to return in the Person instance. Defaults to "*".
         limit (int, optional): Defaults to 50.
 
     Returns:
-        [list(Person)]: listado de personas encontradas
+        List[Person]: Search results
     """
 
     ret = session.restclient.buscarPersonas(
@@ -82,7 +87,18 @@ def people(
     return personas
 
 
-def provisioning_policy(session, name: str, parent: OrganizationalContainer):
+def provisioning_policy(session:"Session", name: str, parent: OrganizationalContainer)-> List[ProvisioningPolicy]:
+    """
+    Provioning Policy search
+
+    Args:
+        session (Session): Active ISIM Session
+        name (str): Provisioning Policy name
+        parent (OrganizationalContainer): Provisioning Policy business unit
+
+    Returns:
+        List[ProvisioningPolicy]: Search results
+    """
 
     wsou = parent.wsou
     results = session.soapclient.buscarPoliticaSuministro(
@@ -91,7 +107,18 @@ def provisioning_policy(session, name: str, parent: OrganizationalContainer):
     return [ProvisioningPolicy(session, provisioning_policy=p) for p in results]
 
 
-def roles(session, by="errolename", search_filter="*", find_unique=False):
+def roles(session:"Session", by="errolename", search_filter="*", find_unique=False)->List[Role]:
+    """
+    Role search
+
+    Args:
+        session (Session): Active ISIM Session
+        by (str, optional): LDAP Attribute to search by. Defaults to "errolename".
+        search_filter (str, optional): Filter to search by. Defaults to "*".
+
+    Returns:
+        List[Role]: Search results. Returns both Dynamic and Static Roles.
+    """
     soap = session.soapclient
     results = soap.buscarRol(f"({by}={search_filter})", find_unique)
 
@@ -105,14 +132,17 @@ def roles(session, by="errolename", search_filter="*", find_unique=False):
     ]
 
 
-def activities(session, by="activityName", search_filter="*"):
+def activities(session:"Session", by="activityName", search_filter="*")->List[Activity]:
     """
-    Returns PENDING activities
+    Pending Activity search
 
     Args:
-        session (pyisim.auth.Session): PyISIM Session
-        by (str, optional): "requestId" oor filters available in ISIMs REST API docs (activityId, activityName, serviceName, participantName). Defaults to "activityName".
-        search_filter (str, optional): Search filter. Defaults to "*".
+        session (Session): Active ISIM Session
+        by (str, optional): "requestId" or filters available in ISIMs REST API docs (activityId, activityName, serviceName, participantName). Defaults to "activityName".
+        search_filter (str, optional): Filter to search by. Defaults to "*".
+
+    Returns:
+        List[Activity]: Search results
     """
 
     if by == "requestId":
@@ -127,7 +157,19 @@ def activities(session, by="activityName", search_filter="*"):
         return [Activity(session, activity=a) for a in results]
 
 
-def access(session, by="accessName", search_filter="*", attributes="", limit=20):
+def access(session:"Session", by="accessName", search_filter="*", attributes="", limit=20)->List[Access]:
+    """
+    Access search
+
+    Args:
+        session (Session): Active ISIM Session
+        by (str, optional): Defaults to "accessName".
+        search_filter (str, optional): Filter to search by. Defaults to "*".
+        limit (int, optional): Defaults to 20.
+
+    Returns:
+        List[Access]: Search results
+    """
 
     ret = session.restclient.buscarAcceso(
         by=by, filtro=search_filter, atributos=attributes, limit=limit
@@ -137,7 +179,19 @@ def access(session, by="accessName", search_filter="*", attributes="", limit=20)
     return accesos
 
 
-def service(session, parent: OrganizationalContainer, by="erservicename", search_filter="*"):
+def service(session:"Session", parent: OrganizationalContainer, by="erservicename", search_filter="*")->List[Service]:
+    """
+    Service search
+
+    Args:
+        session (Session): Active ISIM Session
+        parent (OrganizationalContainer): Service business unit
+        by (str, optional): LDAP attribute to search by. Defaults to "erservicename".
+        search_filter (str, optional): Filter to search by. Defaults to "*".
+
+    Returns:
+        List[Service]: Search results
+    """
 
     # ret=session.restclient.buscarServicio(by,search_filter,limit,atributos=attributes)
     # servicios=[Service(session,service=s) for s in ret]
@@ -149,17 +203,26 @@ def service(session, parent: OrganizationalContainer, by="erservicename", search
     return servicios
 
 
-def organizational_container(session, profile_name, search_filter, by="name"):
-    """[summary]
+def organizational_container(session:"Session", profile_name:str, search_filter:str, by="name")->List[OrganizationalContainer]:
+    """
+    Organizational container search.
+
+    Profile names:
+    
+        * bporganizations
+        * organizationunits
+        * organizations
+        * locations
+        * admindomains
 
     Args:
-        session (pyisim.Session)
-        profile_name (str): ["bporganizations", "organizationunits", "organizations","locations","admindomains"]
-        search_filter (str): name or attr value
-        by (str, optional): attribute to search by. Defaults to "name".
+        session (Session): Active ISIM Session
+        profile_name (str): Organizational container profile name
+        search_filter (str): Filter to search by.
+        by (str, optional): Attribute to search by. Defaults to "name".
 
     Returns:
-        pyisim.entities.OrganizationalContainer
+        List[OrganizationalContainer]: [description]
     """
 
     buscar_por = None if by == "name" else by

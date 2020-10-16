@@ -4,10 +4,19 @@ from requests.auth import HTTPBasicAuth
 
 class VASession:
     """
-    Handles REST API Session in ISIM Virtual Appliance
+    Handles user session for the IBM Security Identity Manager Virtual Appliance
     """
 
-    def __init__(self, username, password, base_url, certificate_path):
+    def __init__(self, username:str, password:str, base_url:str, certificate_path:str):
+        """
+        Performs login on specified ISIM Virtual Appliance URL
+
+        Args:
+            url (str): ISIM VA Base URL. Example: https://iam.isimva.com
+            username (str): Login name of user
+            password (str): User password
+            certificate_path (str): Path to application server root certificate. Example: "./MyCA.cer"
+        """
         self.username = username
         # self.password=password
         self.base_url = base_url
