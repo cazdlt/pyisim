@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pyisim.auth import Session
 
+
 class Service:
     def __init__(self, session: "Session", service=None):
         """

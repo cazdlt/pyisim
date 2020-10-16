@@ -1,5 +1,6 @@
 import json
 from typing import Dict, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from pyisim.va.auth import VASession
 
@@ -9,7 +10,7 @@ def list_files(session: "VASession") -> Dict:
     Lists property files.
 
     Args:
-        session ("VASession"): Active ISIM Virtual Appliance Session
+        session (VASession): Active ISIM Virtual Appliance Session
 
     Returns:
         dict: Dictionary of property files
@@ -23,12 +24,14 @@ def list_files(session: "VASession") -> Dict:
     return json.loads(r.content)
 
 
-def get_property_value(session: "VASession", property_file:str, property_name:str=None)->Dict:
+def get_property_value(
+    session: "VASession", property_file: str, property_name: str = None
+) -> Dict:
     """
     Get values of properties in a property file
 
     Args:
-        session ("VASession"): Active ISIM VA Session
+        session (VASession): Active ISIM VA Session
         property_file (str): Name of the property file
         property_name (str, optional): Property name. Lists all properties in the file if None. Defaults to None.
 
@@ -50,12 +53,14 @@ def get_property_value(session: "VASession", property_file:str, property_name:st
     return json.loads(r.content)
 
 
-def add_property(session: "VASession", property_file:str, property_name:str, property_value:str)->str:
+def add_property(
+    session: "VASession", property_file: str, property_name: str, property_value: str
+) -> str:
     """
     Adds property to file
 
     Args:
-        session ("VASession"): Active ISIM VA Session
+        session (VASession): Active ISIM VA Session
         property_file (str): Property file name
         property_name (str): Property name
         property_value (str): Property value
@@ -81,12 +86,14 @@ def add_property(session: "VASession", property_file:str, property_name:str, pro
     return r.reason
 
 
-def update_property(session: "VASession", property_file:str, property_name:str, property_value:str)->str:
+def update_property(
+    session: "VASession", property_file: str, property_name: str, property_value: str
+) -> str:
     """
     Updates property
 
     Args:
-        session ("VASession"): Active ISIM VA Session
+        session (VASession): Active ISIM VA Session
         property_file (str): Property file name
         property_name (str): Property name
         property_value (str): Property value
@@ -112,12 +119,14 @@ def update_property(session: "VASession", property_file:str, property_name:str, 
     return r.reason
 
 
-def delete_property(session: "VASession", property_file:str, property_name:str=None):
+def delete_property(
+    session: "VASession", property_file: str, property_name: str = None
+):
     """
     Deletes property file or property in file
 
     Args:
-        session ("VASession"): Active ISIM VA Session
+        session (VASession): Active ISIM VA Session
         property_file (str): Property file name
         property_name (str, optional): Property name. Deletes file if none. Defaults to None.
 
@@ -142,12 +151,14 @@ def delete_property(session: "VASession", property_file:str, property_name:str=N
     return r
 
 
-def create_or_update_property(session: "VASession", property_file:str, property_name:str, property_value:str)-> str:
+def create_or_update_property(
+    session: "VASession", property_file: str, property_name: str, property_value: str
+) -> str:
     """
     If property does not exist, creates it. If property exists, update it
 
     Args:
-        session ("VASession"): Active ISIM VA Session
+        session (VASession): Active ISIM VA Session
         property_file (str): Property file name
         property_name (str): Property name
         property_value (str): Property value

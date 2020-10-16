@@ -1,9 +1,16 @@
 from typing import Dict, List, TYPE_CHECKING, Union
+
 if TYPE_CHECKING:
     from pyisim.auth import Session
     from pyisim.entities.activity import Activity
 
-def activity_batch_complete(session: "Session", actividades: List["Activity"], resultado:Union[str,List[Dict[str,str]]], justification:str):
+
+def activity_batch_complete(
+    session: "Session",
+    actividades: List["Activity"],
+    resultado: Union[str, List[Dict[str, str]]],
+    justification: str,
+):
     """
     Completes activities in batch.
 

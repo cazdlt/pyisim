@@ -106,7 +106,7 @@ actividad.complete(sess,form,"justification")
 -   Update property files (ISIM VA)
 
 ```py
-from pyisim.va.auth import Session
+from pyisim.va.auth import VASession
 from pyisim.va.configure import update_property
 
 
@@ -115,12 +115,12 @@ p="secret"
 url="iam.isimva.com"
 cert="./mycert.cer"
 
-s=Session(u,p,url,cert)
+s=VASession(u,p,url,cert)
 
 property_file="CustomLabels.properties"
 property_name="scriptframework.properties"
 property_value="ITIM.java.access.util"
-update_property.create_or_update_property(session,property_file,property_name,property_value)
+update_property.create_or_update_property(s,property_file,property_name,property_value)
 ```
 
 -   Functionalities
@@ -182,3 +182,4 @@ update_property.create_or_update_property(session,property_file,property_name,pr
     -   Improved project (entities) structure
     -   Docstrings for everything
     -   Dataclasses for complex attributes in role and provisioning policy handling
+    -   Changed VA Session class name to VASession

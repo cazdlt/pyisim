@@ -7,7 +7,9 @@ class VASession:
     Handles user session for the IBM Security Identity Manager Virtual Appliance
     """
 
-    def __init__(self, username:str, password:str, base_url:str, certificate_path:str):
+    def __init__(
+        self, username: str, password: str, base_url: str, certificate_path: str
+    ):
         """
         Performs login on specified ISIM Virtual Appliance URL
 

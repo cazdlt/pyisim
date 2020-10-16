@@ -3,8 +3,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pyisim.auth import Session
 
+
 class Group:
-    def __init__(self, session: "Session", group :dict=None):
+    def __init__(self, session: "Session", group: dict = None):
         """
         Represents an ISIM service group. Holds all of its attributes and metadata.
 

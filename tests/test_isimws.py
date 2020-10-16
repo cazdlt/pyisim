@@ -57,9 +57,12 @@ def test_new_rol(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
+        p.dn
+        for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
+    owners_roles = [
+        r.dn for r in search.roles(session, search_filter="ITIM Administrators")
+    ]
 
     # creación
     rolinfo = {
@@ -92,9 +95,12 @@ def test_crear_modificar_eliminar_rol(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
+        p.dn
+        for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
+    owners_roles = [
+        r.dn for r in search.roles(session, search_filter="ITIM Administrators")
+    ]
 
     # creación
     rolinfo = {
@@ -323,7 +329,9 @@ def test_search_groups(session):
     # TODO Search by account/access
     # by service
     parent = search.organizational_container(session, "organizations", test_org)[0]
-    service_dn = search.service(session, parent, search_filter="Directorio Activo")[0].dn
+    service_dn = search.service(session, parent, search_filter="Directorio Activo")[
+        0
+    ].dn
     r = search.groups(
         session, by="service", service_dn=service_dn, group_info="Administrators"
     )
@@ -463,9 +471,12 @@ def test_crear_modificar_eliminar_dynrol(session):
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
+        p.dn
+        for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
+    owners_roles = [
+        r.dn for r in search.roles(session, search_filter="ITIM Administrators")
+    ]
 
     # creación
     name = "dynrol_prueba"
@@ -505,14 +516,18 @@ def test_crear_modificar_eliminar_dynrol(session):
     else:
         assert False
 
+
 def test_crear_modificar_eliminar_rol_dataclasss(session):
 
     parent = search.organizational_container(session, "organizations", test_org)[0]
 
     owners = [
-        p.dn for p in search.people(session, by="employeenumber", search_filter="1015463230")
+        p.dn
+        for p in search.people(session, by="employeenumber", search_filter="1015463230")
     ]
-    owners_roles = [r.dn for r in search.roles(session, search_filter="ITIM Administrators")]
+    owners_roles = [
+        r.dn for r in search.roles(session, search_filter="ITIM Administrators")
+    ]
 
     # creación
     rolinfo = {
@@ -524,7 +539,7 @@ def test_crear_modificar_eliminar_rol_dataclasss(session):
         "access_category": "Role",
         "owners": owners + owners_roles,
     }
-    role_atrrs=RoleAttributes(**rolinfo)
+    role_atrrs = RoleAttributes(**rolinfo)
     rol = StaticRole(session, role_attrs=role_atrrs)
     rol.add(session)
     assert hasattr(rol, "dn")
@@ -545,6 +560,7 @@ def test_crear_modificar_eliminar_rol_dataclasss(session):
         assert True
     else:
         assert False
+
 
 def test_crear_modificar_eliminar_politica_dataclass(session):
 

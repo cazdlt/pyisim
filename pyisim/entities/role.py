@@ -56,7 +56,7 @@ class RoleAttributes:
     LDAP Filter syntax.
     Required if dynamic role.
     """
-    scope: Literal[1,2] = 2
+    scope: Literal[1, 2] = 2
     """
     Dynamic Role scope.
     Only used in dynamic roles.
@@ -76,7 +76,7 @@ class Role:
         session: "Session",
         dn: str = None,
         rol=None,
-        role_attrs: Union[RoleAttributes,Dict] = None,
+        role_attrs: Union[RoleAttributes, Dict] = None,
     ):
         """
         Args:
@@ -254,13 +254,13 @@ class Role:
         # self.dn = r["itimDN"]
         return r
 
-    def modify(self, session:"Session", changes={}):
+    def modify(self, session: "Session", changes={}):
         """
         Requests to modify the role in ISIM
 
         Args:
             session (Session): Active ISIM Session
-            changes (dict, optional): [description]. Defaults to {}.
+            changes (dict, optional): Changes dictionary. Defaults to {}.
 
         Returns:
             zeep.Response: SOAP Response to the request
@@ -315,7 +315,6 @@ class Role:
 
 class DynamicRole(Role):
 
-
     type = "dynamic"
 
     def __init__(
@@ -323,7 +322,7 @@ class DynamicRole(Role):
         session: "Session",
         dn: str = None,
         rol=None,
-        role_attrs: Union[RoleAttributes,Dict] = None,
+        role_attrs: Union[RoleAttributes, Dict] = None,
     ):
         """
         Child class for representing Static Roles.
@@ -346,7 +345,6 @@ class DynamicRole(Role):
 
 
 class StaticRole(Role):
-    
 
     type = "static"
 
@@ -355,7 +353,7 @@ class StaticRole(Role):
         session: "Session",
         dn: str = None,
         rol=None,
-        role_attrs: Union[RoleAttributes,Dict] = None,
+        role_attrs: Union[RoleAttributes, Dict] = None,
     ):
         """
         Child class for representing Static Roles.

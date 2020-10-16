@@ -4,8 +4,9 @@ from typing import Dict, List, TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from pyisim.auth import Session
 
+
 class Activity:
-    def __init__(self, session: "Session", activity=None, id: str=None):
+    def __init__(self, session: "Session", activity=None, id: str = None):
         """
         Represents an ISIM Activity. Can do lookup using the id attribute.
 
@@ -28,7 +29,12 @@ class Activity:
         self.status = activity["_attributes"]["status"]["key"].split(".")[-1]
         self.requestee = activity["_links"]["requestee"]["title"]
 
-    def complete(self, session:"Session", result:Union[str,List[Dict[str,str]]], justification:str):
+    def complete(
+        self,
+        session: "Session",
+        result: Union[str, List[Dict[str, str]]],
+        justification: str,
+    ):
         """
         Completes the activity. As of now, only allows RFIs, Work Orders and Approval operations.
 
@@ -40,12 +46,12 @@ class Activity:
 
         Args:
             session (Session): Active ISIM Session
-            result (Union[str,List[Dict[str,str]]]): Result value.    
+            result (Union[str,List[Dict[str,str]]]): Result value.
             justification (str): Activity justification
 
         Returns:
             dict: REST API Response
-        """      
+        """
 
         if self.type not in ["APPROVAL", "WORK_ORDER", "RFI"]:
             raise NotImplementedError(

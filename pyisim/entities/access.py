@@ -1,5 +1,4 @@
 class Access:
-
     def __init__(self, access=None):
         """
         ISIM Access entity. Used in person.request_access() method. Holds its name and URL.

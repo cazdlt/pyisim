@@ -18,7 +18,13 @@ if TYPE_CHECKING:
     from pyisim.auth import Session
 
 
-def groups(session:"Session", by:str, service_dn:str=None, group_profile_name="", group_info="") -> List[Group]:
+def groups(
+    session: "Session",
+    by: str,
+    service_dn: str = None,
+    group_profile_name="",
+    group_info="",
+) -> List[Group]:
     """
     Service group search.
 
@@ -87,7 +93,9 @@ def people(
     return personas
 
 
-def provisioning_policy(session:"Session", name: str, parent: OrganizationalContainer)-> List[ProvisioningPolicy]:
+def provisioning_policy(
+    session: "Session", name: str, parent: OrganizationalContainer
+) -> List[ProvisioningPolicy]:
     """
     Provioning Policy search
 
@@ -107,7 +115,9 @@ def provisioning_policy(session:"Session", name: str, parent: OrganizationalCont
     return [ProvisioningPolicy(session, provisioning_policy=p) for p in results]
 
 
-def roles(session:"Session", by="errolename", search_filter="*", find_unique=False)->List[Role]:
+def roles(
+    session: "Session", by="errolename", search_filter="*", find_unique=False
+) -> List[Role]:
     """
     Role search
 
@@ -132,7 +142,9 @@ def roles(session:"Session", by="errolename", search_filter="*", find_unique=Fal
     ]
 
 
-def activities(session:"Session", by="activityName", search_filter="*")->List[Activity]:
+def activities(
+    session: "Session", by="activityName", search_filter="*"
+) -> List[Activity]:
     """
     Pending Activity search
 
@@ -157,7 +169,9 @@ def activities(session:"Session", by="activityName", search_filter="*")->List[Ac
         return [Activity(session, activity=a) for a in results]
 
 
-def access(session:"Session", by="accessName", search_filter="*", attributes="", limit=20)->List[Access]:
+def access(
+    session: "Session", by="accessName", search_filter="*", attributes="", limit=20
+) -> List[Access]:
     """
     Access search
 
@@ -179,7 +193,12 @@ def access(session:"Session", by="accessName", search_filter="*", attributes="",
     return accesos
 
 
-def service(session:"Session", parent: OrganizationalContainer, by="erservicename", search_filter="*")->List[Service]:
+def service(
+    session: "Session",
+    parent: OrganizationalContainer,
+    by="erservicename",
+    search_filter="*",
+) -> List[Service]:
     """
     Service search
 
@@ -203,12 +222,14 @@ def service(session:"Session", parent: OrganizationalContainer, by="erservicenam
     return servicios
 
 
-def organizational_container(session:"Session", profile_name:str, search_filter:str, by="name")->List[OrganizationalContainer]:
+def organizational_container(
+    session: "Session", profile_name: str, search_filter: str, by="name"
+) -> List[OrganizationalContainer]:
     """
     Organizational container search.
 
     Profile names:
-    
+
         * bporganizations
         * organizationunits
         * organizations
@@ -222,7 +243,7 @@ def organizational_container(session:"Session", profile_name:str, search_filter:
         by (str, optional): Attribute to search by. Defaults to "name".
 
     Returns:
-        List[OrganizationalContainer]: [description]
+        List[OrganizationalContainer]: Search results.
     """
 
     buscar_por = None if by == "name" else by

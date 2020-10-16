@@ -2,7 +2,7 @@ import json
 import requests
 import urllib
 from urllib.parse import urlencode
-from pyisim.exceptions import NotFoundError, MultipleFoundError,AuthenticationError
+from pyisim.exceptions import NotFoundError, MultipleFoundError, AuthenticationError
 
 requests.packages.urllib3.disable_warnings()
 
@@ -207,9 +207,7 @@ class ISIMClient:
 
         return {"_links": {tipo: {"href": json_["_links"]["self"]["href"]}}}
 
-    def buscarActividad(
-        self, search_attr="activityName", search_filter="*"
-    ):
+    def buscarActividad(self, search_attr="activityName", search_filter="*"):
 
         url = self.__addr + "/itim/rest/activities"
         data = {

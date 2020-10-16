@@ -15,7 +15,13 @@ class Person:
 
     profile_name = "Person"
 
-    def __init__(self, session: "Session", person:dict=None, href:str=None, person_attrs:dict=None):
+    def __init__(
+        self,
+        session: "Session",
+        person: dict = None,
+        href: str = None,
+        person_attrs: dict = None,
+    ):
         """
         Args:
             session (Session): Active ISIM Session
@@ -64,7 +70,9 @@ class Person:
 
         return super().__init_subclass__()
 
-    def add(self, session: "Session", parent: "OrganizationalContainer", justification:str):
+    def add(
+        self, session: "Session", parent: "OrganizationalContainer", justification: str
+    ):
         """
         Request to add the specified person into ISIM
 
@@ -80,7 +88,7 @@ class Person:
         ret = session.restclient.crearPersona(self, orgid, justification)
         return ret
 
-    def modify(self, session:"Session", justification:str, changes={}):
+    def modify(self, session: "Session", justification: str, changes={}):
         """
         Requests to modify the person in ISIM.
 
@@ -130,7 +138,7 @@ class Person:
             ret = session.restclient.solicitarAccesos(accesses, self, justification)
         return ret
 
-    def suspend(self, session:"Session", justification:str):
+    def suspend(self, session: "Session", justification: str):
         """
         Requests to suspend the person in ISIM
 
@@ -158,7 +166,7 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restore(self, session:"Session", justification:str):
+    def restore(self, session: "Session", justification: str):
         """
         Requests to restore the person in ISIM
 
@@ -185,7 +193,7 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def delete(self, session:"Session", justification:str):
+    def delete(self, session: "Session", justification: str):
         """
         Requests to delete the person in ISIM
 

@@ -37,18 +37,18 @@ class ProvisioningPolicyEntitlementValue:
     """
     True if entitlement is automatic
     """
-    parameters: Dict[str,  List[ProvisioningPolicyParameterValue]]
+    parameters: Dict[str, List[ProvisioningPolicyParameterValue]]
     """
     Dictionary representing entitlement parameters:
-    Keys: parameter name (attribute name)
-    Values: List of parameter values for each attribute.
+
+    * Keys: parameter name (attribute name)
+    * Values: List of parameter values for each attribute.
     """
-    workflow: Optional[str]=None
+    workflow: Optional[str] = None
     """
     Account request workflow name.
     Optional. Defaults to None.
     """
-    
 
 
 @dataclasses.dataclass
@@ -69,11 +69,12 @@ class ProvisioningPolicyAttributes:
     Provisioning Policy Business Unit
     """
 
-    entitlements: Dict[str,ProvisioningPolicyEntitlementValue]
+    entitlements: Dict[str, ProvisioningPolicyEntitlementValue]
     """
-    Dictionary of policy entitlements
-    Keys (str): service dn / service profile name / "*" for all services
-    Values: Entitlement values for the target 
+    Dictionary of policy entitlements:
+
+    * Keys (str): service dn / service profile name / "*" for all services
+    * Values: Entitlement values for the target 
     """
 
     memberships: List[str]
@@ -92,8 +93,8 @@ class ProvisioningPolicyAttributes:
     Provisioning Policy priority.
     Integer between 1 and 10000000
     """
-    
-    scope: Literal[1, 2]=2
+
+    scope: Literal[1, 2] = 2
     """
     Provisioning Policy scope.
     Defaults to 2.
@@ -104,33 +105,30 @@ class ProvisioningPolicyAttributes:
         * 2: Subtree
     """
 
-    enabled: bool=True
+    enabled: bool = True
     """
     Optional. Defaults to true.
     """
 
-    caption: str =""
+    caption: str = ""
     """
     Provisioning Policy caption.
     Optional. Defaults  to "".
     """
 
-    keywords: str =""
+    keywords: str = ""
     """
     Provisioning Policy keywords.
     Optional. Defaults  to "".
     """
 
 
-
 class ProvisioningPolicy:
-
-
     def __init__(
         self,
         session: "Session",
         provisioning_policy=None,
-        policy_attrs: Union[ProvisioningPolicyAttributes,Dict]=None,
+        policy_attrs: Union[ProvisioningPolicyAttributes, Dict] = None,
     ):
         """
         Args:
