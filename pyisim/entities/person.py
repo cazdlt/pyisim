@@ -220,3 +220,7 @@ class Person:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
+
+    def get_accounts(self):
+        #TODO
+        raise NotImplementedError

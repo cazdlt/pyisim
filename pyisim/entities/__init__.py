@@ -6,3 +6,4 @@ from .activity import Activity
 from .access import Access
 from .service import Service
 from .group import Group
+from .account import Account

@@ -4,7 +4,7 @@ import time
 import pytest
 from pyisim import search
 from pyisim.auth import Session
-from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole
+from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole, Account
 from pyisim.entities.role import RoleAttributes
 from pyisim.exceptions import NotFoundError
 from pyisim.utils import get_account_defaults
@@ -665,3 +665,26 @@ def test_get_account_defaults(session):
 
     r=get_account_defaults(session,service,person)
     print(r)
+
+def test_search_account(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
+    sfilter="(eruid=cazamorad)"
+
+    r=search.account(session,sfilter)
+    print(r)
+
+    r=search.account(session,sfilter,service)
+    print(r)
+
+def test_crear_cuenta(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
+    owner = search.people(session, by="employeenumber", search_filter="55608311080")[0]
+    justification="ok"
+
+    attrs=get_account_defaults(session,service,owner)
+    cuenta=Account(session,account_attrs=attrs)
+    cuenta.add(session,owner,service,justification)

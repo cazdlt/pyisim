@@ -1,4 +1,3 @@
-from datetime import date
 from zeep import Client, Settings
 from zeep.xsd import Nil
 from zeep.transports import Transport
@@ -356,4 +355,35 @@ class ISIMClient:
         client = self.get_client(url)
 
         r = client.service.getDefaultAccountAttributes(self.s, service_dn)
+        return serialize_object(r, target_cls=dict)
+
+    def getAccountProfileForService(self, service_dn):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.getAccountProfileForService(self.s, service_dn)
+        return r
+
+    def searchAccounts(self, search_arguments):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        search_arguments = {k: v for k, v in search_arguments.items() if v is not None}
+
+        r = client.service.searchAccounts(self.s, search_arguments)
+        return serialize_object(r, target_cls=dict)
+
+    # createAccount(session: ns1:WSSession, serviceDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> createAccountReturn: ns1:WSRequest
+    def createAccount(self, service_dn, wsattrs, date, justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date=Nil
+
+        r = client.service.createAccount(
+            self.s, service_dn, wsattrs, date, justification
+        )
         return serialize_object(r, target_cls=dict)

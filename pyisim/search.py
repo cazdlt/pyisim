@@ -10,6 +10,7 @@ from pyisim.entities import (
     DynamicRole,
     ProvisioningPolicy,
     Group,
+    Account,
 )
 
 from typing import List, TYPE_CHECKING
@@ -254,3 +255,23 @@ def organizational_container(
     ous = [OrganizationalContainer(session, organizational_container=ou) for ou in ret]
 
     return ous
+
+def account(
+    session: "Session",
+    ldap_search_filter: str,
+    service:"Service"=None,
+) -> List[Account]:
+
+    args={
+        "filter":ldap_search_filter
+    }
+
+    if service:
+        profile_name=session.soapclient.getAccountProfileForService(service.dn)
+        args["profile"]=profile_name
+        results=session.soapclient.searchAccounts(args)
+        return [Account(session,account=r) for r in results if r["serviceName"]==service.name]
+    else:
+        results=session.soapclient.searchAccounts(args)
+        return [Account(session,account=r) for r in results]
+
