@@ -2,7 +2,7 @@ from typing import Dict, List, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
-    from pyisim.entities.activity import Activity
+    from pyisim.entities import Activity, Person, Service
 
 
 def activity_batch_complete(
@@ -20,9 +20,9 @@ def activity_batch_complete(
 
     Result values:
 
-        * For approvals: "approve" / "reject"
-        * For work orders: "successful" / "warning" / "failure"
-        * For RFIs: List of {"name":attr_name, "value":attr_value}
+    * For approvals: "approve" / "reject"
+    * For work orders: "successful" / "warning" / "failure"
+    * For RFIs: List of {"name":attr_name, "value":attr_value}
 
     Args:
         session (Session): Active ISIM session.
@@ -45,5 +45,35 @@ def activity_batch_complete(
             acts_dict.append(act_dict)
 
     r = session.restclient.completarActividades(acts_dict, resultado, justification)
+
+    return r
+
+
+def get_account_defaults(
+    session: "Session", service: "Service", person: "Person" = None
+) -> List[Dict]:
+    """
+    Get account default attribute values
+
+    Args:
+        session (Session): Active ISIM Session
+        service (Service): Account service
+        person (Person, optional): Person to get the default attributes, if None then gets global defaults for the service. Defaults to None.
+
+    Raises:
+        KeyError: Raised if person has no reference to ISIM
+
+    Returns:
+        List[Dict]: List of default attributes for the account
+    """
+    if person:
+        if not hasattr(person,"dn"):
+            raise KeyError("Person must have a reference to ISIM (DN). Search for it.")
+        
+        r = session.soapclient.getDefaultAccountAttributesByPerson(
+            service.dn, person.dn
+        )
+    else:
+        r = session.soapclient.getDefaultAccountAttributes(service.dn)
 
     return r

@@ -181,5 +181,6 @@ update_property.create_or_update_property(s,property_file,property_name,property
     -   Improved project (entities) structure
     -   Docstrings for everything
     -   Dataclasses for complex attributes in role and provisioning policy handling
-    -   Changed VA Session class name to VASession
+    -   Changed Virtual Appliance Session class name to VASession
     -   Added docs
+    -   get_account_defaults utility method

@@ -341,3 +341,19 @@ class ISIMClient:
             date = Nil
 
         return client.service.modifyDynamicRole(self.s, role_dn, wsattr_list, date)
+
+    def getDefaultAccountAttributesByPerson(self, service_dn, person_dn):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.getDefaultAccountAttributesByPerson(
+            self.s, service_dn, person_dn
+        )
+        return serialize_object(r, target_cls=dict)
+
+    def getDefaultAccountAttributes(self, service_dn):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.getDefaultAccountAttributes(self.s, service_dn)
+        return serialize_object(r, target_cls=dict)

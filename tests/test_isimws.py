@@ -1,22 +1,23 @@
-from pyisim.entities.role import RoleAttributes
-from random import randint
-from pyisim.exceptions import NotFoundError
-import pytest
-import time
 import random
+import time
+
+import pytest
 from pyisim import search
 from pyisim.auth import Session
 from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole
+from pyisim.entities.role import RoleAttributes
+from pyisim.exceptions import NotFoundError
+from pyisim.utils import get_account_defaults
 from secret import (
     admin_login,
     admin_pw,
     cert,
     env,
-    test_url,
-    test_org,
+    test_dep,
     test_description,
     test_manager,
-    test_dep,
+    test_org,
+    test_url,
 )
 
 
@@ -649,3 +650,18 @@ def test_crear_modificar_eliminar_politica_dataclass(session):
     time.sleep(10)
     pp_elim = search.provisioning_policy(session, name, parent)
     assert len(pp_elim) == 0
+
+
+def test_get_account_defaults(session):
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
+    person = search.people(session, by="employeenumber", search_filter="1015463230")[0]
+
+    try:
+        r=get_account_defaults(session,service)
+        print(r)
+    except Exception as e:
+        print(e)
+
+    r=get_account_defaults(session,service,person)
+    print(r)
