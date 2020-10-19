@@ -23,9 +23,9 @@ class ProvisioningPolicyParameterValue:
 
     Options:
 
-        * str if type is regex or script
-        * list if type is constant value
-        * can be None if type is null
+    * str if type is regex or script
+    * list if type is constant value
+    * can be None if type is null
 
     """
 
@@ -83,9 +83,9 @@ class ProvisioningPolicyAttributes:
 
     Options:
 
-        * List of role DNs
-        * "*" for everyone
-        * "Everyone that's not entitled through other policies" is not supported yet
+    * List of role DNs
+    * "*" for everyone
+    * "Everyone that's not entitled through other policies" is not supported yet
     """
 
     priority: int
@@ -101,8 +101,8 @@ class ProvisioningPolicyAttributes:
 
     Options:
 
-        * 1: One level
-        * 2: Subtree
+    * 1: One level
+    * 2: Subtree
     """
 
     enabled: bool = True

@@ -34,9 +34,9 @@ class RoleAttributes:
 
     Options:
 
-        * 1: Access disabled
-        * 2: Access enabled
-        * 3: Shared access
+    * 1: Access disabled
+    * 2: Access enabled
+    * 3: Shared access
     """
     access_category: str = None
     """

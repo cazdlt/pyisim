@@ -229,11 +229,12 @@ def organizational_container(
     Organizational container search.
 
     Profile names:
-        * bporganizations
-        * organizationunits
-        * organizations
-        * locations
-        * admindomains
+
+    * bporganizations
+    * organizationunits
+    * organizations
+    * locations
+    * admindomains
 
     Args:
         session (Session): Active ISIM Session
