@@ -1,4 +1,5 @@
 from typing import List, TYPE_CHECKING
+from .account import Account
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
@@ -221,6 +222,30 @@ class Person:
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def get_accounts(self):
-        #TODO
-        raise NotImplementedError
+    def get_accounts(self, session: "Session") -> List[Account]:
+        """
+        Retrieves all registered accounts of the referenced person.
+
+        Args:
+            session (Session): Active ISIM Session
+
+        Returns:
+            List[Account]: List of the person account entities.
+        """
+
+        try:
+            try:
+                dn = self.dn
+            except AttributeError:
+                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+                    "_attributes"
+                ]["dn"]
+                self.dn = dn
+
+            result = session.soapclient.getAccountsByOwner(self.dn)
+            return [Account(session, account=r) for r in result]
+
+        except AttributeError:
+            raise Exception(
+                "Person has no reference to ISIM, search for it or initialize it with href to link it."
+            )

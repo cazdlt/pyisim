@@ -22,7 +22,7 @@ from secret import (
 
 
 @pytest.fixture
-def session():
+def session() -> Session:
     return Session(test_url, admin_login, admin_pw, cert)
 
 
@@ -672,9 +672,11 @@ def test_search_account(session):
     service = search.service(session, parent, search_filter="Directorio Activo")[0]
     sfilter="(eruid=cazamorad)"
 
+    #sin servicio
     r=search.account(session,sfilter)
     print(r)
 
+    #con servicio
     r=search.account(session,sfilter,service)
     print(r)
 
@@ -688,3 +690,8 @@ def test_crear_cuenta(session):
     attrs=get_account_defaults(session,service,owner)
     cuenta=Account(session,account_attrs=attrs)
     cuenta.add(session,owner,service,justification)
+
+def test_get_person_accounts(session):
+    me=session.current_person()
+    accounts=me.get_accounts(session)
+    print(accounts)

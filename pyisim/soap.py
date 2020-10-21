@@ -387,3 +387,11 @@ class ISIMClient:
             self.s, service_dn, wsattrs, date, justification
         )
         return serialize_object(r, target_cls=dict)
+
+    #getAccountsByOwner(session: ns1:WSSession, personDN: xsd:string) -> getAccountsByOwnerReturn: ns1:WSAccount[]
+    def getAccountsByOwner(self,person_dn):
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.getAccountsByOwner(self.s, person_dn)
+        return serialize_object(r, target_cls=dict)

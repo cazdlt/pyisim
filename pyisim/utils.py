@@ -78,8 +78,8 @@ def get_account_defaults(
 
     account_attrs = {}
     for a in result:
-        if a["values"]["item"][0].strip():
-            attr_values = a["values"]["item"]
+        attr_values = a["values"]["item"]
+        if attr_values[0] and attr_values[0].strip():
             account_attrs[a["name"]] = (
                 attr_values if len(attr_values) > 1 else attr_values[0]
             )
