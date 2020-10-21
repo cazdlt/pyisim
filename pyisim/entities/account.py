@@ -51,18 +51,33 @@ class Account:
         # TODO
         raise NotImplementedError
 
-    def suspend(self):
-        # TODO
-        raise NotImplementedError
+    def suspend(self, session, justification):
+        try:
+            ret = session.soapclient.suspendAccount(self.dn, None, justification)
+            return ret
+        except AttributeError:
+            raise Exception(
+                "Account has no reference to ISIM, search for it to link it"
+            )
 
-    def restore(self):
-        # TODO
-        raise NotImplementedError
+    def restore(self,session,password,justification):
+        try:
+            ret = session.soapclient.restoreAccount(self.dn, password, None, justification)
+            return ret
+        except AttributeError:
+            raise Exception(
+                "Account has no reference to ISIM, search for it to link it"
+            )
 
     def orphan(self):
         # TODO
         raise NotImplementedError
 
-    def delete(self):
-        # TODO
-        raise NotImplementedError
+    def delete(self,session,justification):
+        try:
+            ret = session.soapclient.deprovisionAccount(self.dn, None, justification)
+            return ret
+        except AttributeError:
+            raise Exception(
+                "Account has no reference to ISIM, search for it to link it"
+            )
