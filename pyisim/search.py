@@ -37,7 +37,7 @@ def groups(
         group_info (str, optional): Group name or description if searching by service. Defaults to None.
 
     Raises:
-        NotImplementedError: Search by account and access not implement
+        NotImplementedError: Search by account and access not implemented
 
 
     Returns:

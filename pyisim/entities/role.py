@@ -292,7 +292,7 @@ class Role:
 
         return r
 
-    def delete(self, session: "Session", date=None):
+    def delete(self, session: "Session"):
         """
         Requests to delete role from ISIM
 
@@ -303,12 +303,8 @@ class Role:
         Returns:
             zeep.Response: SOAP Response to the request
         """
-        if date:
-            raise NotImplementedError(
-                "No se ha implementado la programación de tareas."
-            )
 
-        r = session.soapclient.eliminarRol(self.dn, date)
+        r = session.soapclient.eliminarRol(self.dn, None)
 
         return r
 
