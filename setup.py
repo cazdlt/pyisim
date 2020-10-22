@@ -13,7 +13,7 @@ URL = "https://github.com/cazdlt/pyisim"
 EMAIL = "cazdlt@gmail.com"
 AUTHOR = "Andrés Zamora"
 REQUIRES_PYTHON = ">=3.8.0"
-VERSION = "0.1.1"  # Get the version from the package __init__.py
+VERSION = "0.2.0"  # Get the version from the package __init__.py
 REQUIRED = ["requests >= 2.23.0", "zeep >= 3.4.0"]
 EXTRAS = {}
 

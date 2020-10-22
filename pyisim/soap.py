@@ -114,7 +114,6 @@ class ISIMClient:
 
     def buscarRol(self, filtro, find_unique=True):
 
-
         url = self.addr + "WSRoleServiceService?wsdl"
         client = self.get_client(url)
 
@@ -428,8 +427,8 @@ class ISIMClient:
         r = client.service.orphanSingleAccount(self.s, account_dn)
         return serialize_object(r, target_cls=dict)
 
-    #modifyAccount(session: ns1:WSSession, accountDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> modifyAccountReturn: ns1:WSRequest
-    def modifyAccount(self,account_dn,wsattrs,date,justification):
+    # modifyAccount(session: ns1:WSSession, accountDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> modifyAccountReturn: ns1:WSRequest
+    def modifyAccount(self, account_dn, wsattrs, date, justification):
         url = self.addr + "WSAccountServiceService?wsdl"
         client = self.get_client(url)
 
@@ -438,5 +437,7 @@ class ISIMClient:
         else:
             date = Nil
 
-        r = client.service.modifyAccount(self.s, account_dn, wsattrs, date, justification)
+        r = client.service.modifyAccount(
+            self.s, account_dn, wsattrs, date, justification
+        )
         return serialize_object(r, target_cls=dict)

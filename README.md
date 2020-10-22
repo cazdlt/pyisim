@@ -144,6 +144,14 @@ update_property.create_or_update_property(s,property_file,property_name,property
             -   Approvals
             -   Work Orders
             -   RFIs
+    - Accounts
+        - Search
+        - Add
+        - Delete
+        - Modify
+        - Suspend
+        - Restore
+        - Orphan
     -   Static and dynamic roles
         -   Search
         -   Lookup
@@ -162,26 +170,12 @@ update_property.create_or_update_property(s,property_file,property_name,property
         -   Create/Search/Update property files
 
 -   TODO (in priority order):
-
-    -   DN Lookup for Person entities
+    -   Normalize request responses
     -   Add operations to services
         -   DN Lookup
         -   Add
         -   Modify
         -   Delete
         -   Test connection
-    -   Normalize request responses
     -   Add some complex use cases to the documentation
 
--   Changes since last version:
-    -   Improved activity search by request id
-    -   Dynamic Role handling
-    -   Fixed RFI completion
-    -   Some translations
-    -   Improved project (entities) structure
-    -   Docstrings for everything
-    -   Dataclasses for complex attributes in role and provisioning policy handling
-    -   Changed Virtual Appliance Session class name to VASession
-    -   Added docs
-    -   get_account_defaults utility method
-    -   Account handling

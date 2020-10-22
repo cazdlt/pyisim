@@ -1,0 +1,12 @@
+## 0.2.0
+-   Improved activity search by request id
+-   Dynamic Role handling
+-   Fixed RFI completion
+-   Some translations
+-   Improved project (entities) structure
+-   Docstrings for everything
+-   Dataclasses for complex attributes in role and provisioning policy handling
+-   Changed Virtual Appliance Session class name to VASession
+-   Finally added docs
+-   get_account_defaults utility method
+-   Account handling

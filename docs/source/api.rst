@@ -22,6 +22,13 @@ Access
    :members:
    :undoc-members:
 
+Account
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: pyisim.entities.account
+   :members:
+   :undoc-members:
+
 Activity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -91,7 +91,9 @@ class Account:
                     {
                         "name": name,
                         "operation": 0,
-                        "values": {"item": value if isinstance(value, list) else [value]},
+                        "values": {
+                            "item": value if isinstance(value, list) else [value]
+                        },
                         "isEncoded": False,
                     }
                 )
