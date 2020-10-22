@@ -69,15 +69,6 @@ class ISIMClient:
         return ous
 
     def buscarPoliticaSuministro(self, wsou, nombre_politica, find_unique=True):
-        """
-        Si find_unique es True (por defecto):
-           lanza error si no encuentra ninguno o encuentra múltiples.
-           Devuelve instancia encontrada
-
-        Si find_unique es False:
-           No lanza errores
-           Devuelve lista de resultados
-        """
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
         client = self.get_client(url)
@@ -122,15 +113,7 @@ class ISIMClient:
         return s
 
     def buscarRol(self, filtro, find_unique=True):
-        """
-        Si find_unique es True (por defecto):
-           lanza error si no encuentra ninguno o encuentra múltiples.
-           Devuelve instancia encontrada
 
-        Si find_unique es False:
-           No lanza errores
-           Devuelve lista de resultados
-        """
 
         url = self.addr + "WSRoleServiceService?wsdl"
         client = self.get_client(url)
@@ -435,4 +418,25 @@ class ISIMClient:
             date = Nil
 
         r = client.service.deprovisionAccount(self.s, account_dn, date, justification)
+        return serialize_object(r, target_cls=dict)
+
+    # orphanSingleAccount(session: ns1:WSSession, accountDN: xsd:string) ->
+    def orphanSingleAccount(self, account_dn):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.orphanSingleAccount(self.s, account_dn)
+        return serialize_object(r, target_cls=dict)
+
+    #modifyAccount(session: ns1:WSSession, accountDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> modifyAccountReturn: ns1:WSRequest
+    def modifyAccount(self,account_dn,wsattrs,date,justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.modifyAccount(self.s, account_dn, wsattrs, date, justification)
         return serialize_object(r, target_cls=dict)

@@ -733,7 +733,7 @@ def test_suspender_restaurar_eliminar_cuenta(session):
     #suspender y probar
     cuentas=owner.get_accounts(session)
     cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
-    cuenta_test.suspend(session,"ok")
+    cuenta_test.suspend(session,justification)
     time.sleep(3)
     cuentas=owner.get_accounts(session)
     cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
@@ -742,7 +742,7 @@ def test_suspender_restaurar_eliminar_cuenta(session):
     #restaurar y probar
     cuentas=owner.get_accounts(session)
     cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
-    cuenta_test.restore(session,"NewPassw0rd","ok")
+    cuenta_test.restore(session,"NewPassw0rd",justification)
     time.sleep(3)
     cuentas=owner.get_accounts(session)
     cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
@@ -757,3 +757,58 @@ def test_suspender_restaurar_eliminar_cuenta(session):
         assert len(cuenta_test)<1
     except Exception as e:
         assert "CTGIMI019E" in e.message   #CTGIMI019E = can't delete because policy (but tried)
+
+
+def test_modificar_dejar_huerfana_cuenta(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter=test_service_name)[0]
+
+    n=random.randint(0,10000)
+    test_person_attrs={
+        "cn":".",
+        "givenname":"prueba",
+        "sn":n,
+        "employeenumber":n,
+        "manager":test_manager,
+        "description":test_description,
+        "departmentnumber":test_dep,
+        "title":test_title,
+        "mail":"cazdlt@gmail.com",
+        "mobile":"cazdlt@gmail.com"
+    }
+
+    #crea persona y la busca
+    p=Person(session,person_attrs=test_person_attrs)
+    p.add(session,parent,"test")
+    time.sleep(5)
+    owner = search.people(session, by="employeenumber", search_filter=n)[0]
+    
+    justification="ok"
+
+    #crear
+    attrs=get_account_defaults(session,service,owner)
+    cuenta=Account(session,account_attrs=attrs)
+    r=cuenta.add(session,owner,service,justification)
+    time.sleep(3)
+
+    #modificar 
+    cuentas=owner.get_accounts(session)
+    cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
+    cuenta_test.title="new title"
+    cuenta_test.sn="nueva description"
+    changes={
+        "title":"newer title", #this should stay
+        "employeenumber":347231
+    }
+    cuenta_test.modify(session,justification,changes)
+
+    try:
+        cuenta_test.orphan(session)
+        time.sleep(5)
+        cuentas=owner.get_accounts(session)
+        cuenta_test=[c for c in cuentas if c.service_name==test_service_name]
+        assert len(cuenta_test)<1
+    except Exception as e:
+        assert "CTGIMI019E" in e.message   #CTGIMI019E = can't orphan because policy (but tried)
+    
