@@ -67,13 +67,21 @@ def get_account_defaults(
         List[Dict]: List of default attributes for the account
     """
     if person:
-        if not hasattr(person,"dn"):
+        if not hasattr(person, "dn"):
             raise KeyError("Person must have a reference to ISIM (DN). Search for it.")
-        
-        r = session.soapclient.getDefaultAccountAttributesByPerson(
+
+        result = session.soapclient.getDefaultAccountAttributesByPerson(
             service.dn, person.dn
         )
     else:
-        r = session.soapclient.getDefaultAccountAttributes(service.dn)
+        result = session.soapclient.getDefaultAccountAttributes(service.dn)
 
-    return r
+    account_attrs = {}
+    for a in result:
+        attr_values = a["values"]["item"]
+        if attr_values[0] and attr_values[0].strip():
+            account_attrs[a["name"]] = (
+                attr_values if len(attr_values) > 1 else attr_values[0]
+            )
+
+    return account_attrs

@@ -1,4 +1,3 @@
-from datetime import date
 from zeep import Client, Settings
 from zeep.xsd import Nil
 from zeep.transports import Transport
@@ -70,15 +69,6 @@ class ISIMClient:
         return ous
 
     def buscarPoliticaSuministro(self, wsou, nombre_politica, find_unique=True):
-        """
-        Si find_unique es True (por defecto):
-           lanza error si no encuentra ninguno o encuentra múltiples.
-           Devuelve instancia encontrada
-
-        Si find_unique es False:
-           No lanza errores
-           Devuelve lista de resultados
-        """
 
         url = self.addr + "WSProvisioningPolicyServiceService?wsdl"
         client = self.get_client(url)
@@ -123,15 +113,7 @@ class ISIMClient:
         return s
 
     def buscarRol(self, filtro, find_unique=True):
-        """
-        Si find_unique es True (por defecto):
-           lanza error si no encuentra ninguno o encuentra múltiples.
-           Devuelve instancia encontrada
 
-        Si find_unique es False:
-           No lanza errores
-           Devuelve lista de resultados
-        """
 
         url = self.addr + "WSRoleServiceService?wsdl"
         client = self.get_client(url)
@@ -356,4 +338,105 @@ class ISIMClient:
         client = self.get_client(url)
 
         r = client.service.getDefaultAccountAttributes(self.s, service_dn)
+        return serialize_object(r, target_cls=dict)
+
+    def getAccountProfileForService(self, service_dn):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.getAccountProfileForService(self.s, service_dn)
+        return r
+
+    def searchAccounts(self, search_arguments):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        search_arguments = {k: v for k, v in search_arguments.items() if v is not None}
+
+        r = client.service.searchAccounts(self.s, search_arguments)
+        return serialize_object(r, target_cls=dict)
+
+    # createAccount(session: ns1:WSSession, serviceDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> createAccountReturn: ns1:WSRequest
+    def createAccount(self, service_dn, wsattrs, date, justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.createAccount(
+            self.s, service_dn, wsattrs, date, justification
+        )
+        return serialize_object(r, target_cls=dict)
+
+    # getAccountsByOwner(session: ns1:WSSession, personDN: xsd:string) -> getAccountsByOwnerReturn: ns1:WSAccount[]
+    def getAccountsByOwner(self, person_dn):
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.getAccountsByOwner(self.s, person_dn)
+        return serialize_object(r, target_cls=dict)
+
+    # suspendAccount(session: ns1:WSSession, accountDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> suspendAccountReturn: ns1:WSRequest
+    def suspendAccount(self, account_dn, date, justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.suspendAccount(self.s, account_dn, date, justification)
+        return serialize_object(r, target_cls=dict)
+
+    # restoreAccount(session: ns1:WSSession, accountDN: xsd:string, newPassword: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restoreAccountReturn: ns1:WSRequest
+    def restoreAccount(self, account_dn, password, date, justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.restoreAccount(
+            self.s, account_dn, password, date, justification
+        )
+        return serialize_object(r, target_cls=dict)
+
+    # deprovisionAccount(session: ns1:WSSession, accountDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> deprovisionAccountReturn: ns1:WSRequest
+    def deprovisionAccount(self, account_dn, date, justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.deprovisionAccount(self.s, account_dn, date, justification)
+        return serialize_object(r, target_cls=dict)
+
+    # orphanSingleAccount(session: ns1:WSSession, accountDN: xsd:string) ->
+    def orphanSingleAccount(self, account_dn):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        r = client.service.orphanSingleAccount(self.s, account_dn)
+        return serialize_object(r, target_cls=dict)
+
+    #modifyAccount(session: ns1:WSSession, accountDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> modifyAccountReturn: ns1:WSRequest
+    def modifyAccount(self,account_dn,wsattrs,date,justification):
+        url = self.addr + "WSAccountServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.modifyAccount(self.s, account_dn, wsattrs, date, justification)
         return serialize_object(r, target_cls=dict)

@@ -10,6 +10,7 @@ from pyisim.entities import (
     DynamicRole,
     ProvisioningPolicy,
     Group,
+    Account,
 )
 
 from typing import List, TYPE_CHECKING
@@ -36,7 +37,7 @@ def groups(
         group_info (str, optional): Group name or description if searching by service. Defaults to None.
 
     Raises:
-        NotImplementedError: Search by account and access not implement
+        NotImplementedError: Search by account and access not implemented
 
 
     Returns:
@@ -115,9 +116,7 @@ def provisioning_policy(
     return [ProvisioningPolicy(session, provisioning_policy=p) for p in results]
 
 
-def roles(
-    session: "Session", by="errolename", search_filter="*", find_unique=False
-) -> List[Role]:
+def roles(session: "Session", by="errolename", search_filter="*") -> List[Role]:
     """
     Role search
 
@@ -130,7 +129,7 @@ def roles(
         List[Role]: Search results. Returns both Dynamic and Static Roles.
     """
     soap = session.soapclient
-    results = soap.buscarRol(f"({by}={search_filter})", find_unique)
+    results = soap.buscarRol(f"({by}={search_filter})", find_unique=False)
 
     is_dynamic = [
         any(filter(lambda i: i.name == "erjavascript", r.attributes.item))
@@ -254,3 +253,25 @@ def organizational_container(
     ous = [OrganizationalContainer(session, organizational_container=ou) for ou in ret]
 
     return ous
+
+
+def account(
+    session: "Session",
+    ldap_search_filter: str,
+    service: "Service" = None,
+) -> List[Account]:
+
+    args = {"filter": ldap_search_filter}
+
+    if service:
+        profile_name = session.soapclient.getAccountProfileForService(service.dn)
+        args["profile"] = profile_name
+        results = session.soapclient.searchAccounts(args)
+        return [
+            Account(session, account=r)
+            for r in results
+            if r["serviceName"] == service.name
+        ]
+    else:
+        results = session.soapclient.searchAccounts(args)
+        return [Account(session, account=r) for r in results]

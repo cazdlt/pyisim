@@ -4,7 +4,7 @@ import time
 import pytest
 from pyisim import search
 from pyisim.auth import Session
-from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole
+from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole, Account
 from pyisim.entities.role import RoleAttributes
 from pyisim.exceptions import NotFoundError
 from pyisim.utils import get_account_defaults
@@ -18,11 +18,13 @@ from secret import (
     test_manager,
     test_org,
     test_url,
+    test_title,
+    test_service_name
 )
 
 
 @pytest.fixture
-def session():
+def session() -> Session:
     return Session(test_url, admin_login, admin_pw, cert)
 
 
@@ -665,3 +667,148 @@ def test_get_account_defaults(session):
 
     r=get_account_defaults(session,service,person)
     print(r)
+
+def test_search_account(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
+    sfilter="(eruid=cazamorad)"
+
+    #sin servicio
+    r=search.account(session,sfilter)
+    print(r)
+
+    #con servicio
+    r=search.account(session,sfilter,service)
+    print(r)
+
+def test_crear_cuenta(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter="Directorio Activo")[0]
+    owner = search.people(session, by="employeenumber", search_filter="55608311080")[0]
+    justification="ok"
+
+    attrs=get_account_defaults(session,service,owner)
+    cuenta=Account(session,account_attrs=attrs)
+    cuenta.add(session,owner,service,justification)
+
+def test_get_person_accounts(session):
+    me=session.current_person()
+    accounts=me.get_accounts(session)
+    print(accounts)
+
+def test_suspender_restaurar_eliminar_cuenta(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter=test_service_name)[0]
+
+    n=random.randint(0,10000)
+    test_person_attrs={
+        "cn":".",
+        "givenname":"prueba",
+        "sn":n,
+        "employeenumber":n,
+        "manager":test_manager,
+        "description":test_description,
+        "departmentnumber":test_dep,
+        "title":test_title,
+        "mail":"cazdlt@gmail.com",
+        "mobile":"cazdlt@gmail.com"
+    }
+
+    p=Person(session,person_attrs=test_person_attrs)
+    p.add(session,parent,"test")
+    time.sleep(3)
+
+    owner = search.people(session, by="employeenumber", search_filter=n)[0]
+    justification="ok"
+
+    #crear
+    attrs=get_account_defaults(session,service,owner)
+    cuenta=Account(session,account_attrs=attrs)
+    r=cuenta.add(session,owner,service,justification)
+    time.sleep(3)
+
+    #suspender y probar
+    cuentas=owner.get_accounts(session)
+    cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
+    cuenta_test.suspend(session,justification)
+    time.sleep(3)
+    cuentas=owner.get_accounts(session)
+    cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
+    assert cuenta_test.eraccountstatus=="1"
+
+    #restaurar y probar
+    cuentas=owner.get_accounts(session)
+    cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
+    cuenta_test.restore(session,"NewPassw0rd",justification)
+    time.sleep(3)
+    cuentas=owner.get_accounts(session)
+    cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
+    assert cuenta_test.eraccountstatus=="0"
+    
+    #eliminar
+    try:
+        cuenta_test.delete(session,"ok")
+        time.sleep(3)
+        cuentas=owner.get_accounts(session)
+        cuenta_test=[c for c in cuentas if c.service_name==test_service_name]
+        assert len(cuenta_test)<1
+    except Exception as e:
+        assert "CTGIMI019E" in e.message   #CTGIMI019E = can't delete because policy (but tried)
+
+
+def test_modificar_dejar_huerfana_cuenta(session):
+
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    service = search.service(session, parent, search_filter=test_service_name)[0]
+
+    n=random.randint(0,10000)
+    test_person_attrs={
+        "cn":".",
+        "givenname":"prueba",
+        "sn":n,
+        "employeenumber":n,
+        "manager":test_manager,
+        "description":test_description,
+        "departmentnumber":test_dep,
+        "title":test_title,
+        "mail":"cazdlt@gmail.com",
+        "mobile":"cazdlt@gmail.com"
+    }
+
+    #crea persona y la busca
+    p=Person(session,person_attrs=test_person_attrs)
+    p.add(session,parent,"test")
+    time.sleep(5)
+    owner = search.people(session, by="employeenumber", search_filter=n)[0]
+    
+    justification="ok"
+
+    #crear
+    attrs=get_account_defaults(session,service,owner)
+    cuenta=Account(session,account_attrs=attrs)
+    r=cuenta.add(session,owner,service,justification)
+    time.sleep(3)
+
+    #modificar 
+    cuentas=owner.get_accounts(session)
+    cuenta_test=[c for c in cuentas if c.service_name==test_service_name][0]
+    cuenta_test.title="new title"
+    cuenta_test.sn="nueva description"
+    changes={
+        "title":"newer title", #this should stay
+        "employeenumber":347231
+    }
+    cuenta_test.modify(session,justification,changes)
+
+    try:
+        cuenta_test.orphan(session)
+        time.sleep(5)
+        cuentas=owner.get_accounts(session)
+        cuenta_test=[c for c in cuentas if c.service_name==test_service_name]
+        assert len(cuenta_test)<1
+    except Exception as e:
+        assert "CTGIMI019E" in e.message   #CTGIMI019E = can't orphan because policy (but tried)
+    
