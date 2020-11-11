@@ -459,3 +459,12 @@ class ISIMClient:
 
         r = client.service.suspendPersonAdvanced(self.s, person_dn, include_accounts, date, justification)
         return r
+
+    def getRequest(self,request_id):
+        #getRequest(session: ns1:WSSession, requestId: xsd:long) -> getRequestReturn: ns1:WSRequest
+        url = self.addr + "WSRequestServiceService?wsdl"
+        client = self.get_client(url)
+        r = client.service.getRequest(self.s, request_id)
+        return r
+        
+    

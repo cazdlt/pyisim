@@ -4,7 +4,7 @@ import time
 import pytest
 from pyisim import search
 from pyisim.auth import Session
-from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole, Account
+from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole, Account, Request
 from pyisim.entities.role import RoleAttributes
 from pyisim.exceptions import NotFoundError
 from pyisim.utils import get_account_defaults
@@ -816,3 +816,56 @@ def test_modificar_dejar_huerfana_cuenta(session):
         assert (
             "CTGIMI019E" in e.message
         )  # CTGIMI019E = can't orphan because policy (but tried)
+
+
+def test_request_access_approve(session):
+
+    # required attributes on the Person form (more can be included)
+    info_persona = {
+        "givenname": "te",
+        "sn": "st",
+        "cn": "test",
+        "initials": "CC",
+        "employeenumber": random.randint(1, 99999999),
+        "departmentnumber": test_dep,
+        "manager": test_manager,
+        "title": "test",
+        "description": test_description,
+        "businesscategory": "test",
+        "mobile": "test@test.com",
+    }
+    persona = Person(session, person_attrs=info_persona)
+
+    # crear y validar
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    persona.add(session, parent, "ok")
+    time.sleep(5)
+    persona_creada = search.people(
+        session,
+        by="employeenumber",
+        search_filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )[0]
+    assert persona_creada.employeenumber == str(info_persona["employeenumber"])
+
+    accesses=search.access(session,search_filter="*",limit=2) # get two accesses
+    r=persona_creada.request_access(session,accesses,"ok")
+    time.sleep(3)
+    request_id=r.json()["requestID"]
+    print(r)
+    actividades=search.activities(session,"requestId",request_id)
+    r2=actividades[0].complete(session,"approve","ok")
+    print(r2)
+
+def test_lookup_request(session):
+
+    id="4020615234983983545" #real id
+    r=Request(session,id=id)
+    assert str(r.request_id)==id
+
+    try:
+        id="6344020623458355" #non existant id
+        r=Request(session,id=id)
+    except NotFoundError:
+        pass
