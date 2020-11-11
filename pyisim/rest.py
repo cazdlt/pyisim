@@ -315,7 +315,7 @@ class ISIMClient:
             resultado = resultado.lower()
 
         if len(actividades) == 0:
-            raise Exception("Nothing to complete")
+            return None
 
         for activity in actividades:
             activityType = activity["_attributes"]["type"]

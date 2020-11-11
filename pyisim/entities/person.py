@@ -139,7 +139,7 @@ class Person:
             ret = session.restclient.solicitarAccesos(accesses, self, justification)
         return ret
 
-    def suspend(self, session: "Session", justification: str):
+    def suspend(self, session: "Session", justification: str,suspend_accounts:bool=False):
         """
         Requests to suspend the person in ISIM
 
@@ -160,20 +160,22 @@ class Person:
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.suspenderPersona(dn, justification)
+            ret = session.soapclient.suspendPersonAdvanced(dn, suspend_accounts, None, justification)
             return ret
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restore(self, session: "Session", justification: str):
+    def restore(self, session: "Session", justification: str, restore_accounts:bool=False, password:str=None):
         """
         Requests to restore the person in ISIM
 
         Args:
             session (Session): Active ISIM Session
             justification (str): Request justification
+            restore_accounts (bool): Boolean to specify if accounts are to be restored
+            password (str): Restored accounts password
 
         Returns:
             dict: ISIM SOAP API Response
@@ -187,7 +189,7 @@ class Person:
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.restaurarPersona(self.dn, justification)
+            ret = session.soapclient.restaurarPersona(self.dn, restore_accounts, password, None, justification)
             return ret
         except AttributeError:
             raise Exception(

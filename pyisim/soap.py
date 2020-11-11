@@ -283,12 +283,17 @@ class ISIMClient:
         r = client.service.suspendPerson(self.s, dn, justification)
         return r
 
-    def restaurarPersona(self, dn, justification):
-        # restorePerson(password: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restorePersonReturn: ns1:WSRequest
+    def restaurarPersona(self, dn, restore_accounts, password, date, justification):
+        # restorePerson(session: ns1:WSSession, personDN: xsd:string, restoreAccounts: xsd:boolean, password: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restorePersonReturn: ns1:WSRequest
         url = self.addr + "WSPersonServiceService?wsdl"
         client = self.get_client(url)
 
-        r = client.service.restorePerson(self.s, dn, True, Nil, Nil, justification)
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.restorePerson(self.s, dn, restore_accounts, password or Nil, date, justification)
         return r
 
     def eliminarPersona(self, dn, justification):
@@ -441,3 +446,16 @@ class ISIMClient:
             self.s, account_dn, wsattrs, date, justification
         )
         return serialize_object(r, target_cls=dict)
+
+    def suspendPersonAdvanced(self,person_dn,include_accounts,date,justification):
+        #suspendPersonAdvanced(session: ns1:WSSession, personDN: xsd:string, includeAccounts: xsd:boolean, date: xsd:dateTime, justification: xsd:string) -> suspendPersonAdvancedReturn: ns1:WSRequest
+        url = self.addr + "WSPersonServiceService?wsdl"
+        client = self.get_client(url)
+
+        if date:
+            raise NotImplementedError()
+        else:
+            date = Nil
+
+        r = client.service.suspendPersonAdvanced(self.s, person_dn, include_accounts, date, justification)
+        return r

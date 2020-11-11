@@ -38,9 +38,9 @@ Modifying people
 .. code:: py
 
     from pyisim import search
-    persona = search.people(sess,Person,"employeenumber","1015463230",limit=1)[0]
+    persona = search.people(sess, by="employeenumber", search_filter="1015463230", limit=1)[0]
     persona.title="CEO"
-    persona.modify(sess,"my justification")
+    persona.modify(sess, "my justification")
     
 
 Obtaining the current logged in person and doing stuff
@@ -54,8 +54,8 @@ Obtaining the current logged in person and doing stuff
 
     s=Session(url, "cazdlt", "secretpw", "my_certificate.cer")
     me=s.current_person()
-    me.modify(s,"my justification",changes={"mail":"cazdlt@gmail.com"})
-    me.suspend(s,"suspending myself")
+    me.modify(s, "my justification", changes={"mail":"cazdlt@gmail.com"})
+    me.suspend(s, "suspending myself", suspend_accounts=True)
 
 Custom Person/BPPerson entities
 ----------------------------------------
@@ -84,9 +84,9 @@ Access request
 .. code:: py
 
     from pyisim import search
-    accesses=search.access(sess,search_filter="*Consulta*",limit=5)
-    person=search.people(session,by="givenname",search_filter="Juan",limit=1)[0]
-    person.request_access(session,accesses,"justification")
+    accesses=search.access(sess, search_filter="*Consulta*", limit=5)
+    person=search.people(session, by="givenname", search_filter="Juan",limit=1)[0]
+    person.request_access(session,accesses, "justification")
 
 Approve activity
 --------------------
@@ -100,7 +100,7 @@ Approve activity
         search_filter=request_id,
         limit=1
     )[0]
-    actividad.complete(sess,"approve","justification")
+    actividad.complete(sess, "approve", "justification")
 
 Fulfill RFI
 --------------------
@@ -114,8 +114,8 @@ Fulfill RFI
             "value":["Analyst"],
         },
     ]
-    actividad=search.activities(session,by="requestId",search_filter=request_id)[0]
-    actividad.complete(sess,form,"justification")
+    actividad = search.activities(session, by="requestId", search_filter=request_id)[0]
+    actividad.complete(sess, form, "justification")
 
 Creating roles
 --------------------
