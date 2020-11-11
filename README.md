@@ -1,4 +1,4 @@
-# isim
+# PyISIM
 
 [![PyPI version shields.io](https://img.shields.io/pypi/v/pyisim)](https://pypi.python.org/pypi/pyisim/)
 [![PyPI status](https://img.shields.io/pypi/status/pyisim)](https://pypi.python.org/pypi/pyisim/)
@@ -7,13 +7,14 @@
 
 <!-- https://img.shields.io/pypi/l/pyisim -->
 
-Python client for IBM Security Identity Manager (ISIM/ITIM) web services (SOAP and REST APIs) <br>
+Python client for IBM Security Identity Manager (ISIM / ITIM) web services (SOAP and REST APIs) <br>
 Tested on ISIM 7.0.1 FP13 and ISIM 7.0.2 FP2
-Due to API limitations some functionalities are served through ISIM's REST API and some other through ISIM SOAP Web Services. <br>
+Due to API limitations some functionalities are served through ISIM's REST API and some other through ISIM SOAP Web Services.
 
-This is my first package, and still on development, but I've been using it for months by now so I wanted to share.
+## Docs
+You can read the full documentation [here](https://pyisim.readthedocs.io/en/latest/)
 
-Usage example:
+## Examples
 
 -   Login
 
@@ -123,59 +124,35 @@ property_value="ITIM.java.access.util"
 update_property.create_or_update_property(s,property_file,property_name,property_value)
 ```
 
--   Functionalities
+## Functionalities
 
-    -   TLS Client
+|    Entities\Operations    | Search | DN Lookup | Add | Delete | Suspend | Restore |      Modify     |
+|:-------------------------:|:------:|:---------:|:---:|:------:|:-------:|:-------:|:---------------:|
+|           People          |    ✓   |           |  ✓  |    ✓   |    ✓    |    ✓    |        ✓        |
+|       Dynamic Roles       |    ✓   |     ✓     |  ✓  |    ✓   |         |         |        ✓        |
+|        Static Roles       |    ✓   |     ✓     |  ✓  |    ✓   |         |         |        ✓        |
+|   Provisioning Policies   |    ✓   |           |  ✓  |    ✓   |         |         |        ✓        |
+|         Activities        |    ✓   |           |     |        |         |         |    (Complete)   |
+| Organizational Containers |    ✓   |     ✓     |     |        |         |         |                 |
+|          Services         |    ✓   |           |     |        |         |         |                 |
+|           Access          |    ✓   |           |     |        |         |         |    (Request)    |
+|           Groups          |    ✓   |           |     |        |         |         |                 |
+|          Accounts         |    ✓   |           |  ✓  |    ✓   |    ✓    |    ✓    |  ✓ (and orphan) |
+
+<br>
+
+-   ISIM VA Utilities:
     -   Authentication
-    -   People
-        -   Add
-        -   Modify
-        -   Search
-        -   Lookup
-        -   Request access (and search/lookup)
-        -   Create custom Person entities (BPPerson, etc..)
-        -   Suspend
-        -   Restore
-        -   Delete
-    -   Activities
-        -   Search
-        -   Lookup
-        -   Complete
-            -   Approvals
-            -   Work Orders
-            -   RFIs
-    - Accounts
-        - Search
-        - Add
-        - Delete
-        - Modify
-        - Suspend
-        - Restore
-        - Orphan
-    -   Static and dynamic roles
-        -   Search
-        -   Lookup
-        -   Add
-        -   Modify
-        -   Delete
-    -   Provisioning policies
-        -   Add
-        -   Modify
-        -   Search
-        -   Delete
-    -   Services
-        -   Search
-    -   ISIM VA Utilities:
-        -   Authentication
-        -   Create/Search/Update property files
+    -   Create/Search/Update property files
 
--   TODO (in priority order):
-    -   Normalize request responses
-    -   Add operations to services
-        -   DN Lookup
-        -   Add
-        -   Modify
-        -   Delete
-        -   Test connection
-    -   Add some complex use cases to the documentation
+## TODO
+*in priority order*
+1. Normalize request responses
+2. Add operations to services
+    -   DN Lookup
+    -   Add
+    -   Modify
+    -   Delete
+    -   Test connection
+3. Add some complex use cases to the documentation
 
