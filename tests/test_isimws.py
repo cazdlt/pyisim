@@ -362,7 +362,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
     # crear y validar
     parent = search.organizational_container(session, "organizations", test_org)[0]
     persona.add(session, parent, "ok")
-    time.sleep(2)
+    time.sleep(5)
     persona_creada = search.people(
         session,
         by="employeenumber",

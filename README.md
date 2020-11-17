@@ -155,4 +155,5 @@ update_property.create_or_update_property(s,property_file,property_name,property
     -   Delete
     -   Test connection
 3. Add some complex use cases to the documentation
+4. Fix formatting (use snake_case, use english) on the client classes (soap.py, rest.py)
 
