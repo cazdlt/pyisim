@@ -1,3 +1,4 @@
+# type: ignore
 import random
 import time
 
@@ -869,3 +870,52 @@ def test_lookup_request(session):
         r=Request(session,id=id)
     except NotFoundError:
         pass
+
+def test_get_pending_activities_abort(session):
+
+    # required attributes on the Person form (more can be included)
+    info_persona = {
+        "givenname": "te",
+        "sn": "st",
+        "cn": "test",
+        "initials": "CC",
+        "employeenumber": random.randint(1, 99999999),
+        "departmentnumber": test_dep,
+        "manager": test_manager,
+        "title": "test",
+        "description": test_description,
+        "businesscategory": "test",
+        "mobile": "test@test.com",
+    }
+    persona = Person(session, person_attrs=info_persona)
+
+    # crear y validar
+    parent = search.organizational_container(session, "organizations", test_org)[0]
+    persona.add(session, parent, "ok")
+    time.sleep(5)
+    persona_creada = search.people(
+        session,
+        by="employeenumber",
+        search_filter=info_persona["employeenumber"],
+        attributes="*",
+        limit=1,
+    )[0]
+    assert persona_creada.employeenumber == str(info_persona["employeenumber"])
+
+    accesses=search.access(session,search_filter="*",limit=2) # get two accesses
+    r=persona_creada.request_access(session,accesses,"ok")
+    time.sleep(3)
+    request_id=r.json()["requestID"]
+
+    request=Request(session,id=request_id)
+    from_request=request.get_pending_activities(session)    
+    
+    from_search=search.activities(session,"requestId",request_id)
+
+    assert len(from_request)==len(from_search)
+
+    request.abort(session,"ok")
+    time.sleep(3)
+    aborted=Request(session,id=request_id)
+    assert aborted.process_state=="A"
+    

@@ -11,7 +11,7 @@ from pyisim.exceptions import NotFoundError
 # from pyisim.entities import OrganizationalContainer
 
 
-requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings() # type: ignore
 
 
 class ISIMClient:
@@ -256,7 +256,7 @@ class ISIMClient:
             self.buscarActividadesRecursivo(s.requestId, act_list)
         return "ok"
 
-    def buscarActividadesDeSolicitud(self, process_id):
+    def buscarActividadesDeSolicitud(self, process_id, pending_only=True):
         """
         The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
         """
@@ -267,13 +267,12 @@ class ISIMClient:
         self.buscarActividadesRecursivo(int(process_id), actividades)
 
         # Filtra solo las actividades manuales (M) y pendientes (R)
-        manuales_pendientes = [
-            a for a in actividades if a.activityType == "M" and a.state == "R"
-        ]
-
-        # acts = client.service.getActivities(self.s, int(process_id), True)
-        # subprocesses
-        return manuales_pendientes
+        if pending_only:
+            actividades = [
+                a for a in actividades if a.activityType == "M" and a.state == "R"
+            ]
+        
+        return actividades
 
     def suspenderPersona(self, dn, justification):
         # suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)
@@ -467,4 +466,9 @@ class ISIMClient:
         r = client.service.getRequest(self.s, request_id)
         return r
         
-    
+    def abortRequest(self, request_id, justification):
+        #abortRequest(session: ns1:WSSession, requestId: xsd:long, justification: xsd:string) -> 
+        url = self.addr + "WSRequestServiceService?wsdl"
+        client = self.get_client(url)
+        r = client.service.abortRequest(self.s, request_id, justification)
+        return r
