@@ -1,5 +1,5 @@
 from collections import defaultdict
-from pyisim.entities.response import Response
+from ..response import Response
 from .organizational_container import OrganizationalContainer
 import dataclasses
 from typing import Dict, List, Literal, TYPE_CHECKING, Union

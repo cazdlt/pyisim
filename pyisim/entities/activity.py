@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Dict, List, Union
 
 from ..exceptions import NotFoundError
-from .response import Response
+from ..response import Response
 
 if TYPE_CHECKING:
     from ..auth import Session

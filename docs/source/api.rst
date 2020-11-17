@@ -64,6 +64,13 @@ Provisioning Policy
    :members:
    :undoc-members:
 
+Request
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: pyisim.entities.request
+   :members:
+   :undoc-members:
+
 Role
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -78,6 +85,12 @@ Service
    :members:
    :undoc-members:
 
+Response
+----------------------------
+
+.. automodule:: pyisim.response
+   :members:
+   :undoc-members:
 
 Search
 ----------------------------

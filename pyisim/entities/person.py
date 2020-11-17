@@ -1,7 +1,7 @@
 from pyisim.exceptions import NotFoundError
 from typing import List, TYPE_CHECKING
 from .account import Account
-from .response import Response
+from ..response import Response
 
 if TYPE_CHECKING:
     from pyisim.auth import Session

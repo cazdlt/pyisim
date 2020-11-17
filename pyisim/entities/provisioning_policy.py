@@ -3,7 +3,7 @@ import datetime
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Union
 
 from .organizational_container import OrganizationalContainer
-from .response import Response
+from ..response import Response
 
 if TYPE_CHECKING:
     from ..auth import Session
