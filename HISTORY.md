@@ -1,3 +1,6 @@
+## ??
+- Advanced options for suspend/restore person
+
 ## 0.2.0
 -   Improved activity search by request id
 -   Dynamic Role handling
