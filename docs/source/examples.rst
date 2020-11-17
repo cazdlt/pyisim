@@ -2,6 +2,8 @@
 Examples
 ==========================
 
+Look for the ``tests/`` folder in our Github repo to see some more detailed examples.
+
 Login
 --------------------
 
@@ -86,7 +88,8 @@ Access request
     from pyisim import search
     accesses=search.access(sess, search_filter="*Consulta*", limit=5)
     person=search.people(session, by="givenname", search_filter="Juan",limit=1)[0]
-    person.request_access(session,accesses, "justification")
+    response=person.request_access(session,accesses, "justification")
+    request_id=response.request.id
 
 Approve activity
 --------------------

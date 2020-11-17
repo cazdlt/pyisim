@@ -1,5 +1,7 @@
+from pyisim.exceptions import NotFoundError
 from typing import List, TYPE_CHECKING
 from .account import Account
+from ..response import Response
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
@@ -27,7 +29,7 @@ class Person:
         Args:
             session (Session): Active ISIM Session
             person (dict, optional): Used for initialization after search operations. Defaults to None.
-            href (str, optional): Used for initialization for lookup  operations. Defaults to None.
+            href (str, optional): Used for initialization for lookup operations. Defaults to None.
             person_attrs: Dictionary of person attributes
         """
 
@@ -42,9 +44,8 @@ class Person:
 
         elif href:
             r = session.restclient.lookupPersona(href, attributes="*")
-            assert (
-                r["_links"]["self"]["href"] == href
-            ), "Persona no encontrada o inválida"
+            if r["_links"]["self"]["href"] != href:
+                raise NotFoundError(f"Invalid or not found person: {href}")
 
             self.href = href
             self.dn = session.restclient.lookupPersona(self.href, attributes="dn")[
@@ -73,7 +74,7 @@ class Person:
 
     def add(
         self, session: "Session", parent: "OrganizationalContainer", justification: str
-    ):
+    )->Response:
         """
         Request to add the specified person into ISIM
 
@@ -83,13 +84,13 @@ class Person:
             justification (str): Request justificacion
 
         Returns:
-            dict: ISIM REST API Response
+            Response: ISIM API Response
         """
         orgid = parent.href.split("/")[-1]
         ret = session.restclient.crearPersona(self, orgid, justification)
-        return ret
+        return Response(session,ret)
 
-    def modify(self, session: "Session", justification: str, changes={}):
+    def modify(self, session: "Session", justification: str, changes={})->Response:
         """
         Requests to modify the person in ISIM.
 
@@ -101,7 +102,7 @@ class Person:
             changes (dict, optional): Attribute changes dictionary. Defaults to {}.
 
         Returns:
-            dict: ISIM REST API Response
+            Response: ISIM API Response
         """
         try:
             # href = self.href
@@ -113,7 +114,7 @@ class Person:
             ret = session.restclient.modificarPersona(
                 self.href, self.changes, justification
             )
-            return ret
+            return Response(session,ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
@@ -121,7 +122,7 @@ class Person:
 
     def request_access(
         self, session: "Session", accesses: List["Access"], justification: str
-    ):
+    )->Response:
         """
         Requests access to the person
 
@@ -131,15 +132,15 @@ class Person:
             justification (str): Request justification
 
         Returns:
-            dict: ISIM REST API Response
+            Response: ISIM API Response
         """
 
         ret = {}
         if len(accesses) > 0:
             ret = session.restclient.solicitarAccesos(accesses, self, justification)
-        return ret
+        return Response(session,ret)
 
-    def suspend(self, session: "Session", justification: str,suspend_accounts:bool=False):
+    def suspend(self, session: "Session", justification: str,suspend_accounts:bool=False)->Response:
         """
         Requests to suspend the person in ISIM
 
@@ -148,7 +149,7 @@ class Person:
             justification (str): Request justification
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM API Response
         """
 
         try:
@@ -161,13 +162,13 @@ class Person:
                 self.dn = dn
 
             ret = session.soapclient.suspendPersonAdvanced(dn, suspend_accounts, None, justification)
-            return ret
+            return Response(session,ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restore(self, session: "Session", justification: str, restore_accounts:bool=False, password:str=None):
+    def restore(self, session: "Session", justification: str, restore_accounts:bool=False, password:str=None)->Response:
         """
         Requests to restore the person in ISIM
 
@@ -178,7 +179,7 @@ class Person:
             password (str): Restored accounts password
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM API Response
         """
         try:
             try:
@@ -190,13 +191,13 @@ class Person:
                 self.dn = dn
 
             ret = session.soapclient.restaurarPersona(self.dn, restore_accounts, password, None, justification)
-            return ret
+            return Response(session,ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def delete(self, session: "Session", justification: str):
+    def delete(self, session: "Session", justification: str)->Response:
         """
         Requests to delete the person in ISIM
 
@@ -205,7 +206,7 @@ class Person:
             justification (str): Request justification
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM API Response
         """
 
         try:
@@ -218,7 +219,7 @@ class Person:
                 self.dn = dn
 
             ret = session.soapclient.eliminarPersona(self.dn, justification)
-            return ret
+            return Response(session,ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."

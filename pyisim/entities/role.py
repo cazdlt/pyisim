@@ -1,4 +1,5 @@
 from collections import defaultdict
+from ..response import Response
 from .organizational_container import OrganizationalContainer
 import dataclasses
 from typing import Dict, List, Literal, TYPE_CHECKING, Union
@@ -56,7 +57,7 @@ class RoleAttributes:
     LDAP Filter syntax.
     Required if dynamic role.
     """
-    scope: Literal[1, 2] = 2
+    scope: Literal[1, 2] = None
     """
     Dynamic Role scope.
     Only used in dynamic roles.
@@ -226,7 +227,7 @@ class Role:
         # del role["erparent"]
         return role
 
-    def add(self, session: "Session"):
+    def add(self, session: "Session") -> Response:
         """
         Requests to add the role into ISIM
 
@@ -237,24 +238,22 @@ class Role:
             session (Session): Active ISIM Session
 
         Returns:
-            zeep.Response: SOAP Response to the request
+            Response: ISIM API Response
         """
-        session = session.soapclient
-
-        # client = self.__role_client
 
         wsrole = self.__crearWSRole(session)
 
         if self.type == "static":
-            r = session.crearRolEstatico(wsrole, self.ou.wsou)
+            r = session.soapclient.crearRolEstatico(wsrole, self.ou.wsou)
             self.dn = r["itimDN"]
+            return Response(session,r,content=StaticRole(session,rol=r))
         else:
-            r = session.crearRolDinamico(wsrole, self.ou.wsou)
+            r = session.soapclient.crearRolDinamico(wsrole, self.ou.wsou)
+            return Response(session,r)
 
-        # self.dn = r["itimDN"]
-        return r
+        
 
-    def modify(self, session: "Session", changes={}):
+    def modify(self, session: "Session", changes={})-> Response:
         """
         Requests to modify the role in ISIM
 
@@ -263,7 +262,7 @@ class Role:
             changes (dict, optional): Changes dictionary. Defaults to {}.
 
         Returns:
-            zeep.Response: SOAP Response to the request
+            Response: ISIM API Response
         """
         session = session.soapclient
         # url = session.addr + "WSRoleServiceService?wsdl"
@@ -287,12 +286,12 @@ class Role:
 
         if self.type == "static":
             r = session.modificarRolEstatico(self.dn, wsattributes)
+            return Response(session,r,content=self)
         else:
             r = session.modificarRolDinamico(self.dn, wsattributes)
+            return Response(session,r)
 
-        return r
-
-    def delete(self, session: "Session"):
+    def delete(self, session: "Session") -> Response:
         """
         Requests to delete role from ISIM
 
@@ -301,12 +300,12 @@ class Role:
             date (datetime, optional): Not implemented yet. Defaults to None.
 
         Returns:
-            zeep.Response: SOAP Response to the request
+            Response: ISIM API Response
         """
 
         r = session.soapclient.eliminarRol(self.dn, None)
 
-        return r
+        return Response(session,r)
 
 
 class DynamicRole(Role):

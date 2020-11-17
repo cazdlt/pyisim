@@ -44,13 +44,12 @@ def groups(
         List[Group]: Search results
     """
 
-    session = session.soapclient
     if by == "account":
         raise NotImplementedError
     elif by == "access":
         raise NotImplementedError
     elif by == "service":
-        ret = session.buscarGruposPorServicio(
+        ret = session.soapclient.buscarGruposPorServicio(
             service_dn, group_profile_name, group_info
         )
     else:
@@ -132,7 +131,7 @@ def roles(session: "Session", by="errolename", search_filter="*") -> List[Role]:
     results = soap.buscarRol(f"({by}={search_filter})", find_unique=False)
 
     is_dynamic = [
-        any(filter(lambda i: i.name == "erjavascript", r.attributes.item))
+        any(filter(lambda i: i.name == "erjavascript", r.attributes.item)) # type: ignore
         for r in results
     ]
     return [

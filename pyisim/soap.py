@@ -11,7 +11,7 @@ from pyisim.exceptions import NotFoundError
 # from pyisim.entities import OrganizationalContainer
 
 
-requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings() # type: ignore
 
 
 class ISIMClient:
@@ -191,9 +191,9 @@ class ISIMClient:
             assert (
                 len(servicios) == 1
             ), f"Se ha encontrado más de un servicio con: {filtro}"
-            return serialize_object(servicios[0], target_cls=dict)
+            return servicios[0]
         else:
-            return [serialize_object(s, target_cls=dict) for s in servicios]
+            return servicios
 
     def searchWorkflow(self, nombre, org_name):
         """
@@ -256,7 +256,7 @@ class ISIMClient:
             self.buscarActividadesRecursivo(s.requestId, act_list)
         return "ok"
 
-    def buscarActividadesDeSolicitud(self, process_id):
+    def buscarActividadesDeSolicitud(self, process_id, pending_only=True):
         """
         The customer can accomplish this by using a combination of getActivities() and getChildProcesses().
         """
@@ -267,13 +267,12 @@ class ISIMClient:
         self.buscarActividadesRecursivo(int(process_id), actividades)
 
         # Filtra solo las actividades manuales (M) y pendientes (R)
-        manuales_pendientes = [
-            a for a in actividades if a.activityType == "M" and a.state == "R"
-        ]
-
-        # acts = client.service.getActivities(self.s, int(process_id), True)
-        # subprocesses
-        return manuales_pendientes
+        if pending_only:
+            actividades = [
+                a for a in actividades if a.activityType == "M" and a.state == "R"
+            ]
+        
+        return actividades
 
     def suspenderPersona(self, dn, justification):
         # suspendPerson(session: ns1:WSSession, personDN: xsd:string, justification: xsd:string)
@@ -335,14 +334,14 @@ class ISIMClient:
         r = client.service.getDefaultAccountAttributesByPerson(
             self.s, service_dn, person_dn
         )
-        return serialize_object(r, target_cls=dict)
+        return r
 
     def getDefaultAccountAttributes(self, service_dn):
         url = self.addr + "WSAccountServiceService?wsdl"
         client = self.get_client(url)
 
         r = client.service.getDefaultAccountAttributes(self.s, service_dn)
-        return serialize_object(r, target_cls=dict)
+        return r
 
     def getAccountProfileForService(self, service_dn):
         url = self.addr + "WSAccountServiceService?wsdl"
@@ -358,7 +357,7 @@ class ISIMClient:
         search_arguments = {k: v for k, v in search_arguments.items() if v is not None}
 
         r = client.service.searchAccounts(self.s, search_arguments)
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # createAccount(session: ns1:WSSession, serviceDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> createAccountReturn: ns1:WSRequest
     def createAccount(self, service_dn, wsattrs, date, justification):
@@ -373,7 +372,7 @@ class ISIMClient:
         r = client.service.createAccount(
             self.s, service_dn, wsattrs, date, justification
         )
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # getAccountsByOwner(session: ns1:WSSession, personDN: xsd:string) -> getAccountsByOwnerReturn: ns1:WSAccount[]
     def getAccountsByOwner(self, person_dn):
@@ -381,7 +380,7 @@ class ISIMClient:
         client = self.get_client(url)
 
         r = client.service.getAccountsByOwner(self.s, person_dn)
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # suspendAccount(session: ns1:WSSession, accountDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> suspendAccountReturn: ns1:WSRequest
     def suspendAccount(self, account_dn, date, justification):
@@ -394,7 +393,7 @@ class ISIMClient:
             date = Nil
 
         r = client.service.suspendAccount(self.s, account_dn, date, justification)
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # restoreAccount(session: ns1:WSSession, accountDN: xsd:string, newPassword: xsd:string, date: xsd:dateTime, justification: xsd:string) -> restoreAccountReturn: ns1:WSRequest
     def restoreAccount(self, account_dn, password, date, justification):
@@ -409,7 +408,7 @@ class ISIMClient:
         r = client.service.restoreAccount(
             self.s, account_dn, password, date, justification
         )
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # deprovisionAccount(session: ns1:WSSession, accountDN: xsd:string, date: xsd:dateTime, justification: xsd:string) -> deprovisionAccountReturn: ns1:WSRequest
     def deprovisionAccount(self, account_dn, date, justification):
@@ -422,7 +421,7 @@ class ISIMClient:
             date = Nil
 
         r = client.service.deprovisionAccount(self.s, account_dn, date, justification)
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # orphanSingleAccount(session: ns1:WSSession, accountDN: xsd:string) ->
     def orphanSingleAccount(self, account_dn):
@@ -430,7 +429,7 @@ class ISIMClient:
         client = self.get_client(url)
 
         r = client.service.orphanSingleAccount(self.s, account_dn)
-        return serialize_object(r, target_cls=dict)
+        return r
 
     # modifyAccount(session: ns1:WSSession, accountDN: xsd:string, wsAttrs: ns1:WSAttribute[], date: xsd:dateTime, justification: xsd:string) -> modifyAccountReturn: ns1:WSRequest
     def modifyAccount(self, account_dn, wsattrs, date, justification):
@@ -445,7 +444,7 @@ class ISIMClient:
         r = client.service.modifyAccount(
             self.s, account_dn, wsattrs, date, justification
         )
-        return serialize_object(r, target_cls=dict)
+        return r
 
     def suspendPersonAdvanced(self,person_dn,include_accounts,date,justification):
         #suspendPersonAdvanced(session: ns1:WSSession, personDN: xsd:string, includeAccounts: xsd:boolean, date: xsd:dateTime, justification: xsd:string) -> suspendPersonAdvancedReturn: ns1:WSRequest
@@ -458,4 +457,18 @@ class ISIMClient:
             date = Nil
 
         r = client.service.suspendPersonAdvanced(self.s, person_dn, include_accounts, date, justification)
+        return r
+
+    def getRequest(self,request_id):
+        #getRequest(session: ns1:WSSession, requestId: xsd:long) -> getRequestReturn: ns1:WSRequest
+        url = self.addr + "WSRequestServiceService?wsdl"
+        client = self.get_client(url)
+        r = client.service.getRequest(self.s, request_id)
+        return r
+        
+    def abortRequest(self, request_id, justification):
+        #abortRequest(session: ns1:WSSession, requestId: xsd:long, justification: xsd:string) -> 
+        url = self.addr + "WSRequestServiceService?wsdl"
+        client = self.get_client(url)
+        r = client.service.abortRequest(self.s, request_id, justification)
         return r

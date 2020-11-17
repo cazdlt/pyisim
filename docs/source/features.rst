@@ -17,7 +17,7 @@ features in it for the ISIM Application Server. Authorization (login) is
 clearly also available.
 
 +---------------------------+--------+-----------+-----+--------+---------+---------+-----------------+
-|    Entities\Operations    | Search | DN Lookup | Add | Delete | Suspend | Restore |      Modify     |
+|    Entities\Operations    | Search |   Lookup  | Add | Delete | Suspend | Restore |      Modify     |
 +===========================+========+===========+=====+========+=========+=========+=================+
 |           People          |    ✓   |           |  ✓  |    ✓   |    ✓    |    ✓    |        ✓        |
 +---------------------------+--------+-----------+-----+--------+---------+---------+-----------------+
@@ -38,6 +38,8 @@ clearly also available.
 |           Groups          |    ✓   |           |     |        |         |         |                 |
 +---------------------------+--------+-----------+-----+--------+---------+---------+-----------------+
 |          Accounts         |    ✓   |           |  ✓  |    ✓   |    ✓    |    ✓    |  ✓ (and orphan) |
++---------------------------+--------+-----------+-----+--------+---------+---------+-----------------+
+|           Requests        |        |     ✓     |     |        |         |         |      (Abort)    |
 +---------------------------+--------+-----------+-----+--------+---------+---------+-----------------+
 
 The following are the currently available features in it for the ISIM7 Virtual Appliance. 

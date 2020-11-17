@@ -51,7 +51,7 @@ def activity_batch_complete(
 
 def get_account_defaults(
     session: "Session", service: "Service", person: "Person" = None
-) -> List[Dict]:
+) -> Dict:
     """
     Get account default attribute values
 
@@ -64,7 +64,7 @@ def get_account_defaults(
         KeyError: Raised if person has no reference to ISIM
 
     Returns:
-        List[Dict]: List of default attributes for the account
+        Dict: Default attributes for the account
     """
     if person:
         if not hasattr(person, "dn"):
@@ -78,7 +78,9 @@ def get_account_defaults(
 
     account_attrs = {}
     for a in result:
+
         attr_values = a["values"]["item"]
+
         if attr_values[0] and attr_values[0].strip():
             account_attrs[a["name"]] = (
                 attr_values if len(attr_values) > 1 else attr_values[0]

@@ -1,5 +1,7 @@
-## ??
+## 0.3.0
 - Advanced options for suspend/restore person
+- Added proper request and response handling
+- Translated some more docstrings and errors into english
 
 ## 0.2.0
 -   Improved activity search by request id
