@@ -16,6 +16,8 @@ You can read the full documentation [here](https://pyisim.readthedocs.io/en/late
 
 ## Examples
 
+Look for the ``tests/`` folder in our Github repo to see some more detailed examples.
+
 -   Login
 
 ```py
@@ -148,7 +150,7 @@ update_property.create_or_update_property(s,property_file,property_name,property
 
 ## TODO
 *in priority order*
-1. Add access href lookup (to ease response formatting)
+1. Add access href lookup (to ease response reading)
 2. Add operations to services
     -   DN Lookup
     -   Add

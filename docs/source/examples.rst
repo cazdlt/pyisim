@@ -2,6 +2,8 @@
 Examples
 ==========================
 
+Look for the ``tests/`` folder in our Github repo to see some more detailed examples.
+
 Login
 --------------------
 
