@@ -346,14 +346,14 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
 
     # required attributes on the Person form (more can be included)
     info_persona = {
-        "givenname": "te",
-        "sn": "st",
+        "givenname": "test",
+        "sn": f"n{random.randint(0,10000)}",
         "cn": "test",
         "initials": "CC",
         "employeenumber": random.randint(1, 99999999),
         "departmentnumber": test_dep,
         "manager": test_manager,
-        "title": "test",
+        "title": test_title,
         "description": test_description,
         "businesscategory": "test",
         "mobile": "test@test.com",
@@ -416,7 +416,7 @@ def test_crear_modificar_suspender_restaurar_eliminar_persona(session):
 
     # eliminar
     persona_res.delete(session, "ok")
-    time.sleep(3)
+    time.sleep(5)
     persona_elim = search.people(
         session,
         by="employeenumber",
@@ -755,7 +755,7 @@ def test_suspender_restaurar_eliminar_cuenta(session):
 
     # eliminar
     try:
-        cuenta_test.delete(session, "ok")
+        r=cuenta_test.delete(session, "ok")
         time.sleep(3)
         cuentas = owner.get_accounts(session)
         cuenta_test = [c for c in cuentas if c.service_name == test_service_name]

@@ -57,7 +57,7 @@ class RoleAttributes:
     LDAP Filter syntax.
     Required if dynamic role.
     """
-    scope: Literal[1, 2] = 2
+    scope: Literal[1, 2] = None
     """
     Dynamic Role scope.
     Only used in dynamic roles.
