@@ -74,7 +74,7 @@ class Person:
 
     def add(
         self, session: "Session", parent: "OrganizationalContainer", justification: str
-    )->Response:
+    ) -> Response:
         """
         Request to add the specified person into ISIM
 
@@ -88,9 +88,9 @@ class Person:
         """
         orgid = parent.href.split("/")[-1]
         ret = session.restclient.crearPersona(self, orgid, justification)
-        return Response(session,ret)
+        return Response(session, ret)
 
-    def modify(self, session: "Session", justification: str, changes={})->Response:
+    def modify(self, session: "Session", justification: str, changes={}) -> Response:
         """
         Requests to modify the person in ISIM.
 
@@ -114,7 +114,7 @@ class Person:
             ret = session.restclient.modificarPersona(
                 self.href, self.changes, justification
             )
-            return Response(session,ret)
+            return Response(session, ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
@@ -122,7 +122,7 @@ class Person:
 
     def request_access(
         self, session: "Session", accesses: List["Access"], justification: str
-    )->Response:
+    ) -> Response:
         """
         Requests access to the person
 
@@ -138,9 +138,11 @@ class Person:
         ret = {}
         if len(accesses) > 0:
             ret = session.restclient.solicitarAccesos(accesses, self, justification)
-        return Response(session,ret)
+        return Response(session, ret)
 
-    def suspend(self, session: "Session", justification: str,suspend_accounts:bool=False)->Response:
+    def suspend(
+        self, session: "Session", justification: str, suspend_accounts: bool = False
+    ) -> Response:
         """
         Requests to suspend the person in ISIM
 
@@ -161,14 +163,22 @@ class Person:
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.suspendPersonAdvanced(dn, suspend_accounts, None, justification)
-            return Response(session,ret)
+            ret = session.soapclient.suspendPersonAdvanced(
+                dn, suspend_accounts, None, justification
+            )
+            return Response(session, ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def restore(self, session: "Session", justification: str, restore_accounts:bool=False, password:str=None)->Response:
+    def restore(
+        self,
+        session: "Session",
+        justification: str,
+        restore_accounts: bool = False,
+        password: str = None,
+    ) -> Response:
         """
         Requests to restore the person in ISIM
 
@@ -190,14 +200,16 @@ class Person:
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.restaurarPersona(self.dn, restore_accounts, password, None, justification)
-            return Response(session,ret)
+            ret = session.soapclient.restaurarPersona(
+                self.dn, restore_accounts, password, None, justification
+            )
+            return Response(session, ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def delete(self, session: "Session", justification: str)->Response:
+    def delete(self, session: "Session", justification: str) -> Response:
         """
         Requests to delete the person in ISIM
 
@@ -219,7 +231,7 @@ class Person:
                 self.dn = dn
 
             ret = session.soapclient.eliminarPersona(self.dn, justification)
-            return Response(session,ret)
+            return Response(session, ret)
         except AttributeError:
             raise Exception(
                 "Person has no reference to ISIM, search for it or initialize it with href to link it."

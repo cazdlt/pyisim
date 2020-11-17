@@ -339,9 +339,7 @@ class ISIMClient:
 
             if activityType == "RFI":
 
-                assert (
-                    len(actividades) == 1
-                ), "Can only complete one RFI at a time"
+                assert len(actividades) == 1, "Can only complete one RFI at a time"
 
                 workitem_id = workitem.split("/")[-1]
 
@@ -401,9 +399,7 @@ class ISIMClient:
         servicios = json.loads(self.s.get(url, params=data).content)
 
         if len(servicios) == 0:
-            raise NotFoundError(
-                f"Service not found: ({search_attr}={search_filter})"
-            )
+            raise NotFoundError(f"Service not found: ({search_attr}={search_filter})")
 
         return servicios
 

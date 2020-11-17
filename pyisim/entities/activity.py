@@ -68,4 +68,4 @@ class Activity:
         assert self.status == "PENDING", "Activity is already complete."
         r = session.restclient.completarActividades([act_dict], result, justification)
 
-        return Response(session,r)
+        return Response(session, r)

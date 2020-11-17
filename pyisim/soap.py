@@ -11,7 +11,7 @@ from pyisim.exceptions import NotFoundError
 # from pyisim.entities import OrganizationalContainer
 
 
-requests.packages.urllib3.disable_warnings() # type: ignore
+requests.packages.urllib3.disable_warnings()  # type: ignore
 
 
 class ISIMClient:
@@ -271,7 +271,7 @@ class ISIMClient:
             actividades = [
                 a for a in actividades if a.activityType == "M" and a.state == "R"
             ]
-        
+
         return actividades
 
     def suspenderPersona(self, dn, justification):
@@ -292,7 +292,9 @@ class ISIMClient:
         else:
             date = Nil
 
-        r = client.service.restorePerson(self.s, dn, restore_accounts, password or Nil, date, justification)
+        r = client.service.restorePerson(
+            self.s, dn, restore_accounts, password or Nil, date, justification
+        )
         return r
 
     def eliminarPersona(self, dn, justification):
@@ -446,8 +448,8 @@ class ISIMClient:
         )
         return r
 
-    def suspendPersonAdvanced(self,person_dn,include_accounts,date,justification):
-        #suspendPersonAdvanced(session: ns1:WSSession, personDN: xsd:string, includeAccounts: xsd:boolean, date: xsd:dateTime, justification: xsd:string) -> suspendPersonAdvancedReturn: ns1:WSRequest
+    def suspendPersonAdvanced(self, person_dn, include_accounts, date, justification):
+        # suspendPersonAdvanced(session: ns1:WSSession, personDN: xsd:string, includeAccounts: xsd:boolean, date: xsd:dateTime, justification: xsd:string) -> suspendPersonAdvancedReturn: ns1:WSRequest
         url = self.addr + "WSPersonServiceService?wsdl"
         client = self.get_client(url)
 
@@ -456,18 +458,20 @@ class ISIMClient:
         else:
             date = Nil
 
-        r = client.service.suspendPersonAdvanced(self.s, person_dn, include_accounts, date, justification)
+        r = client.service.suspendPersonAdvanced(
+            self.s, person_dn, include_accounts, date, justification
+        )
         return r
 
-    def getRequest(self,request_id):
-        #getRequest(session: ns1:WSSession, requestId: xsd:long) -> getRequestReturn: ns1:WSRequest
+    def getRequest(self, request_id):
+        # getRequest(session: ns1:WSSession, requestId: xsd:long) -> getRequestReturn: ns1:WSRequest
         url = self.addr + "WSRequestServiceService?wsdl"
         client = self.get_client(url)
         r = client.service.getRequest(self.s, request_id)
         return r
-        
+
     def abortRequest(self, request_id, justification):
-        #abortRequest(session: ns1:WSSession, requestId: xsd:long, justification: xsd:string) -> 
+        # abortRequest(session: ns1:WSSession, requestId: xsd:long, justification: xsd:string) ->
         url = self.addr + "WSRequestServiceService?wsdl"
         client = self.get_client(url)
         r = client.service.abortRequest(self.s, request_id, justification)

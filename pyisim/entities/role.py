@@ -246,14 +246,12 @@ class Role:
         if self.type == "static":
             r = session.soapclient.crearRolEstatico(wsrole, self.ou.wsou)
             self.dn = r["itimDN"]
-            return Response(session,r,content=StaticRole(session,rol=r))
+            return Response(session, r, content=StaticRole(session, rol=r))
         else:
             r = session.soapclient.crearRolDinamico(wsrole, self.ou.wsou)
-            return Response(session,r)
+            return Response(session, r)
 
-        
-
-    def modify(self, session: "Session", changes={})-> Response:
+    def modify(self, session: "Session", changes={}) -> Response:
         """
         Requests to modify the role in ISIM
 
@@ -286,10 +284,10 @@ class Role:
 
         if self.type == "static":
             r = session.modificarRolEstatico(self.dn, wsattributes)
-            return Response(session,r,content=self)
+            return Response(session, r, content=self)
         else:
             r = session.modificarRolDinamico(self.dn, wsattributes)
-            return Response(session,r)
+            return Response(session, r)
 
     def delete(self, session: "Session") -> Response:
         """
@@ -305,7 +303,7 @@ class Role:
 
         r = session.soapclient.eliminarRol(self.dn, None)
 
-        return Response(session,r)
+        return Response(session, r)
 
 
 class DynamicRole(Role):

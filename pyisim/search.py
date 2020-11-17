@@ -131,7 +131,7 @@ def roles(session: "Session", by="errolename", search_filter="*") -> List[Role]:
     results = soap.buscarRol(f"({by}={search_filter})", find_unique=False)
 
     is_dynamic = [
-        any(filter(lambda i: i.name == "erjavascript", r.attributes.item)) # type: ignore
+        any(filter(lambda i: i.name == "erjavascript", r.attributes.item))  # type: ignore
         for r in results
     ]
     return [

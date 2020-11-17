@@ -5,7 +5,14 @@ import time
 import pytest
 from pyisim import search
 from pyisim.auth import Session
-from pyisim.entities import DynamicRole, Person, ProvisioningPolicy, StaticRole, Account, Request
+from pyisim.entities import (
+    DynamicRole,
+    Person,
+    ProvisioningPolicy,
+    StaticRole,
+    Account,
+    Request,
+)
 from pyisim.entities.role import RoleAttributes
 from pyisim.exceptions import NotFoundError
 from pyisim.utils import get_account_defaults
@@ -755,7 +762,7 @@ def test_suspender_restaurar_eliminar_cuenta(session):
 
     # eliminar
     try:
-        r=cuenta_test.delete(session, "ok")
+        r = cuenta_test.delete(session, "ok")
         time.sleep(3)
         cuentas = owner.get_accounts(session)
         cuenta_test = [c for c in cuentas if c.service_name == test_service_name]
@@ -851,32 +858,34 @@ def test_request_access_approve(session):
     )[0]
     assert persona_creada.employeenumber == str(info_persona["employeenumber"])
 
-    accesses=search.access(session,search_filter="*",limit=2) # get two accesses
-    r=persona_creada.request_access(session,accesses,"ok")
+    accesses = search.access(session, search_filter="*", limit=2)  # get two accesses
+    r = persona_creada.request_access(session, accesses, "ok")
     time.sleep(3)
-    request_id=r.request.id
+    request_id = r.request.id
     print(r)
-    actividades=search.activities(session,"requestId",request_id)
+    actividades = search.activities(session, "requestId", request_id)
 
-    #complete 
-    r2=actividades[0].complete(session,"approve","ok")
+    # complete
+    r2 = actividades[0].complete(session, "approve", "ok")
     print(r2)
 
-    #now try to complete it again
-    r3=actividades[0].complete(session,"approve","ok")
+    # now try to complete it again
+    r3 = actividades[0].complete(session, "approve", "ok")
     print(r3)
+
 
 def test_lookup_request(session):
 
-    id="4020615234983983545" #real id
-    r=Request(session,id=id)
-    assert str(r.id)==id
+    id = "4020615234983983545"  # real id
+    r = Request(session, id=id)
+    assert str(r.id) == id
 
     try:
-        id="6344020623458355" #non existant id
-        r=Request(session,id=id)
+        id = "6344020623458355"  # non existant id
+        r = Request(session, id=id)
     except NotFoundError:
         pass
+
 
 def test_get_pending_activities_abort(session):
 
@@ -909,20 +918,19 @@ def test_get_pending_activities_abort(session):
     )[0]
     assert persona_creada.employeenumber == str(info_persona["employeenumber"])
 
-    accesses=search.access(session,search_filter="*",limit=2) # get two accesses
-    r=persona_creada.request_access(session,accesses,"ok")
+    accesses = search.access(session, search_filter="*", limit=2)  # get two accesses
+    r = persona_creada.request_access(session, accesses, "ok")
     time.sleep(3)
-    request_id=r.request.id
+    request_id = r.request.id
 
-    request=Request(session,id=request_id)
-    from_request=request.get_pending_activities(session)    
-    
-    from_search=search.activities(session,"requestId",request_id)
+    request = Request(session, id=request_id)
+    from_request = request.get_pending_activities(session)
 
-    assert len(from_request)==len(from_search)
+    from_search = search.activities(session, "requestId", request_id)
 
-    request.abort(session,"ok")
+    assert len(from_request) == len(from_search)
+
+    request.abort(session, "ok")
     time.sleep(3)
-    aborted=Request(session,id=request_id)
-    assert aborted.process_state=="A"
-    
+    aborted = Request(session, id=request_id)
+    assert aborted.process_state == "A"
