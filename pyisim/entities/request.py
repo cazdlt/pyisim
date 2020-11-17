@@ -1,8 +1,9 @@
 from typing import List, TYPE_CHECKING
 from ..exceptions import NotFoundError
-from .activity import Activity
+
 
 if TYPE_CHECKING:
+    from .activity import Activity
     from ..auth import Session
 
 
@@ -31,21 +32,22 @@ class Request:
         self.requestee = request["requestee"]
         self.time_submitted = request["timeSubmitted"]
         self.subject = request["subject"]
-        self.request_id = request["requestId"]
+        self.id = request["requestId"]
         self.process_type = request["processType"]
         self.subject_service = request["subjectService"]
         self.status_string = request["statusString"]
         self.process_state = request["processState"]
         self.time_scheduled = request["timeScheduled"]
 
-    def get_pending_activities(self, session: "Session") -> List[Activity]:
+    def get_pending_activities(self, session: "Session") -> List["Activity"]:
+        from .activity import Activity
 
-        results = session.soapclient.buscarActividadesDeSolicitud(self.request_id)
+        results = session.soapclient.buscarActividadesDeSolicitud(self.id)
         return [Activity(session, id=a.id) for a in results]
 
     def abort(self, session: "Session", justification: str):
 
-        ret = session.soapclient.abortRequest(self.request_id, justification)
+        ret = session.soapclient.abortRequest(self.id, justification)
         return ret
 
     # Maybe implement this later on
@@ -53,3 +55,4 @@ class Request:
     #     self,
     # ):
     #     pass
+

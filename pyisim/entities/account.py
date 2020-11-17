@@ -1,8 +1,10 @@
 from typing import TYPE_CHECKING
+
 from .response import Response
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
+
     from .person import Person
     from .service import Service
 

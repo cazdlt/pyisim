@@ -151,19 +151,20 @@ update_property.create_or_update_property(s,property_file,property_name,property
     [X] ISIM Request handling
     [] Response handling
         [X] Account responses
-        [] Activity responses
-        [] Person responses
+        [X] Activity responses
+        [X] Person responses
         [] Policy responses
         [] Role responses
 ## TODO
 *in priority order*
 1. Normalize request responses
-2. Add operations to services
+2. Add access href lookup (to ease response formatting)
+3. Add operations to services
     -   DN Lookup
     -   Add
     -   Modify
     -   Delete
     -   Test connection
-3. Add some complex use cases to the documentation
-4. Fix formatting (use snake_case, use english) on the client classes (soap.py, rest.py)
+4. Add some complex use cases to the documentation
+5. Fix formatting (use snake_case, use english) on the client classes (soap.py, rest.py)
 

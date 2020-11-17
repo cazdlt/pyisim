@@ -1,8 +1,10 @@
-from pyisim.exceptions import NotFoundError
-from typing import Dict, List, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, List, Union
+
+from ..exceptions import NotFoundError
+from .response import Response
 
 if TYPE_CHECKING:
-    from pyisim.auth import Session
+    from ..auth import Session
 
 
 class Activity:
@@ -34,7 +36,7 @@ class Activity:
         session: "Session",
         result: Union[str, List[Dict[str, str]]],
         justification: str,
-    ):
+    ) -> Response:
         """
         Completes the activity. As of now, only allows RFIs, Work Orders and Approval operations.
 
@@ -50,7 +52,7 @@ class Activity:
             justification (str): Activity justification
 
         Returns:
-            dict: REST API Response
+            Response: ISIM API Response
         """
 
         if self.type not in ["APPROVAL", "WORK_ORDER", "RFI"]:
@@ -66,4 +68,4 @@ class Activity:
         assert self.status == "PENDING", "Activity is already complete."
         r = session.restclient.completarActividades([act_dict], result, justification)
 
-        return r
+        return Response(session,r)

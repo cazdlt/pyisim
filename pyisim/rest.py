@@ -145,7 +145,7 @@ class ISIMClient:
         }
 
         ret = self.s.post(url, json=data, headers=headers)
-        return json.loads(ret.text)
+        return ret
 
     def modificarPersona(self, href, changes, justification):
         url = self.__addr + href
@@ -162,7 +162,7 @@ class ISIMClient:
         }
 
         ret = self.s.put(url, json=data, headers=headers)
-        return json.loads(ret.text)
+        return ret
 
     def buscarAcceso(
         self,
@@ -341,7 +341,7 @@ class ISIMClient:
 
                 assert (
                     len(actividades) == 1
-                ), "Solo es posible completar un RFI a la vez"
+                ), "Can only complete one RFI at a time"
 
                 workitem_id = workitem.split("/")[-1]
 
@@ -380,7 +380,7 @@ class ISIMClient:
 
         url = self.__addr + "/itim/rest/forms/people"
 
-        assert perfil in ["Person", "BPPerson"], "Perfil inválido."
+        assert perfil in ["Person", "BPPerson"], "Invalid profile."
 
         urlPerfil = url + "/" + perfil
         resp = self.s.get(urlPerfil)
@@ -402,7 +402,7 @@ class ISIMClient:
 
         if len(servicios) == 0:
             raise NotFoundError(
-                f"Servicio no encontrado: ({search_attr}={search_filter})"
+                f"Service not found: ({search_attr}={search_filter})"
             )
 
         return servicios

@@ -854,17 +854,23 @@ def test_request_access_approve(session):
     accesses=search.access(session,search_filter="*",limit=2) # get two accesses
     r=persona_creada.request_access(session,accesses,"ok")
     time.sleep(3)
-    request_id=r.json()["requestID"]
+    request_id=r.request.id
     print(r)
     actividades=search.activities(session,"requestId",request_id)
+
+    #complete 
     r2=actividades[0].complete(session,"approve","ok")
     print(r2)
+
+    #now try to complete it again
+    r3=actividades[0].complete(session,"approve","ok")
+    print(r3)
 
 def test_lookup_request(session):
 
     id="4020615234983983545" #real id
     r=Request(session,id=id)
-    assert str(r.request_id)==id
+    assert str(r.id)==id
 
     try:
         id="6344020623458355" #non existant id
@@ -906,7 +912,7 @@ def test_get_pending_activities_abort(session):
     accesses=search.access(session,search_filter="*",limit=2) # get two accesses
     r=persona_creada.request_access(session,accesses,"ok")
     time.sleep(3)
-    request_id=r.json()["requestID"]
+    request_id=r.request.id
 
     request=Request(session,id=request_id)
     from_request=request.get_pending_activities(session)    
