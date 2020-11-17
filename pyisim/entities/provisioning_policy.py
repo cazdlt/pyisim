@@ -1,10 +1,12 @@
-import datetime
-from .organizational_container import OrganizationalContainer
-from typing import Dict, List, Literal, Optional, TYPE_CHECKING, TypeVar, Union
 import dataclasses
+import datetime
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Union
+
+from .organizational_container import OrganizationalContainer
+from .response import Response
 
 if TYPE_CHECKING:
-    from pyisim.auth import Session
+    from ..auth import Session
 
 
 @dataclasses.dataclass
@@ -467,7 +469,7 @@ class ProvisioningPolicy:
 
         return membershipList
 
-    def add(self, session: "Session"):
+    def add(self, session: "Session") -> Response:
         """
         Requests to add provisioning policy into ISIM
 
@@ -475,7 +477,7 @@ class ProvisioningPolicy:
             session (Session): Active ISIM Session
 
         Returns:
-            zeep.Response: SOAP Response to the request
+            Response: ISIM API Response
         """
         session = session.soapclient
         client = self.__pp_client
@@ -500,7 +502,7 @@ class ProvisioningPolicy:
         r = session.crearPolitica(self.ou.wsou, wspp, self.date)
 
         # la respuesta no envía el DN, entonces no se puede meter de una
-        return r
+        return Response(session,r)
 
     def modify(self, session: "Session", changes={}):
         """
@@ -514,7 +516,7 @@ class ProvisioningPolicy:
             changes (dict, optional): Dictionary with attribute changes in the policy. Defaults to {}.
 
         Returns:
-            zeep.Response: SOAP Response to the request
+            Response: ISIM API Response
         """
         session = session.soapclient
         client = self.__pp_client
@@ -544,9 +546,9 @@ class ProvisioningPolicy:
 
         r = session.modificarPolitica(self.ou.wsou, wspp, self.date)
 
-        return r
+        return Response(session,r)
 
-    def delete(self, session: "Session"):
+    def delete(self, session: "Session") -> Response:
         """
         Requests to modify the provisioning policy in ISIM.
 
@@ -554,9 +556,9 @@ class ProvisioningPolicy:
             session (Session): Active ISIM Session
 
         Returns:
-            zeep.Response: SOAP Response to the request
+            Response: ISIM API Response
         """
 
         session = session.soapclient
         r = session.eliminarPolitica(self.ou.wsou, self.dn, self.date)
-        return r
+        return Response(session,r)
