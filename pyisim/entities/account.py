@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from .response import Response
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
@@ -46,7 +47,7 @@ class Account:
         owner: "Person",
         service: "Service",
         justification: str,
-    ):
+    ) -> Response:
         """
         Request to add the specified account
 
@@ -57,16 +58,18 @@ class Account:
             justification (str): Request justificacion
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM SOAP API Response
         """
 
         attrs = self.__dict__
         attrs["owner"] = owner.dn
         wsattrs = self.__create_wsattrs(attrs)
 
-        return session.soapclient.createAccount(
+        wsrequest=session.soapclient.createAccount(
             service.dn, wsattrs, None, justification
         )
+
+        return Response(session,wsrequest)
 
     def __setattr__(self, attr, val):
         if hasattr(self, attr):
@@ -86,7 +89,7 @@ class Account:
 
         wsattrs = []
         for name, value in attrs.items():
-            if name is not "changes":
+            if name != "changes":
                 wsattrs.append(
                     {
                         "name": name,
@@ -100,7 +103,7 @@ class Account:
 
         return wsattrs
 
-    def modify(self, session: "Session", justification: str, changes={}):
+    def modify(self, session: "Session", justification: str, changes={}) -> Response:
         """
         Requests to modify the account.
 
@@ -112,23 +115,23 @@ class Account:
             changes (dict, optional): Attribute changes dictionary. Defaults to {}.
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM SOAP API Response
         """
         try:
 
             self.changes.update(changes)
             wsattrs = self.__create_wsattrs(self.changes)
 
-            ret = session.soapclient.modifyAccount(
+            wsrequest = session.soapclient.modifyAccount(
                 self.dn, wsattrs, None, justification
             )
-            return ret
+            return Response(session,wsrequest)
         except AttributeError:
             raise Exception(
                 "Account has no reference to ISIM, search for it or initialize it with href to link it."
             )
 
-    def suspend(self, session: "Session", justification: str):
+    def suspend(self, session: "Session", justification: str) -> Response:
         """
         Request to suspend the specified account
 
@@ -137,17 +140,17 @@ class Account:
             justification (str): Request justificacion
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM API Response
         """
         try:
-            ret = session.soapclient.suspendAccount(self.dn, None, justification)
-            return ret
+            wsrequest = session.soapclient.suspendAccount(self.dn, None, justification)
+            return Response(session,wsrequest)
         except AttributeError:
             raise Exception(
                 "Account has no reference to ISIM, search for it to link it"
             )
 
-    def restore(self, session: "Session", password: str, justification: str):
+    def restore(self, session: "Session", password: str, justification: str) -> Response:
         """
         Request to restore the specified account
 
@@ -157,19 +160,19 @@ class Account:
             justification (str): Request justificacion
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM SOAP API Response
         """
         try:
-            ret = session.soapclient.restoreAccount(
+            wsrequest = session.soapclient.restoreAccount(
                 self.dn, password, None, justification
             )
-            return ret
+            return Response(session,wsrequest)
         except AttributeError:
             raise Exception(
                 "Account has no reference to ISIM, search for it to link it"
             )
 
-    def orphan(self, session: "Session"):
+    def orphan(self, session: "Session") -> None:
         """
         Request to orphan the specified account
 
@@ -177,17 +180,17 @@ class Account:
             session (Session): Active ISIM Session
 
         Returns:
-            dict: ISIM SOAP API Response
+            None
         """
         try:
-            ret = session.soapclient.orphanSingleAccount(self.dn)
-            return ret
+            session.soapclient.orphanSingleAccount(self.dn)
+            return
         except AttributeError:
             raise Exception(
                 "Account has no reference to ISIM, search for it to link it"
             )
 
-    def delete(self, session: "Session", justification: str):
+    def delete(self, session: "Session", justification: str) -> Response:
         """
         Request to deprovision the specified account
 
@@ -196,11 +199,11 @@ class Account:
             justification (str): Request justificacion
 
         Returns:
-            dict: ISIM SOAP API Response
+            Response: ISIM SOAP API Response
         """
         try:
-            ret = session.soapclient.deprovisionAccount(self.dn, None, justification)
-            return ret
+            wsrequest = session.soapclient.deprovisionAccount(self.dn, None, justification)
+            return Response(session,wsrequest)
         except AttributeError:
             raise Exception(
                 "Account has no reference to ISIM, search for it to link it"

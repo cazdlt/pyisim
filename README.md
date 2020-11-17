@@ -145,6 +145,16 @@ update_property.create_or_update_property(s,property_file,property_name,property
     -   Authentication
     -   Create/Search/Update property files
 
+
+## Doing
+- Normalizing request reponses
+    [X] ISIM Request handling
+    [] Response handling
+        [X] Account responses
+        [] Activity responses
+        [] Person responses
+        [] Policy responses
+        [] Role responses
 ## TODO
 *in priority order*
 1. Normalize request responses

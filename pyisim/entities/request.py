@@ -1,6 +1,6 @@
 from typing import List, TYPE_CHECKING
 from ..exceptions import NotFoundError
-from ..entities import Activity
+from .activity import Activity
 
 if TYPE_CHECKING:
     from ..auth import Session
@@ -14,6 +14,8 @@ class Request:
                 request = session.soapclient.getRequest(id)
             except Exception as e:
                 raise NotFoundError(f"Request {id} not found.")
+        elif not request:
+            raise NotFoundError(f"Request not specified.")
 
         self.time_completed = request["timeCompleted"]
         self.subject_profile = request["subjectProfile"]
