@@ -167,7 +167,7 @@ class ISIMClient:
     def buscarAcceso(
         self,
         by="accessName",
-        atributos="accessName",
+        atributos="*",
         filtro="*",
         limit=20,
         requestee_href=None,
@@ -180,14 +180,12 @@ class ISIMClient:
             "attributes": atributos,
             "limit": limit,
             "requestee": requestee_href,
-            # "filterId": "accessSearch"
         }
         data = urlencode(data, quote_via=urllib.parse.quote)
 
-        res = self.s.get(url, params=data).text
-        accesos = json.loads(res)
+        res = self.s.get(url, params=data)
 
-        return list(accesos)
+        return res.json()
 
     def verificarResultadoUnico(self, json_):
         if len(json_) > 1:
@@ -465,3 +463,21 @@ class ISIMClient:
         person = self.s.get(url, params=params)
 
         return json.loads(person.text)
+    
+    def lookup_access(self,id):
+        url=self.__addr+f"/itim/rest/access/{id}"
+        person = self.s.get(url)
+
+        return person.json()
+    
+    def get_access_owners(self,id, attributes="*",embedded=""):
+        url=self.__addr+f"/itim/rest/access/{id}/owners"
+
+        params = {
+            "attributes": attributes,
+            "embedded": embedded,
+        }
+
+        people = self.s.get(url, params=params)
+
+        return people.json()

@@ -159,6 +159,8 @@ update_property.create_or_update_property(s,property_file,property_name,property
     -   Modify
     -   Delete
     -   Test connection
-3. Add some complex use cases to the documentation
-4. Fix formatting (use snake_case, use english) on the client classes (soap.py, rest.py)
+3. Fix formatting (use snake_case, use english) on the client classes (soap.py, rest.py)
+4. Add some complex use cases to the documentation
+5. Consider using dictionaries as search filters
+6. Correctly implement embedded attribute search
 

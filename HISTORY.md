@@ -1,3 +1,8 @@
+## ??
+- Fixed access request error when the access list is empty
+- Fixed OU comparison
+- Implemented access lookup and improved attribute handling
+
 ## 0.3.0
 - Advanced options for suspend/restore person
 - Added proper request and response handling

@@ -168,7 +168,7 @@ def activities(
 
 
 def access(
-    session: "Session", by="accessName", search_filter="*", attributes="", limit=20
+    session: "Session", by="accessName", search_filter="*", attributes="*", limit=20
 ) -> List[Access]:
     """
     Access search
@@ -186,7 +186,7 @@ def access(
     ret = session.restclient.buscarAcceso(
         by=by, filtro=search_filter, atributos=attributes, limit=limit
     )
-    accesos = [Access(access=a) for a in ret]
+    accesos = [Access(session, access=a) for a in ret]
 
     return accesos
 
