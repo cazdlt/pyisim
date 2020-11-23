@@ -44,4 +44,3 @@ class OrganizationalContainer:
         if type(o) is type(self):
             return self.dn == o.dn
         return False
-        

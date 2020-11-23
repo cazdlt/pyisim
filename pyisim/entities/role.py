@@ -84,7 +84,7 @@ class Role:
             session (Session): Active ISIM Session
             dn (str, optional): Initialize with role DN for lookup into ISIM Directory Server. Defaults to None.
             rol (WSRole, optional): SOAP ProvisioningPolicy object to initialize after search operations. Defaults to None.
-            role_attrs (Union[RoleAttributes,Dict], optional): Provisioning Policy attributes for initialization. Defaults to None.
+            role_attrs (RoleAttributes|Dict, optional): Provisioning Policy attributes for initialization. Defaults to None.
         """
 
         url = session.soapclient.addr + "WSRoleServiceService?wsdl"

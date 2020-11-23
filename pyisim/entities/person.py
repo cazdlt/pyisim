@@ -1,5 +1,5 @@
-from pyisim.exceptions import NotFoundError
-from typing import List, TYPE_CHECKING
+from ..exceptions import NotFoundError, PersonNotFoundError
+from typing import Dict, List, TYPE_CHECKING
 from .account import Account
 from ..response import Response
 
@@ -34,23 +34,20 @@ class Person:
         """
 
         self.changes = {}
+        self.embedded={}
 
         if person:
             self.href = person["_links"]["self"]["href"]
-            self.dn = session.restclient.lookup_person(self.href, attributes="dn")[
-                "_attributes"
-            ]["dn"]
+            self.__get_dn(session)
             person_attrs = person["_attributes"]
 
         elif href:
             r = session.restclient.lookup_person(href, attributes="*")
             if r["_links"]["self"]["href"] != href:
-                raise NotFoundError(f"Invalid or not found person: {href}")
+                raise NotFoundError(f"Person is invalid or not found: {href}")
 
             self.href = href
-            self.dn = session.restclient.lookup_person(self.href, attributes="dn")[
-                "_attributes"
-            ]["dn"]
+            self.__get_dn(session)
             person_attrs = r["_attributes"]
 
         for k, v in person_attrs.items():
@@ -90,6 +87,22 @@ class Person:
         ret = session.restclient.add_person(self, orgid, justification)
         return Response(session, ret)
 
+    def __get_dn(self, session: "Session"):
+        try:
+            href = self.href
+            if not hasattr(self, "dn"):
+                person = session.restclient.lookup_person(href, attributes="dn")
+                if (
+                    person.get("_attributes", {}).get("dn") is None
+                    or person["_links"]["self"]["href"] != href
+                ):
+                    raise AttributeError
+                self.dn = person["_attributes"]["dn"]
+        except AttributeError:
+            raise PersonNotFoundError(
+                "Person has no reference to ISIM, search for it to link it."
+            )
+
     def modify(self, session: "Session", justification: str, changes={}) -> Response:
         """
         Requests to modify the person in ISIM.
@@ -104,21 +117,12 @@ class Person:
         Returns:
             Response: ISIM API Response
         """
-        try:
-            # href = self.href
 
-            self.changes.update(changes)
-            # for attr,value in changes.items():
-            #     setattr(self,attr,value)
+        self.__get_dn(session)
+        self.changes.update(changes)
 
-            ret = session.restclient.modify_person(
-                self.href, self.changes, justification
-            )
-            return Response(session, ret)
-        except AttributeError:
-            raise Exception(
-                "Person has no reference to ISIM, search for it or initialize it with href to link it."
-            )
+        ret = session.restclient.modify_person(self.href, self.changes, justification)
+        return Response(session, ret)
 
     def request_access(
         self, session: "Session", accesses: List["Access"], justification: str
@@ -136,12 +140,17 @@ class Person:
         """
 
         ret = {}
+        self.__get_dn(session)
+
         if len(accesses) > 0:
             ret = session.restclient.request_access(accesses, self, justification)
             return Response(session, ret)
         else:
-            return Response(session, None, content={"message":"List is empty, no access requested."})
-        
+            return Response(
+                session,
+                None,
+                content={"message": "List is empty, no access requested."},
+            )
 
     def suspend(
         self, session: "Session", justification: str, suspend_accounts: bool = False
@@ -157,23 +166,12 @@ class Person:
             Response: ISIM API Response
         """
 
-        try:
-            try:
-                dn = self.dn
-            except AttributeError:
-                dn = session.restclient.lookup_person(self.href, attributes="dn")[
-                    "_attributes"
-                ]["dn"]
-                self.dn = dn
+        self.__get_dn(session)
 
-            ret = session.soapclient.suspend_person_advanced(
-                dn, suspend_accounts, None, justification
-            )
-            return Response(session, ret)
-        except AttributeError:
-            raise Exception(
-                "Person has no reference to ISIM, search for it or initialize it with href to link it."
-            )
+        ret = session.soapclient.suspend_person_advanced(
+            self.dn, suspend_accounts, None, justification
+        )
+        return Response(session, ret)
 
     def restore(
         self,
@@ -194,23 +192,13 @@ class Person:
         Returns:
             Response: ISIM API Response
         """
-        try:
-            try:
-                dn = self.dn
-            except AttributeError:
-                dn = session.restclient.lookup_person(self.href, attributes="dn")[
-                    "_attributes"
-                ]["dn"]
-                self.dn = dn
 
-            ret = session.soapclient.restore_person(
-                self.dn, restore_accounts, password, None, justification
-            )
-            return Response(session, ret)
-        except AttributeError:
-            raise Exception(
-                "Person has no reference to ISIM, search for it or initialize it with href to link it."
-            )
+        self.__get_dn(session)
+
+        ret = session.soapclient.restore_person(
+            self.dn, restore_accounts, password, None, justification
+        )
+        return Response(session, ret)
 
     def delete(self, session: "Session", justification: str) -> Response:
         """
@@ -224,21 +212,10 @@ class Person:
             Response: ISIM API Response
         """
 
-        try:
-            try:
-                dn = self.dn
-            except AttributeError:
-                dn = session.restclient.lookup_person(self.href, attributes="dn")[
-                    "_attributes"
-                ]["dn"]
-                self.dn = dn
+        self.__get_dn(session)
 
-            ret = session.soapclient.delete_person(self.dn, justification)
-            return Response(session, ret)
-        except AttributeError:
-            raise Exception(
-                "Person has no reference to ISIM, search for it or initialize it with href to link it."
-            )
+        ret = session.soapclient.delete_person(self.dn, justification)
+        return Response(session, ret)
 
     def get_accounts(self, session: "Session") -> List[Account]:
         """
@@ -251,19 +228,8 @@ class Person:
             List[Account]: List of the person account entities.
         """
 
-        try:
-            try:
-                dn = self.dn
-            except AttributeError:
-                dn = session.restclient.lookup_person(self.href, attributes="dn")[
-                    "_attributes"
-                ]["dn"]
-                self.dn = dn
+        self.__get_dn(session)
 
-            result = session.soapclient.get_accounts_by_owner(self.dn)
-            return [Account(session, account=r) for r in result]
+        result = session.soapclient.get_accounts_by_owner(self.dn)
+        return [Account(session, account=r) for r in result]
 
-        except AttributeError:
-            raise Exception(
-                "Person has no reference to ISIM, search for it or initialize it with href to link it."
-            )

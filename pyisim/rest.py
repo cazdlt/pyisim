@@ -80,7 +80,7 @@ class ISIMClient:
             buscar_por = name_attrs[profile_name]
 
         data = {"attributes": attributes, "limit": limit, buscar_por: filtro}
-        res=self.s.get(url, params=data)
+        res = self.s.get(url, params=data)
 
         return res.json()
 
@@ -448,7 +448,7 @@ class ISIMClient:
 
         person = self.s.get(url, params=params)
 
-        return json.loads(person.text)
+        return person.json()
 
     def lookup_current_person(self, attributes="*", embedded=""):
         url = self.__addr + "/itim/rest/people/me"
@@ -461,15 +461,15 @@ class ISIMClient:
         person = self.s.get(url, params=params)
 
         return json.loads(person.text)
-    
-    def lookup_access(self,id):
-        url=self.__addr+f"/itim/rest/access/{id}"
+
+    def lookup_access(self, id):
+        url = self.__addr + f"/itim/rest/access/{id}"
         person = self.s.get(url)
 
         return person.json()
-    
-    def get_access_owners(self,id, attributes="*",embedded=""):
-        url=self.__addr+f"/itim/rest/access/{id}/owners"
+
+    def get_access_owners(self, id, attributes="*", embedded=""):
+        url = self.__addr + f"/itim/rest/access/{id}/owners"
 
         params = {
             "attributes": attributes,

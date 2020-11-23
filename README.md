@@ -161,5 +161,4 @@ update_property.create_or_update_property(s,property_file,property_name,property
 2. Correctly implement embedded attribute search
 3. Add some complex use cases to the documentation
 4. Consider using dictionaries as search filters
-
-
+5. Use SOAP for all Person operations

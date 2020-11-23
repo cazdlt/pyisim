@@ -936,20 +936,24 @@ def test_get_pending_activities_abort(session):
     aborted = Request(session, id=request_id)
     assert aborted.process_state == "A"
 
-def test_lookup_access(session):
-    
-    accesos=search.access(session,search_filter="*BEPS*",limit=2)
-    for acceso in accesos:
-        assert acceso == Access(session,href=acceso.href)
 
-    accesos=search.access(session,search_filter="*Horario*",limit=2)
+def test_lookup_access(session):
+
+    accesos = search.access(session, search_filter="*BEPS*", limit=2)
     for acceso in accesos:
-        assert acceso == Access(session,href=acceso.href)
+        assert acceso == Access(session, href=acceso.href)
+
+    accesos = search.access(session, search_filter="*Horario*", limit=2)
+    for acceso in accesos:
+        assert acceso == Access(session, href=acceso.href)
+
 
 def test_get_access_owners(session):
 
-    acceso=search.access(session,search_filter="Control Horarios Acceso Externo",limit=1)[0]
-    assert len(acceso.get_owners(session))==1
-    
-    acceso=search.access(session,search_filter="Horario Acceso Externo",limit=1)[0]
-    assert len(acceso.get_owners(session))==0
+    acceso = search.access(
+        session, search_filter="Control Horarios Acceso Externo", limit=1
+    )[0]
+    assert len(acceso.get_owners(session)) == 1
+
+    acceso = search.access(session, search_filter="Horario Acceso Externo", limit=1)[0]
+    assert len(acceso.get_owners(session)) == 0
