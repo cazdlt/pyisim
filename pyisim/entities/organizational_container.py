@@ -40,5 +40,8 @@ class OrganizationalContainer:
             self.wsou = session.soapclient.lookupContainer(self.dn)
             self.profile_name = self.wsou["profileName"]
 
-    def __eq__(self, o) -> bool:
-        return self.dn == o.dn
+    def __eq__(self, o: object) -> bool:
+        if type(o) is type(self):
+            return self.dn == o.dn
+        return False
+        

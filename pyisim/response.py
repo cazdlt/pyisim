@@ -27,7 +27,7 @@ class Response:
             self.raw = serialize_object(raw, dict)
             self.type = "SOAP"
         else:
-            self.raw = raw.json()
+            self.raw = raw.json() if raw else {}
             self.type = "REST"
 
         if self.raw:
@@ -51,7 +51,7 @@ class Response:
         if content:
             self.result = content
         else:
-            if self.type == "REST":
+            if self.type == "REST" and raw:
                 self.result = {
                     "status_code": raw.status_code,
                     "reason": raw.reason,

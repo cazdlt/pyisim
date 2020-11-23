@@ -138,7 +138,10 @@ class Person:
         ret = {}
         if len(accesses) > 0:
             ret = session.restclient.solicitarAccesos(accesses, self, justification)
-        return Response(session, ret)
+            return Response(session, ret)
+        else:
+            return Response(session, None, content={"message":"List is empty, no access requested."})
+        
 
     def suspend(
         self, session: "Session", justification: str, suspend_accounts: bool = False
