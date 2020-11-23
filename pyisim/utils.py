@@ -44,7 +44,7 @@ def activity_batch_complete(
 
             acts_dict.append(act_dict)
 
-    r = session.restclient.completarActividades(acts_dict, resultado, justification)
+    r = session.restclient.complete_activities(acts_dict, resultado, justification)
 
     return r
 
@@ -70,11 +70,11 @@ def get_account_defaults(
         if not hasattr(person, "dn"):
             raise KeyError("Person must have a reference to ISIM (DN). Search for it.")
 
-        result = session.soapclient.getDefaultAccountAttributesByPerson(
+        result = session.soapclient.get_default_account_attributes_by_person(
             service.dn, person.dn
         )
     else:
-        result = session.soapclient.getDefaultAccountAttributes(service.dn)
+        result = session.soapclient.get_default_account_attributes(service.dn)
 
     account_attrs = {}
     for a in result:

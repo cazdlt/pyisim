@@ -499,7 +499,7 @@ class ProvisioningPolicy:
         del wspp["organizationalContainer"]
         del wspp["itimDN"]
 
-        r = session.crearPolitica(self.ou.wsou, wspp, self.date)
+        r = session.add_provisioning_policy(self.ou.wsou, wspp, self.date)
 
         # la respuesta no envía el DN, entonces no se puede meter de una
         return Response(session, r)
@@ -544,7 +544,7 @@ class ProvisioningPolicy:
 
         del wspp["organizationalContainer"]
 
-        r = session.modificarPolitica(self.ou.wsou, wspp, self.date)
+        r = session.modify_provisioning_policy(self.ou.wsou, wspp, self.date)
 
         return Response(session, r)
 
@@ -560,5 +560,5 @@ class ProvisioningPolicy:
         """
 
         session = session.soapclient
-        r = session.eliminarPolitica(self.ou.wsou, self.dn, self.date)
+        r = session.delete_provisioning_policy(self.ou.wsou, self.dn, self.date)
         return Response(session, r)

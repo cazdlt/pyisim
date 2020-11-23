@@ -49,7 +49,7 @@ def groups(
     elif by == "access":
         raise NotImplementedError
     elif by == "service":
-        ret = session.soapclient.buscarGruposPorServicio(
+        ret = session.soapclient.get_groups_by_service(
             service_dn, group_profile_name, group_info
         )
     else:
@@ -81,7 +81,7 @@ def people(
         List[Person]: Search results
     """
 
-    ret = session.restclient.buscarPersonas(
+    ret = session.restclient.search_people(
         profile_name,
         atributos=attributes,
         embedded="",
@@ -109,7 +109,7 @@ def provisioning_policy(
     """
 
     wsou = parent.wsou
-    results = session.soapclient.buscarPoliticaSuministro(
+    results = session.soapclient.search_provisioning_policy(
         wsou, nombre_politica=name, find_unique=False
     )
     return [ProvisioningPolicy(session, provisioning_policy=p) for p in results]
@@ -128,7 +128,7 @@ def roles(session: "Session", by="errolename", search_filter="*") -> List[Role]:
         List[Role]: Search results. Returns both Dynamic and Static Roles.
     """
     soap = session.soapclient
-    results = soap.buscarRol(f"({by}={search_filter})", find_unique=False)
+    results = soap.search_role(f"({by}={search_filter})", find_unique=False)
 
     is_dynamic = [
         any(filter(lambda i: i.name == "erjavascript", r.attributes.item))  # type: ignore
@@ -156,11 +156,11 @@ def activities(
     """
 
     if by == "requestId":
-        results = session.soapclient.buscarActividadesDeSolicitud(search_filter)
+        results = session.soapclient.get_request_activities(search_filter)
         return [Activity(session, id=a.id) for a in results]
 
     else:
-        results = session.restclient.buscarActividad(
+        results = session.restclient.search_activity(
             search_attr=by, search_filter=search_filter
         )
 
@@ -183,7 +183,7 @@ def access(
         List[Access]: Search results
     """
 
-    ret = session.restclient.buscarAcceso(
+    ret = session.restclient.search_access(
         by=by, filtro=search_filter, atributos=attributes, limit=limit
     )
     accesos = [Access(session, access=a) for a in ret]
@@ -212,7 +212,7 @@ def service(
 
     # ret=session.restclient.buscarServicio(by,search_filter,limit,atributos=attributes)
     # servicios=[Service(session,service=s) for s in ret]
-    ret = session.soapclient.buscarServicio(
+    ret = session.soapclient.search_service(
         parent.wsou, f"({by}={search_filter})", find_unique=False
     )
     servicios = [Service(session, service=s) for s in ret]
@@ -245,7 +245,7 @@ def organizational_container(
     """
 
     buscar_por = None if by == "name" else by
-    ret = session.restclient.buscarOUs(
+    ret = session.restclient.search_containers(
         profile_name, buscar_por=buscar_por, filtro=search_filter, attributes="dn"
     )
 
@@ -263,14 +263,14 @@ def account(
     args = {"filter": ldap_search_filter}
 
     if service:
-        profile_name = session.soapclient.getAccountProfileForService(service.dn)
+        profile_name = session.soapclient.get_account_profile_for_service(service.dn)
         args["profile"] = profile_name
-        results = session.soapclient.searchAccounts(args)
+        results = session.soapclient.search_accounts(args)
         return [
             Account(session, account=r)
             for r in results
             if r["serviceName"] == service.name
         ]
     else:
-        results = session.soapclient.searchAccounts(args)
+        results = session.soapclient.search_accounts(args)
         return [Account(session, account=r) for r in results]

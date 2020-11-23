@@ -17,9 +17,9 @@ class ISIMClient:
     def __init__(self, url, user_, pass_, cert_path=None):
 
         self.__addr = url
-        self.s, self.CSRF = self.autenticar(user_, pass_, cert_path)
+        self.s, self.CSRF = self.login(user_, pass_, cert_path)
 
-    def autenticar(self, user_, pass_, cert=None):
+    def login(self, user_, pass_, cert=None):
 
         assert cert is not None, "No certificate passed"
         url = self.__addr + "/itim/restlogin/login.jsp"
@@ -50,7 +50,7 @@ class ISIMClient:
             )
         return s, CSRF
 
-    def buscarOUs(
+    def search_containers(
         self, profile_name, filtro, buscar_por=None, attributes="", limit=100
     ):
 
@@ -63,7 +63,7 @@ class ISIMClient:
             "admindomains",
         ]
         if profile_name not in tipos:
-            raise Exception(
+            raise ValueError(
                 "No es una categoría de OU válida. Seleccione un tipo de categoría entre las siguientes: "
                 + str(tipos)
             )
@@ -80,13 +80,12 @@ class ISIMClient:
             buscar_por = name_attrs[profile_name]
 
         data = {"attributes": attributes, "limit": limit, buscar_por: filtro}
+        res=self.s.get(url, params=data)
 
-        OUs = json.loads(self.s.get(url, params=data).text)
-
-        return list(OUs)
+        return res.json()
 
     # si filtro="*" busca todo
-    def buscarPersonas(
+    def search_people(
         self, perfil, atributos="cn", embedded="", buscar_por="cn", filtro="*", limit=50
     ):
 
@@ -116,7 +115,7 @@ class ISIMClient:
 
         return list(personas)
 
-    def crearPersona(self, person, orgid, justification):
+    def add_person(self, person, orgid, justification):
 
         url = self.__addr + "/itim/rest/people"
 
@@ -147,7 +146,7 @@ class ISIMClient:
         ret = self.s.post(url, json=data, headers=headers)
         return ret
 
-    def modificarPersona(self, href, changes, justification):
+    def modify_person(self, href, changes, justification):
         url = self.__addr + href
 
         data = {
@@ -164,7 +163,7 @@ class ISIMClient:
         ret = self.s.put(url, json=data, headers=headers)
         return ret
 
-    def buscarAcceso(
+    def search_access(
         self,
         by="accessName",
         atributos="*",
@@ -187,7 +186,7 @@ class ISIMClient:
 
         return res.json()
 
-    def verificarResultadoUnico(self, json_):
+    def verificar_resultado_unico(self, json_):
         if len(json_) > 1:
             raise MultipleFoundError()
         elif len(json_) == 0:
@@ -195,17 +194,17 @@ class ISIMClient:
         else:
             return json_[0]
 
-    def obtenerLinks(self, json_, tipoObjeto):
+    def obtener_links(self, json_, tipoObjeto):
 
         tipos = {"acceso": "access", "persona": "self"}
         assert tipoObjeto in tipos.keys()
         tipo = tipos[tipoObjeto]
 
-        json_ = self.verificarResultadoUnico(json_)
+        json_ = self.verificar_resultado_unico(json_)
 
         return {"_links": {tipo: {"href": json_["_links"]["self"]["href"]}}}
 
-    def buscarActividad(self, search_attr="activityName", search_filter="*"):
+    def search_activity(self, search_attr="activityName", search_filter="*"):
 
         url = self.__addr + "/itim/rest/activities"
         data = {
@@ -220,7 +219,7 @@ class ISIMClient:
 
         return list(actividades)
 
-    def solicitarAccesos(self, accesos, persona, justification):
+    def request_access(self, accesos, persona, justification):
         url = self.__addr + "/itim/rest/access/assignments"
 
         persona_rest = {"self": {"href": persona.href}}
@@ -294,8 +293,7 @@ class ISIMClient:
 
         return rfi_form
 
-    # falta tener en cuenta cuando llegan varias actividades
-    def completarActividades(self, actividades, resultado, justification="ok"):
+    def complete_activities(self, actividades, resultado, justification="ok"):
 
         url = self.__addr + "/itim/rest/workitems"
 
@@ -372,7 +370,7 @@ class ISIMClient:
 
         return self.s.put(url, json=body, headers=headers)
 
-    def buscarFormulario(self, perfil):
+    def search_form(self, perfil):
 
         url = self.__addr + "/itim/rest/forms/people"
 
@@ -383,7 +381,7 @@ class ISIMClient:
 
         return json.loads(resp.text)["template"]["page"]["body"]["tabbedForm"]["tab"]
 
-    def buscarServicio(self, search_attr, search_filter, limit, atributos=""):
+    def search_service(self, search_attr, search_filter, limit, atributos=""):
 
         url = self.__addr + "/itim/rest/services"
 
@@ -420,7 +418,7 @@ class ISIMClient:
 
     #     return self.s.delete(url_del, headers=headers)
 
-    def lookupSolicitud(self, requestID):
+    def lookup_request(self, requestID):
         url = self.__addr + "/itim/rest/requests"
 
         url_req = url + "/" + requestID
@@ -430,7 +428,7 @@ class ISIMClient:
 
         return solicitud
 
-    def lookupActividad(self, activityID):
+    def lookup_activity(self, activityID):
         url = self.__addr + "/itim/rest/activities"
 
         url_act = url + "/" + activityID
@@ -440,7 +438,7 @@ class ISIMClient:
 
         return actividad
 
-    def lookupPersona(self, href, attributes="dn"):
+    def lookup_person(self, href, attributes="dn"):
         url = self.__addr + href
 
         params = {
@@ -452,7 +450,7 @@ class ISIMClient:
 
         return json.loads(person.text)
 
-    def lookupCurrentPerson(self, attributes="*", embedded=""):
+    def lookup_current_person(self, attributes="*", embedded=""):
         url = self.__addr + "/itim/rest/people/me"
 
         params = {

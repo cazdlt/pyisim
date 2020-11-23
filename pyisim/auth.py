@@ -31,5 +31,5 @@ class Session:
         Returns:
             pyisim.entities.Person: Person entity of the currently logged user.
         """
-        p = self.restclient.lookupCurrentPerson(attributes, "")
+        p = self.restclient.lookup_current_person(attributes, "")
         return Person(self, person=p)

@@ -22,7 +22,7 @@ class Request:
 
         if id:
             try:
-                request = session.soapclient.getRequest(id)
+                request = session.soapclient.get_request(id)
             except Exception as e:
                 raise NotFoundError(f"Request {id} not found.")
         elif not request:
@@ -61,7 +61,7 @@ class Request:
         """
         from .activity import Activity
 
-        results = session.soapclient.buscarActividadesDeSolicitud(self.id)
+        results = session.soapclient.get_request_activities(self.id)
         return [Activity(session, id=a.id) for a in results]
 
     def abort(self, session: "Session", justification: str) -> None:
@@ -73,7 +73,7 @@ class Request:
             justification (str): Justification for the abortion
         """
 
-        session.soapclient.abortRequest(self.id, justification)
+        session.soapclient.abort_request(self.id, justification)
         return
 
     # Maybe implement this later on

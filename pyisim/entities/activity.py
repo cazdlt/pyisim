@@ -19,7 +19,7 @@ class Activity:
         """
 
         if id:
-            activity = session.restclient.lookupActividad(str(id))
+            activity = session.restclient.lookup_activity(str(id))
             if "_attributes" not in activity.keys():
                 raise NotFoundError(f"Activity not found: {id}")
 
@@ -66,6 +66,6 @@ class Activity:
         act_dict["_links"]["workitem"]["href"] = self.workitem_href
 
         assert self.status == "PENDING", "Activity is already complete."
-        r = session.restclient.completarActividades([act_dict], result, justification)
+        r = session.restclient.complete_activities([act_dict], result, justification)
 
         return Response(session, r)

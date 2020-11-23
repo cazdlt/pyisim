@@ -124,7 +124,7 @@ class Role:
 
         else:
             if dn:
-                rol = session.soapclient.lookupRole(dn)
+                rol = session.soapclient.lookup_role(dn)
 
             self.name = rol["name"]
             self.description = rol["description"]
@@ -244,11 +244,11 @@ class Role:
         wsrole = self.__crearWSRole(session)
 
         if self.type == "static":
-            r = session.soapclient.crearRolEstatico(wsrole, self.ou.wsou)
+            r = session.soapclient.create_static_role(wsrole, self.ou.wsou)
             self.dn = r["itimDN"]
             return Response(session, r, content=StaticRole(session, rol=r))
         else:
-            r = session.soapclient.crearRolDinamico(wsrole, self.ou.wsou)
+            r = session.soapclient.create_dynamic_role(wsrole, self.ou.wsou)
             return Response(session, r)
 
     def modify(self, session: "Session", changes={}) -> Response:
@@ -283,10 +283,10 @@ class Role:
         # print(wsattributes)
 
         if self.type == "static":
-            r = session.modificarRolEstatico(self.dn, wsattributes)
+            r = session.modify_static_role(self.dn, wsattributes)
             return Response(session, r, content=self)
         else:
-            r = session.modificarRolDinamico(self.dn, wsattributes)
+            r = session.modify_dynamic_role(self.dn, wsattributes)
             return Response(session, r)
 
     def delete(self, session: "Session") -> Response:
@@ -301,7 +301,7 @@ class Role:
             Response: ISIM API Response
         """
 
-        r = session.soapclient.eliminarRol(self.dn, None)
+        r = session.soapclient.remove_role(self.dn, None)
 
         return Response(session, r)
 

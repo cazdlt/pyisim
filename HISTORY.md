@@ -2,6 +2,7 @@
 - Fixed access request error when the access list is empty
 - Fixed OU comparison
 - Implemented access lookup and improved attribute handling
+- Normalized formatting on the low-level client modules
 
 ## 0.3.0
 - Advanced options for suspend/restore person

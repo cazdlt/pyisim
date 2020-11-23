@@ -67,7 +67,7 @@ class Account:
         attrs["owner"] = owner.dn
         wsattrs = self.__create_wsattrs(attrs)
 
-        wsrequest = session.soapclient.createAccount(
+        wsrequest = session.soapclient.create_account(
             service.dn, wsattrs, None, justification
         )
 
@@ -124,7 +124,7 @@ class Account:
             self.changes.update(changes)
             wsattrs = self.__create_wsattrs(self.changes)
 
-            wsrequest = session.soapclient.modifyAccount(
+            wsrequest = session.soapclient.modify_account(
                 self.dn, wsattrs, None, justification
             )
             return Response(session, wsrequest)
@@ -145,7 +145,7 @@ class Account:
             Response: ISIM API Response
         """
         try:
-            wsrequest = session.soapclient.suspendAccount(self.dn, None, justification)
+            wsrequest = session.soapclient.suspend_account(self.dn, None, justification)
             return Response(session, wsrequest)
         except AttributeError:
             raise Exception(
@@ -167,7 +167,7 @@ class Account:
             Response: ISIM SOAP API Response
         """
         try:
-            wsrequest = session.soapclient.restoreAccount(
+            wsrequest = session.soapclient.restore_account(
                 self.dn, password, None, justification
             )
             return Response(session, wsrequest)
@@ -187,7 +187,7 @@ class Account:
             None
         """
         try:
-            session.soapclient.orphanSingleAccount(self.dn)
+            session.soapclient.orphan_single_account(self.dn)
             return
         except AttributeError:
             raise Exception(
@@ -206,7 +206,7 @@ class Account:
             Response: ISIM SOAP API Response
         """
         try:
-            wsrequest = session.soapclient.deprovisionAccount(
+            wsrequest = session.soapclient.deprovision_account(
                 self.dn, None, justification
             )
             return Response(session, wsrequest)

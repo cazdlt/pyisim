@@ -37,18 +37,18 @@ class Person:
 
         if person:
             self.href = person["_links"]["self"]["href"]
-            self.dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+            self.dn = session.restclient.lookup_person(self.href, attributes="dn")[
                 "_attributes"
             ]["dn"]
             person_attrs = person["_attributes"]
 
         elif href:
-            r = session.restclient.lookupPersona(href, attributes="*")
+            r = session.restclient.lookup_person(href, attributes="*")
             if r["_links"]["self"]["href"] != href:
                 raise NotFoundError(f"Invalid or not found person: {href}")
 
             self.href = href
-            self.dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+            self.dn = session.restclient.lookup_person(self.href, attributes="dn")[
                 "_attributes"
             ]["dn"]
             person_attrs = r["_attributes"]
@@ -87,7 +87,7 @@ class Person:
             Response: ISIM API Response
         """
         orgid = parent.href.split("/")[-1]
-        ret = session.restclient.crearPersona(self, orgid, justification)
+        ret = session.restclient.add_person(self, orgid, justification)
         return Response(session, ret)
 
     def modify(self, session: "Session", justification: str, changes={}) -> Response:
@@ -111,7 +111,7 @@ class Person:
             # for attr,value in changes.items():
             #     setattr(self,attr,value)
 
-            ret = session.restclient.modificarPersona(
+            ret = session.restclient.modify_person(
                 self.href, self.changes, justification
             )
             return Response(session, ret)
@@ -137,7 +137,7 @@ class Person:
 
         ret = {}
         if len(accesses) > 0:
-            ret = session.restclient.solicitarAccesos(accesses, self, justification)
+            ret = session.restclient.request_access(accesses, self, justification)
             return Response(session, ret)
         else:
             return Response(session, None, content={"message":"List is empty, no access requested."})
@@ -161,12 +161,12 @@ class Person:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookup_person(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.suspendPersonAdvanced(
+            ret = session.soapclient.suspend_person_advanced(
                 dn, suspend_accounts, None, justification
             )
             return Response(session, ret)
@@ -198,12 +198,12 @@ class Person:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookup_person(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.restaurarPersona(
+            ret = session.soapclient.restore_person(
                 self.dn, restore_accounts, password, None, justification
             )
             return Response(session, ret)
@@ -228,12 +228,12 @@ class Person:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookup_person(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            ret = session.soapclient.eliminarPersona(self.dn, justification)
+            ret = session.soapclient.delete_person(self.dn, justification)
             return Response(session, ret)
         except AttributeError:
             raise Exception(
@@ -255,12 +255,12 @@ class Person:
             try:
                 dn = self.dn
             except AttributeError:
-                dn = session.restclient.lookupPersona(self.href, attributes="dn")[
+                dn = session.restclient.lookup_person(self.href, attributes="dn")[
                     "_attributes"
                 ]["dn"]
                 self.dn = dn
 
-            result = session.soapclient.getAccountsByOwner(self.dn)
+            result = session.soapclient.get_accounts_by_owner(self.dn)
             return [Account(session, account=r) for r in result]
 
         except AttributeError:

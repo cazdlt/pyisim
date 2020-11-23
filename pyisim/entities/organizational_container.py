@@ -17,7 +17,7 @@ class OrganizationalContainer:
             organizational_container (dict, optional): Used for initialization after search operations. Defaults to None.
         """
         if dn:
-            self.wsou = session.soapclient.lookupContainer(dn)
+            self.wsou = session.soapclient.lookup_container(dn)
             self.name = self.wsou.name
             self.dn = self.wsou["itimDN"]
             self.profile_name = self.wsou["profileName"]
@@ -29,7 +29,7 @@ class OrganizationalContainer:
                 "Location": "locations",
                 "AdminDomain": "admindomains",
             }
-            self.href = session.restclient.buscarOUs(
+            self.href = session.restclient.search_containers(
                 rest_profile_names[self.profile_name], self.name
             )[0]["_links"]["self"]["href"]
 
@@ -37,7 +37,7 @@ class OrganizationalContainer:
             self.name = organizational_container["_links"]["self"]["title"]
             self.href = organizational_container["_links"]["self"]["href"]
             self.dn = organizational_container["_attributes"]["dn"]
-            self.wsou = session.soapclient.lookupContainer(self.dn)
+            self.wsou = session.soapclient.lookup_container(self.dn)
             self.profile_name = self.wsou["profileName"]
 
     def __eq__(self, o: object) -> bool:
