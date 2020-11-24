@@ -33,7 +33,7 @@ class Person:
             session (Session): Active ISIM Session
             person (dict, optional): Used for initialization after search operations. Defaults to None.
             href (str, optional): Used for initialization for lookup operations. Defaults to None.
-            dn (str,optional): Used for DN Lookup operations. Not implemented. Defaults to None.
+            dn (str,optional): Used for DN Lookup operations. Defaults to None.
             person_attrs: Dictionary of person attributes
         """
 
@@ -41,9 +41,15 @@ class Person:
         self.embedded = {}
 
         if dn:
-            raise NotImplementedError("DN Lookup for Persons not implemented yet.")
+            r=session.restclient.lookup_person_dn(dn)
+            if isinstance(r,dict) and "SEARCH_FAILURE" in r.get("key",""):
+                raise NotFoundError(f"Person is invalid or not found: {dn}")
 
-        if person:
+            self.href=r[0]["_links"]["self"]["href"]
+            self.dn=dn
+            person_attrs = r[0]["_attributes"]
+
+        elif person:
             self.href = person["_links"]["self"]["href"]
             self.__get_dn(session)
             person_attrs = person["_attributes"]

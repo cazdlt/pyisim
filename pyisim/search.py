@@ -75,7 +75,7 @@ def people(
         session (Session): Active ISIM Session
         search_filter (str, optional): Filter to search by. Defaults to "*".
         by (str, optional): LDAP Attribute to search by. Defaults to "cn".
-        profile_name (str, optional): Person/BPPerson. Defaults to "Person".
+        profile_name (str, optional): Limits the search scope. Defaults to "Person", which returns both Person and BPPerson entities.
         attributes (str, optional): Attributes to return in the Person instance. Defaults to "*".
         embedded (List[str], optional): Attributes to embed as PyISIM entities. Can only support "Person" attributes (ersponsor, manager, etc).
         roles (bool, optional): If true, returns the roles as embedded PyISIM entities. They will be stored in the "embedded" attribute. Defaults to false.

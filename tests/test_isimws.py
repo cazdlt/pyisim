@@ -1024,3 +1024,20 @@ def test_get_embedded(session):
     r[0].get_embedded(session, ["manager"])
     r[0].get_embedded(session, ["erparent"], roles=True)
     print(r[0])
+
+def test_lookup_person_dn(session):
+
+    #person
+    dn="erglobalid=3805077201843703203,ou=0,ou=people,erglobalid=00000000000000000000,ou=colpensiones,dc=colpensiones"
+    p=Person(session,dn=dn)
+
+    #bpperson
+    dn="erglobalid=894606483549232386,ou=0,ou=people,erglobalid=00000000000000000000,ou=colpensiones,dc=colpensiones" #TODO
+    p=Person(session,dn=dn)
+
+    #no existente
+    dn="erglobalid=67587658765,ou=0,ou=people,erglobalid=00000000000000000000,ou=colpensiones,dc=colpensiones"
+    try:
+        p=Person(session,dn=dn)
+    except:
+        pass

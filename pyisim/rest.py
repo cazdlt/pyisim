@@ -482,13 +482,13 @@ class ISIMClient:
 
         return ous.json()
 
-    def lookup_person_dn(self,dn,attributes,embedded):
+    def lookup_person_dn(self,dn,attributes="*",embedded=""):
         url = self.__addr + f"/itim/rest/people/person"
 
         params = {
+            "distinguishedName;x-property":dn,
             "attributes": attributes,
             "embedded": embedded,
-            "distinguishedName;x-property":dn
         }
         data = urlencode(params, quote_via=urllib.parse.quote)
 

@@ -40,9 +40,15 @@ Modifying people
 .. code:: py
 
     from pyisim import search
-    persona = search.people(sess, by="employeenumber", search_filter="1015463230", limit=1)[0]
-    persona.title="CEO"
-    persona.modify(sess, "my justification")
+    from pyisim.auth import Session
+
+    s=Session(url, "cazdlt", "secretpw", "my_certificate.cer")
+    person = search.people(s, "employeenumber", "1015463230", embedded=["manager"], limit=1)[0]
+    print("This is his boss' name:", person.embedded["manager"].cn)
+
+    person.title="CEO"
+    person.modify(sess, "my justification")
+    
     
 
 Obtaining the current logged in person and doing stuff
@@ -58,6 +64,7 @@ Obtaining the current logged in person and doing stuff
     me=s.current_person()
     me.modify(s, "my justification", changes={"mail":"cazdlt@gmail.com"})
     me.suspend(s, "suspending myself", suspend_accounts=True)
+    me.get_embedded(s,roles=True) # gets person roles as python entities
 
 Custom Person/BPPerson entities
 ----------------------------------------
