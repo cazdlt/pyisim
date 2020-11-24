@@ -60,10 +60,12 @@ def groups(
 
 def people(
     session: "Session",
-    search_filter="*",
     by="cn",
+    search_filter="*",
     profile_name="Person",
     attributes="*",
+    embedded: List[str] = None,
+    roles=False,
     limit=50,
 ) -> List[Person]:
     """
@@ -75,21 +77,29 @@ def people(
         by (str, optional): LDAP Attribute to search by. Defaults to "cn".
         profile_name (str, optional): Person/BPPerson. Defaults to "Person".
         attributes (str, optional): Attributes to return in the Person instance. Defaults to "*".
+        embedded (List[str], optional): Attributes to embed as PyISIM entities. Can only support "Person" attributes (ersponsor, manager, etc).
+        roles (bool, optional): If true, returns the roles as embedded PyISIM entities. They will be stored in the "embedded" attribute. Defaults to false.
         limit (int, optional): Defaults to 50.
 
     Returns:
         List[Person]: Search results
     """
+    if embedded:
+        embedded = ",".join(embedded)
 
     ret = session.restclient.search_people(
         profile_name,
         atributos=attributes,
-        embedded="",
+        embedded=embedded or "",
         buscar_por=by,
         filtro=search_filter,
         limit=limit,
     )
     personas = [Person(session, person=p) for p in ret]
+    if roles:
+        for p in personas:
+            p.get_embedded(session, roles=True)
+
     return personas
 
 

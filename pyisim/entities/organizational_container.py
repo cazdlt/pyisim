@@ -34,9 +34,17 @@ class OrganizationalContainer:
             )[0]["_links"]["self"]["href"]
 
         elif organizational_container:
+
             self.name = organizational_container["_links"]["self"]["title"]
             self.href = organizational_container["_links"]["self"]["href"]
-            self.dn = organizational_container["_attributes"]["dn"]
+
+            self.dn = organizational_container.get("_attributes", {}).get("dn")
+            if not self.dn:
+                cat = self.href.split("/")[-2]
+                id = self.href.split("/")[-1]
+                ou = session.restclient.lookup_organizational_container(cat, id)
+                self.dn = ou["_attributes"]["dn"]
+
             self.wsou = session.soapclient.lookup_container(self.dn)
             self.profile_name = self.wsou["profileName"]
 

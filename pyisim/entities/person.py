@@ -1,11 +1,13 @@
+from typing import TYPE_CHECKING, Dict, List
+
 from ..exceptions import NotFoundError, PersonNotFoundError
-from typing import Dict, List, TYPE_CHECKING
-from .account import Account
 from ..response import Response
+from .account import Account
+from .organizational_container import OrganizationalContainer
+from .role import DynamicRole, StaticRole
 
 if TYPE_CHECKING:
     from pyisim.auth import Session
-    from .organizational_container import OrganizationalContainer
     from .access import Access
 
 
@@ -34,12 +36,16 @@ class Person:
         """
 
         self.changes = {}
-        self.embedded={}
+        self.embedded = {}
 
         if person:
             self.href = person["_links"]["self"]["href"]
             self.__get_dn(session)
             person_attrs = person["_attributes"]
+
+            embedded = person.get("_embedded")
+            if embedded:
+                self.__fill_embedded(session, embedded)
 
         elif href:
             r = session.restclient.lookup_person(href, attributes="*")
@@ -54,7 +60,7 @@ class Person:
             setattr(self, k, v)
 
     def __setattr__(self, attr, val):
-        if hasattr(self, attr):
+        if hasattr(self, attr) and attr not in ("changes", "embedded", "href", "dn"):
             self.changes[attr] = val
         super().__setattr__(attr, val)
 
@@ -84,7 +90,14 @@ class Person:
             Response: ISIM API Response
         """
         orgid = parent.href.split("/")[-1]
-        ret = session.restclient.add_person(self, orgid, justification)
+
+        person_data = self.__dict__.copy()
+        person_data.pop("changes", "")
+        person_data.pop("embedded", "")
+
+        ret = session.restclient.add_person(
+            person_data, self.profile_name, orgid, justification
+        )
         return Response(session, ret)
 
     def __get_dn(self, session: "Session"):
@@ -92,10 +105,8 @@ class Person:
             href = self.href
             if not hasattr(self, "dn"):
                 person = session.restclient.lookup_person(href, attributes="dn")
-                if (
-                    person.get("_attributes", {}).get("dn") is None
-                    or person["_links"]["self"]["href"] != href
-                ):
+                dn = person.get("_attributes", {}).get("dn")
+                if dn is None or person["_links"]["self"]["href"] != href:
                     raise AttributeError
                 self.dn = person["_attributes"]["dn"]
         except AttributeError:
@@ -233,3 +244,61 @@ class Person:
         result = session.soapclient.get_accounts_by_owner(self.dn)
         return [Account(session, account=r) for r in result]
 
+    def __fill_embedded(self, session: "Session", embedded: dict) -> None:
+
+        for attr, value in embedded.items():
+            href = value["_links"]["self"]["href"].lower()
+            if "people" in href:
+                self.embedded[attr] = [Person(session, person=value)]
+            elif "organizationcontainers" in href:
+                ou = [OrganizationalContainer(session, organizational_container=value)]
+                self.embedded[attr] = ou
+
+    def get_embedded(
+        self, session: "Session", embedded: List[str] = None, roles=False
+    ) -> Dict[str, List]:
+        """
+        Gets or updates the specified embedded attributes as PyISIM entities.
+        Only works for attributes available in the _embedded REST API parameter and/or organizational roles.
+
+        Args:
+            embedded (List[str], optional): List of attributes to embed as PyISIM entities
+            roles (bool, optional): Specifies to embed the person's roles
+
+        Returns:
+            Dict[str, List]: Dictionary of embedded entities.
+        """
+
+        self.__get_dn(session)
+
+        if embedded:
+            embeds = ",".join(embedded)
+            p = session.restclient.lookup_person(self.href, embedded=embeds)
+
+            values = p.get("_embedded")
+            if values:
+                self.__fill_embedded(session, values)
+
+        if roles:
+            self.__get_roles(session)
+
+        return self.embedded
+
+    def __get_roles(self, session: "Session") -> None:
+
+        if not hasattr(self, "erroles"):
+            raise KeyError("Person has no roles or was initialized without them.")
+
+        roles = []
+        for role_dn in self.erroles:
+            r = session.soapclient.lookup_role(role_dn)
+            attrs = {
+                attr["name"]: [i for i in attr["values"]["item"]]
+                for attr in r["attributes"]["item"]
+            }
+            if "erDynamicRole" in attrs["objectclass"]:
+                roles.append(DynamicRole(session, dn=role_dn))
+            else:
+                roles.append(StaticRole(session, dn=role_dn))
+
+        self.embedded["roles"] = roles

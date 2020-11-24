@@ -115,25 +115,15 @@ class ISIMClient:
 
         return list(personas)
 
-    def add_person(self, person, orgid, justification):
+    def add_person(self, person, profile, orgid, justification):
 
         url = self.__addr + "/itim/rest/people"
 
-        # tipo_persona = person.profile_name
-
-        # tipos = ["Person", "BPPerson"]
-        # if tipo_persona in tipos:
-        #     raise Exception(
-        #         "No es una tipo válido de persona. Seleccione un tipo de persona entre los siguientes: "+str(tipos))
-
-        person_data = person.__dict__.copy()
-        person_data.pop("changes", "")
-
         data = {
             "justification": justification,
-            "profileName": person.profile_name,
+            "profileName": profile,
             "orgID": orgid,
-            "_attributes": person_data,
+            "_attributes": person,
         }
 
         headers = {
@@ -215,9 +205,9 @@ class ISIMClient:
 
         headers = {"Cache-Control": "no-cache"}
 
-        actividades = json.loads(self.s.get(url, params=data, headers=headers).text)
+        actividades = self.s.get(url, params=data, headers=headers)
 
-        return list(actividades)
+        return actividades.json()
 
     def request_access(self, accesos, persona, justification):
         url = self.__addr + "/itim/rest/access/assignments"
@@ -377,9 +367,9 @@ class ISIMClient:
         assert perfil in ["Person", "BPPerson"], "Invalid profile."
 
         urlPerfil = url + "/" + perfil
-        resp = self.s.get(urlPerfil)
+        form = self.s.get(urlPerfil).json()
 
-        return json.loads(resp.text)["template"]["page"]["body"]["tabbedForm"]["tab"]
+        return form["template"]["page"]["body"]["tabbedForm"]["tab"]
 
     def search_service(self, search_attr, search_filter, limit, atributos=""):
 
@@ -392,12 +382,9 @@ class ISIMClient:
         }
         data = urlencode(data, quote_via=urllib.parse.quote)
 
-        servicios = json.loads(self.s.get(url, params=data).content)
+        servicios = self.s.get(url, params=data)
 
-        if len(servicios) == 0:
-            raise NotFoundError(f"Service not found: ({search_attr}={search_filter})")
-
-        return servicios
+        return servicios.json()
 
     # def eliminarServicio(self, nombre):
 
@@ -424,9 +411,9 @@ class ISIMClient:
         url_req = url + "/" + requestID
         data = {"attributes": "*"}
 
-        solicitud = json.loads(self.s.get(url_req, params=data).text)
+        solicitud = self.s.get(url_req, params=data)
 
-        return solicitud
+        return solicitud.json()
 
     def lookup_activity(self, activityID):
         url = self.__addr + "/itim/rest/activities"
@@ -434,16 +421,17 @@ class ISIMClient:
         url_act = url + "/" + activityID
         data = {"attributes": "*"}
 
-        actividad = json.loads(self.s.get(url_act, params=data).text)
+        actividad = self.s.get(url_act, params=data)
 
-        return actividad
+        return actividad.json()
 
-    def lookup_person(self, href, attributes="dn"):
+    def lookup_person(self, href, attributes="dn", embedded="", forms=False):
         url = self.__addr + href
 
         params = {
             "attributes": attributes,
-            "forms": False,
+            "forms": forms,
+            "embedded": embedded,
         }
 
         person = self.s.get(url, params=params)
@@ -479,3 +467,17 @@ class ISIMClient:
         people = self.s.get(url, params=params)
 
         return people.json()
+
+    def lookup_organizational_container(
+        self, category, id, attributes="dn", embedded=""
+    ):
+        url = self.__addr + f"/itim/rest/organizationcontainers/{category}/{id}"
+
+        params = {
+            "attributes": attributes,
+            "embedded": embedded,
+        }
+
+        ous = self.s.get(url, params=params)
+
+        return ous.json()

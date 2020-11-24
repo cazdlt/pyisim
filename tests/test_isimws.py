@@ -950,10 +950,77 @@ def test_lookup_access(session):
 
 def test_get_access_owners(session):
 
-    acceso = search.access(
-        session, search_filter="Control Horarios Acceso Externo", limit=1
-    )[0]
+    nombre_acceso = "Control Horarios Acceso Externo"
+    acceso = search.access(session, search_filter=nombre_acceso, limit=1)[0]
     assert len(acceso.get_owners(session)) == 1
 
-    acceso = search.access(session, search_filter="Horario Acceso Externo", limit=1)[0]
+    nombre_acceso = "Horario Acceso Externo"
+    acceso = search.access(session, search_filter=nombre_acceso, limit=1)[0]
     assert len(acceso.get_owners(session)) == 0
+
+
+def test_search_people_embedded(session):
+
+    # with embedded person
+    r = search.people(
+        session,
+        by="employeenumber",
+        search_filter="1015463230",
+        limit=1,
+        embedded=["manager", "erparent"],
+    )
+
+    # with other possibly embedded stuff
+    r = search.people(
+        session,
+        by="employeenumber",
+        search_filter="1015463230",
+        limit=1,
+        embedded=[
+            "erroles",
+            "description",
+            "manager",
+        ],  # only manager gets embedded here bc of api limitations
+        roles=True,
+    )
+
+    # with no embeds
+    r = search.people(
+        session,
+        by="employeenumber",
+        search_filter="1015463230",
+        limit=1,
+    )
+
+    # wrong embed
+    r = search.people(
+        session,
+        by="employeenumber",
+        search_filter="1015463230",
+        embedded=["fiuhwe"],
+        limit=1,
+    )
+
+    # empty list
+    r = search.people(
+        session,
+        by="employeenumber",
+        search_filter="1015463230",
+        embedded=[],
+        limit=1,
+    )
+
+    print(r)
+
+
+def test_get_embedded(session):
+    r = search.people(
+        session,
+        by="employeenumber",
+        search_filter="1015463230",
+        limit=1,
+    )
+
+    r[0].get_embedded(session, ["manager"])
+    r[0].get_embedded(session, ["erparent"], roles=True)
+    print(r[0])
