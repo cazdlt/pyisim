@@ -1,4 +1,4 @@
-## ??
+## 0.3.1
 - Fixed access request error when the access list is empty
 - Fixed OU comparison
 - Implemented access lookup and improved attribute handling
