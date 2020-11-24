@@ -25,6 +25,7 @@ class Person:
         session: "Session",
         person: dict = None,
         href: str = None,
+        dn: str = None,
         person_attrs: dict = None,
     ):
         """
@@ -32,11 +33,15 @@ class Person:
             session (Session): Active ISIM Session
             person (dict, optional): Used for initialization after search operations. Defaults to None.
             href (str, optional): Used for initialization for lookup operations. Defaults to None.
+            dn (str,optional): Used for DN Lookup operations. Not implemented. Defaults to None.
             person_attrs: Dictionary of person attributes
         """
 
         self.changes = {}
         self.embedded = {}
+
+        if dn:
+            raise NotImplementedError("DN Lookup for Persons not implemented yet.")
 
         if person:
             self.href = person["_links"]["self"]["href"]

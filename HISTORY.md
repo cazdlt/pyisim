@@ -3,6 +3,7 @@
 - Fixed OU comparison
 - Implemented access lookup and improved attribute handling
 - Normalized formatting on the low-level client modules
+- Added embedded attribute handling to Person entities
 
 ## 0.3.0
 - Advanced options for suspend/restore person

@@ -152,13 +152,12 @@ update_property.create_or_update_property(s,property_file,property_name,property
 
 ## TODO
 *in priority order*
-1. Add operations to services
+1. Add DN Lookup to Person entities
+2. Add operations to services
     -   DN Lookup
     -   Add
     -   Modify
     -   Delete
     -   Test connection
-2. Correctly implement embedded attribute search
 3. Add some complex use cases to the documentation
 4. Consider using dictionaries as search filters
-5. Use SOAP for all Person operations
